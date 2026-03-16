@@ -92,13 +92,13 @@ export async function POST(request: NextRequest) {
       short_description,
       status,
       open_source: true,
-      license_type: license || 'MIT',
+      license: license || 'MIT',
     })
     .select('id, slug')
     .single()
 
   if (error || !skill) {
-    return NextResponse.json({ error: 'Failed to create skill' }, { status: 500 })
+    return NextResponse.json({ error: 'Failed to create skill', detail: error?.message }, { status: 500 })
   }
 
   // Seed initial metrics
