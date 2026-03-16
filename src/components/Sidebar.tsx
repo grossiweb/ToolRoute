@@ -24,7 +24,7 @@ const workflows = [
   { slug: 'knowledge-management', label: 'Knowledge Management' },
 ]
 
-export function Sidebar({ verticals }: { verticals: Vertical[] }) {
+export function Sidebar({ verticals, basePath = '/' }: { verticals: Vertical[]; basePath?: string }) {
   const router = useRouter()
   const searchParams = useSearchParams()
   const activeWorkflow = searchParams.get('workflow')
@@ -39,7 +39,8 @@ export function Sidebar({ verticals }: { verticals: Vertical[] }) {
     if (value) {
       params.set(key, value)
     }
-    router.push(`/?${params.toString()}`)
+    const qs = params.toString()
+    router.push(qs ? `${basePath}?${qs}` : basePath)
     setMobileOpen(false)
   }
 

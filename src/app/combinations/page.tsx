@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatScore, getScoreColor } from '@/lib/scoring'
+import { Sidebar } from '@/components/Sidebar'
 import Link from 'next/link'
 
 export const revalidate = 3600
@@ -72,35 +73,11 @@ export default async function CombinationsPage({
         </p>
       </div>
 
-      {/* Vertical filter */}
-      {verticals && verticals.length > 0 && (
-        <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-8 -mx-4 px-4">
-          <Link
-            href="/combinations"
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              !searchParams.vertical
-                ? 'bg-brand text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            All
-          </Link>
-          {verticals.map((v: any) => (
-            <Link
-              key={v.slug}
-              href={`/combinations?vertical=${v.slug}`}
-              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-                searchParams.vertical === v.slug
-                  ? 'bg-brand text-white'
-                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-              }`}
-            >
-              {v.name}
-            </Link>
-          ))}
-        </div>
-      )}
+      {/* Sidebar + Content layout */}
+      <div className="flex gap-6">
+        <Sidebar verticals={(verticals || []).map((v: any) => ({ id: v.slug, slug: v.slug, name: v.name }))} basePath="/combinations" />
 
+        <div className="flex-1 min-w-0">
       {/* Combos grid */}
       {filteredCombos.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
@@ -207,6 +184,9 @@ export default async function CombinationsPage({
           </p>
         </div>
       )}
+
+        </div>{/* end flex-1 */}
+      </div>{/* end sidebar + content flex */}
     </div>
   )
 }

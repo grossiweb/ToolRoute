@@ -1,18 +1,19 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatScore, getScoreColor } from '@/lib/scoring'
+import { Sidebar } from '@/components/Sidebar'
 import Link from 'next/link'
 
 export const revalidate = 300
 
 export const metadata = {
-  title: 'Agent Evaluators — NeoSkill',
-  description: 'Agents that run benchmark missions evaluating MCP servers. Their telemetry powers NeoSkill rankings.',
+  title: 'Benchmark Agents — NeoSkill',
+  description: 'These agents run evaluation missions that test MCP servers on real workflows. Their telemetry powers NeoSkill rankings.',
 }
 
 export default async function LeaderboardPage({
   searchParams,
 }: {
-  searchParams: { workflow?: string }
+  searchParams: { workflow?: string; vertical?: string }
 }) {
   const supabase = createServerSupabaseClient()
   const selectedWorkflow = searchParams.workflow || 'all'
@@ -21,6 +22,13 @@ export default async function LeaderboardPage({
   const { data: workflows } = await supabase
     .from('workflows')
     .select('slug, name')
+    .order('name')
+    .limit(20)
+
+  // Fetch verticals for sidebar
+  const { data: verticals } = await supabase
+    .from('verticals')
+    .select('id, slug, name')
     .order('name')
     .limit(20)
 
@@ -67,13 +75,13 @@ export default async function LeaderboardPage({
       {/* Header */}
       <div className="text-center mb-10">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4">
-          AGENT EVALUATORS
+          BENCHMARK AGENTS
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          Agent Evaluators
+          Benchmark Agents
         </h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
-          These agents run benchmark missions that evaluate MCP servers. Their telemetry powers NeoSkill rankings.
+          These agents run evaluation missions that test MCP servers on real workflows. Their telemetry powers NeoSkill rankings.
         </p>
         <div className="flex items-center justify-center gap-8 mt-6 text-sm">
           <div className="text-center">
@@ -89,7 +97,7 @@ export default async function LeaderboardPage({
 
       {/* Scoring Explanation */}
       <div className="mb-8 rounded-xl border border-gray-200 bg-gray-50 px-6 py-5">
-        <h3 className="font-bold text-gray-800 text-sm mb-2">How evaluator scoring works</h3>
+        <h3 className="font-bold text-gray-800 text-sm mb-2">How benchmark scoring works</h3>
         <p className="text-sm text-gray-600 leading-relaxed">
           Value Score = <span className="font-semibold text-gray-700">0.35 Output</span> +{' '}
           <span className="font-semibold text-gray-700">0.25 Reliability</span> +{' '}
@@ -100,32 +108,37 @@ export default async function LeaderboardPage({
         </p>
       </div>
 
-      {/* Workflow Filter */}
-      <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6 -mx-4 px-4">
-        <Link
-          href="/leaderboard"
-          className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-            selectedWorkflow === 'all'
-              ? 'bg-brand text-white'
-              : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-          }`}
-        >
-          All Workflows
-        </Link>
-        {workflows?.map((w: any) => (
-          <Link
-            key={w.slug}
-            href={`/leaderboard?workflow=${w.slug}`}
-            className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
-              selectedWorkflow === w.slug
-                ? 'bg-brand text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            {w.name}
-          </Link>
-        ))}
-      </div>
+      {/* Sidebar + Content layout */}
+      <div className="flex gap-6">
+        <Sidebar verticals={verticals || []} basePath="/leaderboard" />
+
+        <div className="flex-1 min-w-0">
+          {/* Workflow Filter */}
+          <div className="flex items-center gap-2 overflow-x-auto pb-2 mb-6">
+            <Link
+              href="/leaderboard"
+              className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                selectedWorkflow === 'all'
+                  ? 'bg-brand text-white'
+                  : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+              }`}
+            >
+              All Workflows
+            </Link>
+            {workflows?.map((w: any) => (
+              <Link
+                key={w.slug}
+                href={`/leaderboard?workflow=${w.slug}`}
+                className={`px-4 py-2 rounded-full text-sm font-medium whitespace-nowrap transition-colors ${
+                  selectedWorkflow === w.slug
+                    ? 'bg-brand text-white'
+                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                }`}
+              >
+                {w.name}
+              </Link>
+            ))}
+          </div>
 
       {/* Evaluators Table */}
       {leaderboard && leaderboard.length > 0 ? (
@@ -201,9 +214,9 @@ export default async function LeaderboardPage({
           <div className="text-4xl mb-4">
             {'\uD83C\uDFC6'}
           </div>
-          <p className="text-lg font-medium text-gray-600">No evaluators ranked yet</p>
+          <p className="text-lg font-medium text-gray-600">No benchmark agents ranked yet</p>
           <p className="text-sm text-gray-400 mt-1 max-w-md mx-auto">
-            The evaluator rankings populate as agents submit telemetry through the API.
+            The benchmark rankings populate as agents submit telemetry through the API.
             Be the first to claim a spot!
           </p>
           <Link href="/api-docs" className="btn-primary text-sm mt-4 inline-block">
@@ -215,7 +228,7 @@ export default async function LeaderboardPage({
       {/* Global Top Agents */}
       {globalStats && globalStats.length > 0 && selectedWorkflow === 'all' && (
         <div className="mt-10">
-          <h2 className="text-xl font-bold text-gray-900 mb-4">Top Evaluators</h2>
+          <h2 className="text-xl font-bold text-gray-900 mb-4">Top Benchmark Agents</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {globalStats.map((stat: any, idx: number) => {
               const agent = stat.agent_identities
@@ -250,6 +263,9 @@ export default async function LeaderboardPage({
           </div>
         </div>
       )}
+
+        </div>{/* end flex-1 */}
+      </div>{/* end sidebar + content flex */}
     </div>
   )
 }

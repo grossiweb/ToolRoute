@@ -17,7 +17,7 @@ export default async function HomePage({
     .from('skills')
     .select(`
       id, slug, canonical_name, short_description, vendor_type, status,
-      skill_scores ( overall_score, trust_score, reliability_score, output_score ),
+      skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score ),
       skill_metrics ( github_stars, days_since_last_commit )
     `)
     .eq('status', 'active')
@@ -28,11 +28,19 @@ export default async function HomePage({
   }
 
   const sortBy = searchParams.sort || 'score'
-  if (sortBy === 'stars') {
-    query = query.order('skill_metrics(github_stars)', { ascending: false })
-  } else {
-    query = query.order('skill_scores(overall_score)', { ascending: false })
+  const sortMap: Record<string, string> = {
+    score: 'skill_scores(overall_score)',
+    output: 'skill_scores(output_score)',
+    reliability: 'skill_scores(reliability_score)',
+    efficiency: 'skill_scores(efficiency_score)',
+    cost: 'skill_scores(cost_score)',
+    trust: 'skill_scores(trust_score)',
+    stars: 'skill_metrics(github_stars)',
+    recent: 'skill_metrics(days_since_last_commit)',
   }
+  const sortCol = sortMap[sortBy] || sortMap.score
+  const ascending = sortBy === 'recent' || sortBy === 'cost' ? true : false
+  query = query.order(sortCol, { ascending })
 
   const { data: skills } = await query
 
@@ -53,28 +61,30 @@ export default async function HomePage({
           {skills ? `${skills.length} servers` : 'Loading...'}{' '}
           {searchParams.q && <span>matching <strong>&quot;{searchParams.q}&quot;</strong></span>}
         </p>
-        <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400">Sort:</span>
-          <a
-            href="?sort=score"
-            className={`px-3 py-1 rounded-full transition-colors ${
-              sortBy === 'score'
-                ? 'bg-brand text-white'
-                : 'text-gray-600 hover:text-brand'
-            }`}
-          >
-            NeoSkill Score
-          </a>
-          <a
-            href="?sort=stars"
-            className={`px-3 py-1 rounded-full transition-colors ${
-              sortBy === 'stars'
-                ? 'bg-brand text-white'
-                : 'text-gray-600 hover:text-brand'
-            }`}
-          >
-            GitHub Stars
-          </a>
+        <div className="flex items-center gap-2 text-sm overflow-x-auto">
+          <span className="text-gray-400 flex-shrink-0">Sort:</span>
+          {[
+            { key: 'score', label: 'Overall Score' },
+            { key: 'output', label: 'Output Quality' },
+            { key: 'reliability', label: 'Reliability' },
+            { key: 'efficiency', label: 'Efficiency' },
+            { key: 'cost', label: 'Cost' },
+            { key: 'trust', label: 'Trust' },
+            { key: 'stars', label: 'GitHub Stars' },
+            { key: 'recent', label: 'Last Commit' },
+          ].map(opt => (
+            <a
+              key={opt.key}
+              href={`?sort=${opt.key}${searchParams.workflow ? `&workflow=${searchParams.workflow}` : ''}${searchParams.vertical ? `&vertical=${searchParams.vertical}` : ''}`}
+              className={`px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${
+                sortBy === opt.key
+                  ? 'bg-brand text-white'
+                  : 'text-gray-600 hover:text-brand'
+              }`}
+            >
+              {opt.label}
+            </a>
+          ))}
         </div>
       </div>
 
