@@ -23,7 +23,7 @@ export default async function HomePage({
       skill_metrics ( github_stars, days_since_last_commit )
     `)
     .eq('status', 'active')
-    .limit(30)
+    .limit(120)
 
   if (searchParams.q) {
     query = query.ilike('canonical_name', `%${searchParams.q}%`)
