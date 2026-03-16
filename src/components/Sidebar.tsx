@@ -9,25 +9,41 @@ interface SidebarProps {
 }
 
 const WORKFLOWS = [
-  'Data Ingestion',
-  'Document Processing',
-  'Search & Retrieval',
-  'Code Generation',
-  'Customer Support',
-  'Lead Enrichment',
-  'Content Creation',
-  'DevOps Automation',
+  { label: 'All Workflows', slug: '' },
+  { label: 'Developer Workflow', slug: 'developer-workflow-code-management' },
+  { label: 'Research & Intelligence', slug: 'research-competitive-intelligence' },
+  { label: 'Sales & Outreach', slug: 'sales-research-outreach' },
+  { label: 'Content & Publishing', slug: 'content-creation-publishing' },
+  { label: 'Data & Analytics', slug: 'data-analysis-reporting' },
+  { label: 'Customer Support', slug: 'customer-support-automation' },
+  { label: 'Marketing', slug: 'marketing-intelligence-campaign-management' },
+  { label: 'Finance & Accounting', slug: 'finance-accounting-automation' },
+  { label: 'Legal & Compliance', slug: 'legal-research-document-management' },
+  { label: 'HR & Recruiting', slug: 'hr-recruiting-automation' },
+  { label: 'E-commerce', slug: 'ecommerce-operations' },
+  { label: 'QA & Testing', slug: 'qa-testing-automation' },
+  { label: 'DevOps & Platform', slug: 'it-devops-platform-operations' },
+  { label: 'Security Operations', slug: 'security-operations' },
+  { label: 'Design-to-Code', slug: 'design-to-code-workflow' },
+  { label: 'Knowledge Management', slug: 'knowledge-management' },
+  { label: 'Productivity', slug: 'executive-assistant-productivity' },
 ]
 
 const INDUSTRIES = [
-  'SaaS',
-  'Fintech',
-  'Healthcare',
-  'E-Commerce',
-  'Legal',
-  'Education',
-  'Real Estate',
-  'Logistics',
+  { label: 'All Industries', slug: '' },
+  { label: 'Engineering & Development', slug: 'engineering-development' },
+  { label: 'Sales & Revenue', slug: 'sales-revenue' },
+  { label: 'Marketing & Content', slug: 'marketing-content' },
+  { label: 'Finance & Accounting', slug: 'finance-accounting' },
+  { label: 'Legal & Compliance', slug: 'legal-compliance' },
+  { label: 'Customer Support', slug: 'customer-support' },
+  { label: 'HR & Recruiting', slug: 'hr-recruiting' },
+  { label: 'E-commerce & Retail', slug: 'ecommerce-retail' },
+  { label: 'Healthcare', slug: 'healthcare' },
+  { label: 'Real Estate', slug: 'real-estate' },
+  { label: 'Education', slug: 'education' },
+  { label: 'Cybersecurity', slug: 'cybersecurity' },
+  { label: 'General Business', slug: 'general-business-operations' },
 ]
 
 const TOOL_TYPES = [
@@ -55,10 +71,10 @@ const TOOL_TYPES = [
 const TASKS = [
   { label: 'All Tasks', slug: '' },
   { label: 'Transcribe Audio', slug: 'transcribe-audio' },
-  { label: 'Extract Text from PDFs', slug: 'extract-text-from-pdfs' },
+  { label: 'Extract Text from PDFs', slug: 'extract-text-pdf' },
   { label: 'Generate Embeddings', slug: 'generate-embeddings' },
   { label: 'Summarize Documents', slug: 'summarize-documents' },
-  { label: 'Search the Web', slug: 'search-the-web' },
+  { label: 'Search the Web', slug: 'search-web' },
   { label: 'Scrape Web Pages', slug: 'scrape-web-pages' },
   { label: 'Query Databases', slug: 'query-databases' },
   { label: 'Manage Repositories', slug: 'manage-repositories' },
@@ -197,13 +213,16 @@ function DefaultSidebar({
     <>
       <SidebarSection title="Workflows">
         {WORKFLOWS.map((wf) => {
-          const slug = wf.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          const href = wf.slug ? `/?workflow=${wf.slug}` : '/'
+          const active = wf.slug
+            ? activeWorkflow === wf.slug
+            : !activeWorkflow && !activeVertical
           return (
             <SidebarItem
-              key={slug}
-              href={`/?workflow=${slug}`}
-              label={wf}
-              active={activeWorkflow === slug}
+              key={wf.slug || '_all'}
+              href={href}
+              label={wf.label}
+              active={active}
             />
           )
         })}
@@ -211,13 +230,16 @@ function DefaultSidebar({
 
       <SidebarSection title="Industries">
         {INDUSTRIES.map((ind) => {
-          const slug = ind.toLowerCase().replace(/[^a-z0-9]+/g, '-')
+          const href = ind.slug ? `/?vertical=${ind.slug}` : '/'
+          const active = ind.slug
+            ? activeVertical === ind.slug
+            : false
           return (
             <SidebarItem
-              key={slug}
-              href={`/?vertical=${slug}`}
-              label={ind}
-              active={activeVertical === slug}
+              key={ind.slug || '_all_ind'}
+              href={href}
+              label={ind.label}
+              active={active}
             />
           )
         })}

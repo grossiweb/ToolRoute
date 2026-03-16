@@ -20,9 +20,8 @@ export function NavBar() {
 
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
+          <Link href="/" className="hover:text-brand transition-colors">Servers</Link>
           <Link href="/leaderboards" className="hover:text-brand transition-colors">Leaderboards</Link>
-          <Link href="/?view=workflows" className="hover:text-brand transition-colors">Workflows</Link>
-          <Link href="/?view=industries" className="hover:text-brand transition-colors">Industries</Link>
           <Link href="/tasks" className="hover:text-brand transition-colors">Tasks</Link>
           <Link href="/compare" className="hover:text-brand transition-colors">Compare</Link>
           <Link href="/olympics" className="hover:text-brand transition-colors">Benchmarks</Link>
@@ -58,9 +57,8 @@ export function NavBar() {
       {/* Mobile menu */}
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-3 text-sm font-medium">
+          <Link href="/" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Servers</Link>
           <Link href="/leaderboards" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
-          <Link href="/?view=workflows" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Workflows</Link>
-          <Link href="/?view=industries" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Industries</Link>
           <Link href="/tasks" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Tasks</Link>
           <Link href="/compare" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Compare</Link>
           <Link href="/olympics" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Benchmarks</Link>
