@@ -26,18 +26,36 @@ export default async function SkillPage({ params }: { params: { slug: string } }
     ? getGradeLabel(score.value_score, score.output_score, score.cost_score)
     : null
 
+  // Fetch total sample size across all benchmark profiles for trust signals
+  const { data: rollupStats } = await supabase
+    .from('skill_benchmark_rollups')
+    .select('sample_size, updated_at')
+    .eq('skill_id', skill.id)
+
+  const totalSampleSize = (rollupStats || []).reduce((sum: number, r: any) => sum + (r.sample_size ?? 0), 0)
+  const lastUpdated = (rollupStats || []).reduce((latest: string | null, r: any) => {
+    if (!r.updated_at) return latest
+    if (!latest) return r.updated_at
+    return r.updated_at > latest ? r.updated_at : latest
+  }, null as string | null)
+  const daysSinceUpdate = lastUpdated
+    ? Math.floor((Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60 * 24))
+    : null
+
+  const confidence = getConfidenceLabel(totalSampleSize)
+
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="flex items-start justify-between gap-6 mb-8">
+      <div className="flex items-start justify-between gap-6 mb-4">
         <div className="flex-1">
-          <div className="flex items-center gap-3 mb-2 flex-wrap">
-            <h1 className="text-3xl font-black text-gray-900">{skill.canonical_name}</h1>
+          <div className="flex items-center gap-3 mb-1 flex-wrap">
+            <h1 className="text-3xl font-black text-gray-900">{skill.canonical_name} MCP Server</h1>
             {skill.vendor_type === 'official' && (
               <span className="badge bg-teal-light text-teal text-xs">Official</span>
             )}
             {grade && (
-              <span className="badge bg-brand-light text-brand text-xs">{grade}</span>
+              <span className="badge bg-brand-light text-brand text-xs">Grade: {grade}</span>
             )}
           </div>
           <p className="text-lg text-gray-600">{skill.short_description}</p>
@@ -67,6 +85,37 @@ export default async function SkillPage({ params }: { params: { slug: string } }
             </div>
           </div>
         )}
+      </div>
+
+      {/* Trust signals bar */}
+      <div className="flex items-center gap-4 flex-wrap bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 mb-8">
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-400 font-medium">Value Score:</span>
+          <span className="font-bold text-gray-900">
+            {score?.value_score != null ? formatScore(score.value_score) : '--'}
+          </span>
+        </div>
+        <div className="w-px h-5 bg-gray-200" />
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-400 font-medium">Sample size:</span>
+          <span className="font-bold text-gray-900">{totalSampleSize} runs</span>
+        </div>
+        <div className="w-px h-5 bg-gray-200" />
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-400 font-medium">Confidence:</span>
+          <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${confidence.color}`}>
+            {confidence.label}
+          </span>
+        </div>
+        <div className="w-px h-5 bg-gray-200" />
+        <div className="flex items-center gap-2 text-sm">
+          <span className="text-gray-400 font-medium">Last updated:</span>
+          <span className="font-bold text-gray-900">
+            {daysSinceUpdate != null
+              ? daysSinceUpdate === 0 ? 'Today' : `${daysSinceUpdate}d ago`
+              : 'No data yet'}
+          </span>
+        </div>
       </div>
 
       {/* Score breakdown */}
@@ -110,11 +159,14 @@ export default async function SkillPage({ params }: { params: { slug: string } }
         </div>
       </div>
 
+      {/* Fallback Intelligence */}
+      <FallbackSection skillId={skill.id} skillSlug={skill.slug} skillName={skill.canonical_name} />
+
       {/* Contribute */}
       <div className="border border-brand/30 bg-brand-light rounded-xl p-6">
         <h2 className="text-base font-bold text-brand mb-2">Help improve this score</h2>
         <p className="text-sm text-gray-600 mb-4">
-          Used this skill? Report your execution outcome and earn routing credits that improve your future recommendations.
+          Used this MCP server? Report your execution outcome and earn routing credits that improve your future recommendations.
         </p>
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between text-sm">
@@ -122,7 +174,7 @@ export default async function SkillPage({ params }: { params: { slug: string } }
             <span className="font-semibold text-teal-700">+3 to +10 routing credits</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-700">Compare two skills</span>
+            <span className="text-gray-700">Compare two servers</span>
             <span className="font-semibold text-teal-700">+8 to +25 routing credits</span>
           </div>
           <div className="flex items-center justify-between text-sm">
@@ -177,6 +229,46 @@ function getConfidenceLabel(sampleSize: number): { label: string; color: string 
   if (sampleSize >= 20) return { label: 'Medium', color: 'text-amber-700 bg-amber-50' }
   if (sampleSize >= 5) return { label: 'Low', color: 'text-orange-700 bg-orange-50' }
   return { label: 'Accumulating', color: 'text-gray-500 bg-gray-100' }
+}
+
+async function FallbackSection({ skillId, skillSlug, skillName }: { skillId: string; skillSlug: string; skillName: string }) {
+  const supabase = createServerSupabaseClient()
+
+  // Try to find alternative edges
+  const { data: edges } = await supabase
+    .from('skill_edges')
+    .select(`
+      edge_type,
+      skill_b:skills!skill_edges_skill_b_id_fkey ( slug, canonical_name )
+    `)
+    .eq('skill_a_id', skillId)
+    .eq('edge_type', 'alternative_to')
+    .limit(3)
+
+  const alternatives = (edges || []).filter((e: any) => e.skill_b?.slug)
+
+  return (
+    <div className="mb-8 bg-gray-50 border border-gray-200 rounded-xl p-6">
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Fallback Intelligence</h2>
+      {alternatives.length > 0 ? (
+        <div className="space-y-2">
+          {alternatives.map((edge: any) => (
+            <div key={edge.skill_b.slug} className="flex items-center gap-2 text-sm">
+              <span className="text-gray-500">If {skillName} fails</span>
+              <span className="text-gray-400">&rarr;</span>
+              <a href={`/skills/${edge.skill_b.slug}`} className="font-medium text-brand hover:underline">
+                {edge.skill_b.canonical_name}
+              </a>
+            </div>
+          ))}
+        </div>
+      ) : (
+        <p className="text-sm text-gray-500">
+          Fallback routing available via <code className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">POST /api/route</code> — the routing engine automatically selects the best alternative when this server is unavailable or underperforming.
+        </p>
+      )}
+    </div>
+  )
 }
 
 async function BenchmarkSection({ skillId }: { skillId: string }) {

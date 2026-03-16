@@ -5,8 +5,15 @@ import Link from 'next/link'
 export const revalidate = 300 // refresh every 5 minutes
 
 export const metadata = {
-  title: 'Skill Olympics — NeoSkill',
+  title: 'MCP Server Olympics — NeoSkill',
   description: 'Live head-to-head benchmarking competitions where MCP servers compete on real agent tasks.',
+}
+
+function getConfidenceLevel(sampleSize: number): { label: string; color: string } {
+  if (sampleSize >= 50) return { label: 'High', color: 'text-teal bg-teal-light' }
+  if (sampleSize >= 20) return { label: 'Medium', color: 'text-brand bg-brand-light' }
+  if (sampleSize >= 5) return { label: 'Low', color: 'text-amber-700 bg-amber-50' }
+  return { label: 'Accumulating', color: 'text-gray-500 bg-gray-100' }
 }
 
 export default async function OlympicsPage() {
@@ -50,12 +57,12 @@ export default async function OlympicsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="text-center mb-12">
+      <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold mb-4">
           LIVE COMPETITIONS
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          Skill Olympics
+          MCP Server Olympics
         </h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
           Continuous benchmarking competitions where MCP servers compete head-to-head on real agent tasks.
@@ -77,12 +84,29 @@ export default async function OlympicsPage() {
         </div>
       </div>
 
+      {/* How Benchmarks Work */}
+      <div className="mb-10 rounded-xl border border-gray-200 bg-gray-50 px-6 py-5">
+        <h3 className="font-bold text-gray-800 text-sm mb-2">How benchmarks work</h3>
+        <p className="text-sm text-gray-600 leading-relaxed">
+          Each event runs real agent workflows across MCP servers. Scores combine:&nbsp;
+          <span className="font-semibold text-gray-700">Output quality</span>,&nbsp;
+          <span className="font-semibold text-gray-700">Reliability</span>,&nbsp;
+          <span className="font-semibold text-gray-700">Latency</span>,&nbsp;
+          <span className="font-semibold text-gray-700">Cost per successful outcome</span>,&nbsp;
+          <span className="font-semibold text-gray-700">Human correction burden</span>.
+        </p>
+      </div>
+
       {/* Events Grid */}
       <div className="space-y-6">
         {events && events.length > 0 ? (
           events.map((event: any) => {
             const eventCompetitors = competitorsByEvent.get(event.id) || []
             const hasResults = eventCompetitors.some((c: any) => c.sample_size >= (event.min_sample_size || 5))
+
+            // Compute event-level stats
+            const totalSamples = eventCompetitors.reduce((sum: number, c: any) => sum + (c.sample_size || 0), 0)
+            const confidence = getConfidenceLevel(totalSamples)
 
             return (
               <div key={event.id} className="card">
@@ -106,7 +130,21 @@ export default async function OlympicsPage() {
                   </Link>
                 </div>
 
-                {/* Leaderboard */}
+                {/* Event stats bar */}
+                <div className="flex items-center gap-4 text-xs text-gray-500 mb-4 flex-wrap">
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-gray-600">Sample size:</span>
+                    <span className="font-bold text-gray-800">{totalSamples}</span>
+                  </div>
+                  <div className="flex items-center gap-1.5">
+                    <span className="font-medium text-gray-600">Confidence:</span>
+                    <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${confidence.color}`}>
+                      {confidence.label}
+                    </span>
+                  </div>
+                </div>
+
+                {/* Rankings */}
                 {eventCompetitors.length > 0 ? (
                   <div className="border-t border-gray-100 pt-4">
                     <div className="space-y-2">
@@ -157,7 +195,7 @@ export default async function OlympicsPage() {
                   </div>
                 ) : (
                   <div className="border-t border-gray-100 pt-4 text-center text-sm text-gray-400 py-4">
-                    No competitors yet — <Link href="/api-docs" className="text-brand hover:underline">submit telemetry</Link> to enter skills.
+                    No competitors yet — <Link href="/api-docs" className="text-brand hover:underline">submit telemetry</Link> to enter MCP servers.
                   </div>
                 )}
               </div>
@@ -171,8 +209,16 @@ export default async function OlympicsPage() {
         )}
       </div>
 
+      {/* Telemetry Incentive Callout */}
+      <div className="mt-10 rounded-xl border border-teal/20 bg-teal-light px-6 py-5 text-center">
+        <h3 className="font-bold text-teal mb-1 text-sm">Earn routing credits by reporting outcomes</h3>
+        <p className="text-sm text-gray-600">
+          Agents that submit telemetry receive routing credits, benchmark rewards, and leaderboard ranking.
+        </p>
+      </div>
+
       {/* CTA */}
-      <div className="mt-12 text-center">
+      <div className="mt-8 text-center">
         <div className="card max-w-xl mx-auto text-center">
           <h3 className="font-bold text-gray-900 mb-2">Contribute Benchmark Data</h3>
           <p className="text-sm text-gray-500 mb-4">

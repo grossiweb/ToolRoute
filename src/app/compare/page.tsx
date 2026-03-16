@@ -9,6 +9,7 @@ export default function ComparePage() {
   const [skills, setSkills] = useState<any[]>([])
   const [selected, setSelected] = useState<any[]>([])
   const [search, setSearch] = useState('')
+  const [rollups, setRollups] = useState<Record<string, any>>({})
   const supabase = createBrowserSupabaseClient()
 
   useEffect(() => {
@@ -28,6 +29,26 @@ export default function ComparePage() {
     }
     loadSkills()
   }, [])
+
+  // Fetch rollups for selected skills
+  useEffect(() => {
+    async function loadRollups() {
+      if (selected.length === 0) return
+      const ids = selected.map((s) => s.id)
+      const { data } = await supabase
+        .from('skill_benchmark_rollups')
+        .select('skill_id, cost_per_useful_outcome_usd')
+        .in('skill_id', ids)
+      if (data) {
+        const map: Record<string, any> = {}
+        for (const row of data) {
+          map[row.skill_id] = row
+        }
+        setRollups(map)
+      }
+    }
+    loadRollups()
+  }, [selected])
 
   const filteredSkills = skills.filter(
     (s) =>
@@ -60,13 +81,13 @@ export default function ComparePage() {
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Compare Skills</h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Compare MCP Servers</h1>
         <p className="text-gray-500">
-          Side-by-side comparison of up to 4 MCP skills across all scoring dimensions.
+          Side-by-side comparison of MCP servers across outcome scoring dimensions.
         </p>
       </div>
 
-      {/* Skill selector */}
+      {/* Server selector */}
       <div className="card mb-8">
         <div className="flex items-center gap-3 flex-wrap mb-4">
           {selected.map((s) => (
@@ -88,7 +109,7 @@ export default function ComparePage() {
             <div className="relative flex-1 min-w-[200px]">
               <input
                 type="text"
-                placeholder={selected.length === 0 ? 'Search skills to compare...' : 'Add another skill...'}
+                placeholder={selected.length === 0 ? 'Search MCP servers to compare...' : 'Add another server...'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
                 className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand"
@@ -115,7 +136,7 @@ export default function ComparePage() {
           )}
         </div>
         <p className="text-xs text-gray-400">
-          {selected.length}/4 skills selected
+          {selected.length}/4 MCP servers selected
         </p>
       </div>
 
@@ -175,7 +196,7 @@ export default function ComparePage() {
                               )}
                             </span>
                           ) : (
-                            <span className="text-gray-300">—</span>
+                            <span className="text-gray-300">&mdash;</span>
                           )}
                         </td>
                       )
@@ -184,6 +205,26 @@ export default function ComparePage() {
                 )
               })}
 
+              {/* Cost per Useful Outcome row */}
+              <tr className="border-b border-gray-50">
+                <td className="px-4 py-3 font-medium text-gray-600 text-xs">
+                  <span className="group relative cursor-help">
+                    Cost per Useful Outcome
+                    <span className="pointer-events-none absolute left-0 bottom-full mb-1 w-56 rounded bg-gray-800 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-20">
+                      Total cost divided by successful task outcomes. Includes retries and correction overhead.
+                    </span>
+                  </span>
+                </td>
+                {selected.map((s) => {
+                  const cost = rollups[s.id]?.cost_per_useful_outcome_usd
+                  return (
+                    <td key={s.id} className="text-center px-4 py-3 text-gray-700">
+                      {cost != null ? `$${Number(cost).toFixed(3)}` : '\u2014'}
+                    </td>
+                  )
+                })}
+              </tr>
+
               {/* GitHub stars row */}
               <tr className="border-b border-gray-50">
                 <td className="px-4 py-3 font-medium text-gray-600 text-xs">GitHub Stars</td>
@@ -191,7 +232,7 @@ export default function ComparePage() {
                   <td key={s.id} className="text-center px-4 py-3 text-gray-700">
                     {s.skill_metrics?.github_stars != null
                       ? s.skill_metrics.github_stars.toLocaleString()
-                      : '—'}
+                      : '\u2014'}
                   </td>
                 ))}
               </tr>
@@ -207,7 +248,7 @@ export default function ComparePage() {
                         ? days === 0
                           ? 'Today'
                           : `${days}d ago`
-                        : '—'}
+                        : '\u2014'}
                     </td>
                   )
                 })}
@@ -218,7 +259,7 @@ export default function ComparePage() {
                 <td className="px-4 py-3 font-medium text-gray-600 text-xs">Pricing</td>
                 {selected.map((s) => (
                   <td key={s.id} className="text-center px-4 py-3 text-gray-700 capitalize">
-                    {s.skill_cost_models?.pricing_model?.replace(/_/g, ' ') || '—'}
+                    {s.skill_cost_models?.pricing_model?.replace(/_/g, ' ') || '\u2014'}
                   </td>
                 ))}
               </tr>
@@ -227,9 +268,9 @@ export default function ComparePage() {
         </div>
       ) : (
         <div className="text-center py-16 text-gray-400">
-          <p className="text-lg font-medium">Select at least 2 skills to compare</p>
+          <p className="text-lg font-medium">Select at least 2 MCP servers to compare</p>
           <p className="text-sm mt-1">
-            Use the search above to find and add skills.
+            Use the search above to find and add MCP servers.
           </p>
         </div>
       )}
@@ -239,7 +280,7 @@ export default function ComparePage() {
         <div className="mt-8 card text-center">
           <h3 className="font-bold text-gray-900 mb-2">Run a Head-to-Head Benchmark</h3>
           <p className="text-sm text-gray-500 mb-4">
-            Compare these skills on real tasks through the Skill Olympics.
+            Compare these MCP servers on real tasks through the MCP Server Olympics.
             Earn 2.5x routing credits for comparative evaluations.
           </p>
           <Link href="/olympics" className="btn-primary text-sm">
@@ -247,6 +288,14 @@ export default function ComparePage() {
           </Link>
         </div>
       )}
+
+      {/* Telemetry Incentive Callout */}
+      <div className="mt-8 rounded-xl border border-teal/20 bg-teal-light px-6 py-5 text-center">
+        <h3 className="font-bold text-teal mb-1 text-sm">Earn routing credits by reporting outcomes</h3>
+        <p className="text-sm text-gray-600">
+          Agents that submit telemetry receive routing credits, benchmark rewards, and leaderboard ranking.
+        </p>
+      </div>
     </div>
   )
 }

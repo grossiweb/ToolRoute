@@ -9,8 +9,8 @@ const endpoints = [
   {
     method: 'POST',
     path: '/api/route',
-    title: 'Route — Skill Recommendation',
-    description: 'Get a confidence-scored skill recommendation for any task. Supports natural language task descriptions or explicit workflow slugs.',
+    title: 'Route — MCP Server Recommendation',
+    description: 'Get a confidence-scored MCP server recommendation for any task. Supports natural language task descriptions or explicit workflow slugs.',
     request: `{
   "task": "extract structured pricing data from competitor websites",
   "workflow_slug": "research-competitive-intelligence",
@@ -39,8 +39,8 @@ const endpoints = [
   {
     method: 'GET',
     path: '/api/skills',
-    title: 'Skills — Search & List',
-    description: 'Search and filter the skill catalog with scores and metrics.',
+    title: 'MCP Servers — Search & List',
+    description: 'Search and filter the MCP server catalog with scores and metrics.',
     request: `GET /api/skills?q=browser&workflow=qa-testing&sort=score&limit=10`,
     response: `[
   {
@@ -55,9 +55,29 @@ const endpoints = [
   },
   {
     method: 'POST',
+    path: '/api/report',
+    title: 'Report — Submit Outcome Telemetry',
+    description: 'Report a single execution outcome for an MCP server. Lightweight alternative to /api/contributions for quick telemetry.',
+    request: `{
+  "skill_slug": "firecrawl-mcp",
+  "outcome": "success",
+  "latency_ms": 2400,
+  "estimated_cost_usd": 0.003,
+  "output_quality_rating": 8.5,
+  "agent_name": "my-research-agent"
+}`,
+    response: `{
+  "accepted": true,
+  "routing_credits": 5,
+  "message": "Outcome recorded. +5 routing credits."
+}`,
+    notes: 'Minimal required fields: skill_slug, outcome. Outcome values: success, partial_success, failure, error. Credits: +3 to +10 per report.',
+  },
+  {
+    method: 'POST',
     path: '/api/contributions',
     title: 'Contributions — Submit Telemetry',
-    description: 'Report execution outcomes and earn routing credits. This is the core telemetry loop.',
+    description: 'Report execution outcomes and earn routing credits. This is the core telemetry loop for detailed multi-run submissions.',
     request: `{
   "contribution_type": "comparative_eval",
   "agent_name": "my-research-agent",
@@ -169,7 +189,7 @@ const route = await neo.route({
 })
 console.log(route.recommended_skill) // "firecrawl-mcp"
 
-// 2. Execute the skill (your code)
+// 2. Execute the MCP server (your code)
 const result = await runSkill(route.recommended_skill, task)
 
 // 3. Report the outcome
@@ -196,6 +216,37 @@ export default function ApiDocsPage() {
         </div>
       </div>
 
+      {/* Telemetry Incentive Loop */}
+      <div className="mb-10 border-2 border-teal/30 bg-teal-light rounded-xl p-6">
+        <div className="flex items-center gap-2 mb-3">
+          <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center text-teal font-bold text-sm">$</div>
+          <h2 className="text-lg font-bold text-gray-900">Telemetry Incentive Loop</h2>
+        </div>
+        <p className="text-sm text-gray-700 mb-4">
+          Earn routing credits by reporting outcomes. Agents that submit telemetry receive:
+        </p>
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center gap-3 text-sm">
+            <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
+            <span className="text-gray-700"><strong className="text-gray-900">Routing credits</strong> (+3 to +40 per report) — unlock priority recommendations</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
+            <span className="text-gray-700"><strong className="text-gray-900">Benchmark rewards</strong> — bonus multipliers for comparative evaluations</span>
+          </div>
+          <div className="flex items-center gap-3 text-sm">
+            <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
+            <span className="text-gray-700"><strong className="text-gray-900">Leaderboard ranking</strong> — climb the agent leaderboard with reputation points</span>
+          </div>
+        </div>
+        <div className="bg-gray-900 text-green-400 rounded-lg p-3 font-mono text-xs">
+          POST /api/report {`{ "skill_slug": "firecrawl-mcp", "outcome": "success" }`}
+        </div>
+        <p className="text-xs text-teal/70 mt-3">
+          Every outcome you report improves the routing engine for all agents. See /api/report and /api/contributions below.
+        </p>
+      </div>
+
       {/* SDK Quick Start */}
       <div className="card mb-10">
         <div className="flex items-center gap-2 mb-3">
@@ -215,13 +266,13 @@ export default function ApiDocsPage() {
         <h3 className="font-bold text-brand mb-2">The Sacred Loop</h3>
         <div className="flex items-center gap-2 text-sm text-brand font-medium flex-wrap">
           <span className="bg-white px-3 py-1 rounded-full">Recommend</span>
-          <span>→</span>
+          <span>&rarr;</span>
           <span className="bg-white px-3 py-1 rounded-full">Execute</span>
-          <span>→</span>
+          <span>&rarr;</span>
           <span className="bg-white px-3 py-1 rounded-full">Report</span>
-          <span>→</span>
+          <span>&rarr;</span>
           <span className="bg-white px-3 py-1 rounded-full">Reward</span>
-          <span>→</span>
+          <span>&rarr;</span>
           <span className="bg-white px-3 py-1 rounded-full">Route Better</span>
         </div>
         <p className="text-xs text-brand/70 mt-2">

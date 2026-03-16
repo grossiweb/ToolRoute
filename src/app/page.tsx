@@ -1,8 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { HeroSection } from '@/components/HeroSection'
 import { SkillCard } from '@/components/SkillCard'
-import { FilterBar } from '@/components/FilterBar'
-import { VerticalPills } from '@/components/VerticalPills'
+import { Sidebar } from '@/components/Sidebar'
 
 export const revalidate = 3600 // revalidate every hour
 
@@ -37,7 +36,7 @@ export default async function HomePage({
 
   const { data: skills } = await query
 
-  // Fetch verticals for filter pills
+  // Fetch verticals for sidebar
   const { data: verticals } = await supabase
     .from('verticals')
     .select('id, slug, name')
@@ -48,21 +47,11 @@ export default async function HomePage({
     <div className="max-w-6xl mx-auto px-4 py-10">
       <HeroSection />
 
-      <div className="mt-10 mb-6">
-        <FilterBar />
-      </div>
-
-      {verticals && verticals.length > 0 && (
-        <div className="mb-8">
-          <VerticalPills verticals={verticals} activeVertical={searchParams.vertical} />
-        </div>
-      )}
-
       {/* Stats bar */}
-      <div className="flex items-center justify-between mb-6">
+      <div className="flex items-center justify-between mt-10 mb-6">
         <p className="text-sm text-gray-500">
-          {skills ? `${skills.length} skills` : 'Loading...'}{' '}
-          {searchParams.q && <span>matching <strong>"{searchParams.q}"</strong></span>}
+          {skills ? `${skills.length} servers` : 'Loading...'}{' '}
+          {searchParams.q && <span>matching <strong>&quot;{searchParams.q}&quot;</strong></span>}
         </p>
         <div className="flex items-center gap-2 text-sm">
           <span className="text-gray-400">Sort:</span>
@@ -89,19 +78,26 @@ export default async function HomePage({
         </div>
       </div>
 
-      {/* Skill grid */}
-      {skills && skills.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {skills.map((skill: any) => (
-            <SkillCard key={skill.id} skill={skill} />
-          ))}
+      {/* Sidebar + Grid layout */}
+      <div className="flex gap-6">
+        <Sidebar verticals={verticals || []} />
+
+        {/* Main content */}
+        <div className="flex-1 min-w-0">
+          {skills && skills.length > 0 ? (
+            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
+              {skills.map((skill: any) => (
+                <SkillCard key={skill.id} skill={skill} />
+              ))}
+            </div>
+          ) : (
+            <div className="text-center py-20 text-gray-400">
+              <p className="text-lg font-medium">No servers found</p>
+              <p className="text-sm mt-1">Try a different search or <a href="/submit" className="text-brand hover:underline">submit a server</a></p>
+            </div>
+          )}
         </div>
-      ) : (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg font-medium">No skills found</p>
-          <p className="text-sm mt-1">Try a different search or <a href="/submit" className="text-brand hover:underline">submit a skill</a></p>
-        </div>
-      )}
+      </div>
     </div>
   )
 }
