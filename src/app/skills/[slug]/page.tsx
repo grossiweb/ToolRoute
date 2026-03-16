@@ -81,7 +81,7 @@ export default async function SkillPage({ params }: { params: { slug: string } }
           <div className="text-center flex-shrink-0">
             <div className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center ${getScoreColor(score.overall_score)}`}>
               <span className="text-2xl font-black">{formatScore(score.overall_score)}</span>
-              <span className="text-[10px] font-semibold opacity-70">NeoSkill</span>
+              <span className="text-[10px] font-semibold opacity-70">ToolRoute</span>
             </div>
           </div>
         )}

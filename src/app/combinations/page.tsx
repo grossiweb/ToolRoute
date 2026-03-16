@@ -6,7 +6,7 @@ import Link from 'next/link'
 export const revalidate = 3600
 
 export const metadata = {
-  title: 'MCP Server Stacks — NeoSkill',
+  title: 'MCP Server Stacks — ToolRoute',
   description: 'Pre-built workflow stacks combining MCP servers for maximum effectiveness.',
 }
 

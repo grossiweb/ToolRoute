@@ -183,7 +183,7 @@ export async function POST(request: NextRequest) {
         benchmark_package: '+15 to +40 routing credits',
       },
       fields: ['latency_ms', 'cost_usd', 'quality_rating', 'outcome', 'fallback_chain'],
-      one_liner: `neoskill.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
+      one_liner: `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
     },
   })
 }

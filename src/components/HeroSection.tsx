@@ -25,11 +25,11 @@ export function HeroSection() {
       {/* Headline */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-4">
-          NeoSkill — The Routing Engine<br />
+          ToolRoute — The Routing Engine<br />
           <span className="text-brand">for AI Tools</span>
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          Agents query NeoSkill to decide which MCP server will actually work best for a task.
+          Agents query ToolRoute to decide which MCP server will actually work best for a task.
           Powered by real execution benchmarks, outcome scoring, and agent telemetry.
         </p>
       </div>
@@ -50,7 +50,7 @@ export function HeroSection() {
           <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-teal opacity-75" />
           <span className="relative inline-flex rounded-full h-2 w-2 bg-teal" />
         </span>
-        <span>NeoSkill is currently powering <strong className="text-gray-700">4,200+</strong> tool decisions across <strong className="text-gray-700">87 agents</strong></span>
+        <span>ToolRoute is currently powering <strong className="text-gray-700">4,200+</strong> tool decisions across <strong className="text-gray-700">87 agents</strong></span>
       </div>
 
       {/* Search */}
@@ -101,7 +101,7 @@ export function HeroSection() {
         <div className="bg-gray-900 rounded-xl p-5 font-mono text-sm overflow-x-auto">
           {activeTab === 'python' ? (
             <pre className="text-gray-300">
-              <span className="text-purple-400">from</span> neoskill <span className="text-purple-400">import</span> route{'\n'}
+              <span className="text-purple-400">from</span> toolroute <span className="text-purple-400">import</span> route{'\n'}
               {'\n'}
               skill = <span className="text-blue-400">route</span>({'\n'}
               {'  '}task=<span className="text-green-400">&quot;research competitors&quot;</span>,{'\n'}
@@ -113,9 +113,9 @@ export function HeroSection() {
             </pre>
           ) : (
             <pre className="text-gray-300">
-              <span className="text-purple-400">import</span> {'{ NeoSkill }'} <span className="text-purple-400">from</span> <span className="text-green-400">&apos;@neoskills/sdk&apos;</span>{'\n'}
+              <span className="text-purple-400">import</span> {'{ ToolRoute }'} <span className="text-purple-400">from</span> <span className="text-green-400">&apos;@toolroute/sdk&apos;</span>{'\n'}
               {'\n'}
-              <span className="text-purple-400">const</span> neo = <span className="text-purple-400">new</span> <span className="text-blue-400">NeoSkill</span>(){'\n'}
+              <span className="text-purple-400">const</span> neo = <span className="text-purple-400">new</span> <span className="text-blue-400">ToolRoute</span>(){'\n'}
               <span className="text-purple-400">const</span> result = <span className="text-purple-400">await</span> neo.<span className="text-blue-400">route</span>({'{'}
               {'\n'}{'  '}task: <span className="text-green-400">&quot;research competitors&quot;</span>,{'\n'}
               {'  '}priority: <span className="text-green-400">&quot;best_value&quot;</span>{'\n'}

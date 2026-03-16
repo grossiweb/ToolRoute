@@ -2,22 +2,22 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 /**
- * NeoSkill MCP Server — JSON-RPC over HTTP
+ * ToolRoute MCP Server — JSON-RPC over HTTP
  *
- * This endpoint makes NeoSkill itself queryable as an MCP server.
- * Agents can call NeoSkill tools using the standard MCP protocol.
+ * This endpoint makes ToolRoute itself queryable as an MCP server.
+ * Agents can call ToolRoute tools using the standard MCP protocol.
  *
  * Tools exposed:
- *   - neoskill_route: Get a skill recommendation for a task
- *   - neoskill_search: Search the skill catalog
- *   - neoskill_compare: Compare skills side by side
- *   - neoskill_missions: List available benchmark missions
- *   - neoskill_report: Submit execution telemetry
+ *   - toolroute_route: Get a skill recommendation for a task
+ *   - toolroute_search: Search the skill catalog
+ *   - toolroute_compare: Compare skills side by side
+ *   - toolroute_missions: List available benchmark missions
+ *   - toolroute_report: Submit execution telemetry
  */
 
 const TOOLS = [
   {
-    name: 'neoskill_route',
+    name: 'toolroute_route',
     description: 'Get a confidence-scored skill recommendation for any agent task. Accepts natural language task descriptions.',
     inputSchema: {
       type: 'object',
@@ -35,8 +35,8 @@ const TOOLS = [
     },
   },
   {
-    name: 'neoskill_search',
-    description: 'Search the NeoSkill skill catalog by name, workflow, or vertical.',
+    name: 'toolroute_search',
+    description: 'Search the ToolRoute skill catalog by name, workflow, or vertical.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -49,7 +49,7 @@ const TOOLS = [
     },
   },
   {
-    name: 'neoskill_compare',
+    name: 'toolroute_compare',
     description: 'Compare two or more skills side by side on all scoring dimensions.',
     inputSchema: {
       type: 'object',
@@ -64,7 +64,7 @@ const TOOLS = [
     },
   },
   {
-    name: 'neoskill_missions',
+    name: 'toolroute_missions',
     description: 'List available benchmark missions that earn routing credits.',
     inputSchema: {
       type: 'object',
@@ -75,7 +75,7 @@ const TOOLS = [
     },
   },
   {
-    name: 'neoskill_report',
+    name: 'toolroute_report',
     description: 'Report skill execution outcome. Earns routing credits and improves recommendations.',
     inputSchema: {
       type: 'object',
@@ -111,7 +111,7 @@ export async function POST(request: NextRequest) {
         protocolVersion: '2024-11-05',
         capabilities: { tools: {} },
         serverInfo: {
-          name: 'neoskill',
+          name: 'toolroute',
           version: '1.0.0',
         },
       })
@@ -140,7 +140,7 @@ async function handleToolCall(id: any, params: any) {
   const supabase = createServerSupabaseClient()
 
   switch (name) {
-    case 'neoskill_route': {
+    case 'toolroute_route': {
       const { task, workflow_slug, priority = 'best_value', trust_floor = 0 } = args || {}
       // Delegate to the route API logic inline
       let query = supabase
@@ -177,7 +177,7 @@ async function handleToolCall(id: any, params: any) {
       }, null, 2))
     }
 
-    case 'neoskill_search': {
+    case 'toolroute_search': {
       const { query: q, workflow, vertical, limit = 10 } = args || {}
       let dbQuery = supabase
         .from('skills')
@@ -191,7 +191,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify(data || [], null, 2))
     }
 
-    case 'neoskill_compare': {
+    case 'toolroute_compare': {
       const { skill_slugs } = args || {}
       if (!skill_slugs || skill_slugs.length < 2) {
         return toolResult(id, 'Error: Provide at least 2 skill slugs to compare.')
@@ -205,7 +205,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify(data || [], null, 2))
     }
 
-    case 'neoskill_missions': {
+    case 'toolroute_missions': {
       const { event } = args || {}
       let dbQuery = supabase
         .from('benchmark_missions')
@@ -217,7 +217,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify(data || [], null, 2))
     }
 
-    case 'neoskill_report': {
+    case 'toolroute_report': {
       const { skill_slug, outcome, latency_ms, cost_usd, quality_rating } = args || {}
 
       // Find the skill

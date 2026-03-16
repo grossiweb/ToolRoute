@@ -183,7 +183,7 @@ export default function SubmitPage() {
               )}
 
               <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
-                Your skill has been added to the NeoSkill pipeline. Once approved, it will appear
+                Your skill has been added to the ToolRoute pipeline. Once approved, it will appear
                 in the catalog and be available for agent routing recommendations.
               </p>
 
@@ -225,11 +225,11 @@ export default function SubmitPage() {
           </div>
           <div>
             <h1 className="text-3xl font-black text-gray-900">Submit a Skill</h1>
-            <p className="text-sm text-gray-500">Add an MCP server to the NeoSkill catalog</p>
+            <p className="text-sm text-gray-500">Add an MCP server to the ToolRoute catalog</p>
           </div>
         </div>
         <p className="text-gray-600 leading-relaxed max-w-2xl">
-          NeoSkill is the open intelligence layer for MCP skills. Submit your server and it enters
+          ToolRoute is the open intelligence layer for MCP skills. Submit your server and it enters
           the benchmark pipeline — scored on output quality, reliability, efficiency, cost, and trust.
           Agents use these scores to route tasks to the best tool automatically.
         </p>

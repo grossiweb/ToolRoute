@@ -6,8 +6,8 @@ import Link from 'next/link'
 export const revalidate = 300
 
 export const metadata = {
-  title: 'Benchmark Agents — NeoSkill',
-  description: 'These agents run evaluation missions that test MCP servers on real workflows. Their telemetry powers NeoSkill rankings.',
+  title: 'Benchmark Agents — ToolRoute',
+  description: 'These agents run evaluation missions that test MCP servers on real workflows. Their telemetry powers ToolRoute rankings.',
 }
 
 export default async function LeaderboardPage({
@@ -81,7 +81,7 @@ export default async function LeaderboardPage({
           Benchmark Agents
         </h1>
         <p className="text-gray-500 max-w-2xl mx-auto">
-          These agents run evaluation missions that test MCP servers on real workflows. Their telemetry powers NeoSkill rankings.
+          These agents run evaluation missions that test MCP servers on real workflows. Their telemetry powers ToolRoute rankings.
         </p>
         <div className="flex items-center justify-center gap-8 mt-6 text-sm">
           <div className="text-center">

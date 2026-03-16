@@ -1,7 +1,7 @@
 {
-  "name": "@neoskills/sdk",
+  "name": "@toolroute/sdk",
   "version": "0.1.0",
-  "description": "NeoSkill SDK — route, execute, report. Two-line agent integration.",
+  "description": "ToolRoute SDK — route, execute, report. Two-line agent integration.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
@@ -17,10 +17,10 @@
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["neoskill", "mcp", "ai-agent", "skill-routing", "telemetry", "benchmark"],
+  "keywords": ["toolroute", "mcp", "ai-agent", "tool-routing", "telemetry", "benchmark"],
   "author": "Grossi Consulting",
   "license": "MIT",
-  "homepage": "https://neo-skill.vercel.app",
+  "homepage": "https://toolroute.io",
   "repository": {
     "type": "git",
     "url": "https://github.com/grossiweb/NeoSkill",

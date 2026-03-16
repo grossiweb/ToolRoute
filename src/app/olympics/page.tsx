@@ -5,7 +5,7 @@ import Link from 'next/link'
 export const revalidate = 300 // refresh every 5 minutes
 
 export const metadata = {
-  title: 'MCP Server Olympics — NeoSkill',
+  title: 'MCP Server Olympics — ToolRoute',
   description: 'Live head-to-head benchmarking competitions where MCP servers compete on real agent tasks.',
 }
 
@@ -230,7 +230,7 @@ export default async function OlympicsPage() {
               API Docs
             </Link>
             <a
-              href="https://github.com/grossiweb/NeoSkill"
+              href="https://github.com/grossiweb/ToolRoute"
               className="btn-secondary text-sm"
               target="_blank"
               rel="noopener noreferrer"

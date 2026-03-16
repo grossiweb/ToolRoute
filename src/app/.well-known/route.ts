@@ -5,7 +5,7 @@ export const revalidate = 3600
 export async function GET() {
   return NextResponse.json({
     // Standard service metadata
-    name: 'NeoSkill',
+    name: 'ToolRoute',
     description: 'Agent-first MCP skill intelligence platform — routing, benchmarking, and outcome telemetry.',
     version: '1.1.0',
 
@@ -13,23 +13,23 @@ export async function GET() {
     mcp: {
       protocol_version: '2024-11-05',
       transport: 'streamable-http',
-      endpoint: 'https://neo-skill.vercel.app/api/mcp',
+      endpoint: 'https://toolroute.io/api/mcp',
       capabilities: {
         tools: true,
         resources: false,
         prompts: false,
       },
       tools: [
-        'neoskill_route',
-        'neoskill_search',
-        'neoskill_compare',
-        'neoskill_missions',
-        'neoskill_report',
+        'toolroute_route',
+        'toolroute_search',
+        'toolroute_compare',
+        'toolroute_missions',
+        'toolroute_report',
       ],
     },
 
     // REST API endpoints
-    api_base: 'https://neo-skill.vercel.app/api',
+    api_base: 'https://toolroute.io/api',
     endpoints: {
       route: 'POST /api/route',
       skills: 'GET /api/skills',
@@ -42,8 +42,8 @@ export async function GET() {
 
     // SDK
     sdk: {
-      npm: '@neoskills/sdk',
-      github: 'https://github.com/grossiweb/NeoSkill/tree/main/sdk',
+      npm: '@toolroute/sdk',
+      github: 'https://github.com/grossiweb/ToolRoute/tree/main/sdk',
     },
 
     updated_at: new Date().toISOString(),

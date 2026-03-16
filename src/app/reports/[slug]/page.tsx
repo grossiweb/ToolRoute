@@ -14,11 +14,11 @@ export async function generateMetadata({ params }: { params: { slug: string } })
     .single()
 
   if (!event) {
-    return { title: 'Report Not Found — NeoSkill' }
+    return { title: 'Report Not Found — ToolRoute' }
   }
 
   return {
-    title: `${event.name} Report — NeoSkill`,
+    title: `${event.name} Report — ToolRoute`,
     description: event.description,
   }
 }

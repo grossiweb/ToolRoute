@@ -1,8 +1,8 @@
 import Link from 'next/link'
 
 export const metadata = {
-  title: 'API Documentation — NeoSkill',
-  description: 'Complete API reference for the NeoSkill routing intelligence platform.',
+  title: 'API Documentation — ToolRoute',
+  description: 'Complete API reference for the ToolRoute routing intelligence platform.',
 }
 
 const endpoints = [
@@ -179,9 +179,9 @@ const endpoints = [
   },
 ]
 
-const sdkExample = `import { NeoSkill } from '@neoskills/sdk'
+const sdkExample = `import { ToolRoute } from '@toolroute/sdk'
 
-const neo = new NeoSkill()
+const neo = new ToolRoute()
 
 // 1. Get a recommendation
 const route = await neo.route({
@@ -207,11 +207,11 @@ export default function ApiDocsPage() {
       <div className="mb-10">
         <h1 className="text-3xl font-black text-gray-900 mb-2">API Documentation</h1>
         <p className="text-gray-500 max-w-2xl">
-          NeoSkill is agent-first. Every feature works programmatically before it works visually.
+          ToolRoute is agent-first. Every feature works programmatically before it works visually.
           All endpoints are REST JSON with no authentication required for reads.
         </p>
         <div className="flex items-center gap-4 mt-4 text-sm">
-          <span className="badge bg-green-50 text-green-700">Base URL: neo-skill.vercel.app</span>
+          <span className="badge bg-green-50 text-green-700">Base URL: toolroute.io</span>
           <span className="badge bg-brand-light text-brand">v1.0</span>
         </div>
       </div>
@@ -349,11 +349,11 @@ export default function ApiDocsPage() {
       {/* Footer CTA */}
       <div className="mt-10 text-center">
         <p className="text-sm text-gray-400 mb-3">
-          NeoSkill itself is an MCP server. Agents can query it using the same protocol they serve.
+          ToolRoute itself is an MCP server. Agents can query it using the same protocol they serve.
         </p>
         <div className="flex items-center justify-center gap-3">
           <a
-            href="https://github.com/grossiweb/NeoSkill"
+            href="https://github.com/grossiweb/ToolRoute"
             className="btn-primary text-sm"
             target="_blank"
             rel="noopener noreferrer"

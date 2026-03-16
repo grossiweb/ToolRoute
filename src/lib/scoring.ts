@@ -1,5 +1,5 @@
 /**
- * NeoSkill scoring utilities
+ * ToolRoute scoring utilities
  * All formulas as defined in the Master Engineering Handoff v3.0
  */
 

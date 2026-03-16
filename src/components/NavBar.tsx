@@ -11,8 +11,12 @@ export function NavBar() {
       <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
         {/* Logo */}
         <Link href="/" className="flex items-center gap-2">
-          <span className="text-xl font-black text-brand tracking-tight">Neo</span>
-          <span className="text-xl font-black text-gray-800 tracking-tight">Skill</span>
+          <span className="font-bold text-xl tracking-tight">
+            <span className="text-gray-900">toolroute</span>
+            <span className="text-gray-900">.</span>
+            <span className="text-brand">i</span>
+            <span className="text-gray-900">o</span>
+          </span>
           <span className="hidden sm:inline ml-1 text-xs font-semibold text-teal bg-teal-light px-2 py-0.5 rounded-full">
             agent-first
           </span>

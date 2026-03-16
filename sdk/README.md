@@ -1,23 +1,23 @@
-# @neoskills/sdk
+# @toolroute/sdk
 
-**Agent skill routing in two lines.** NeoSkill tells your agent which MCP skill to use — backed by real execution data from thousands of agents.
+**Agent tool routing in two lines.** ToolRoute tells your agent which MCP server to use — backed by real execution data from thousands of agents.
 
 ## Quick Start
 
 ```typescript
-import { NeoSkill } from '@neoskills/sdk'
+import { ToolRoute } from '@toolroute/sdk'
 
-const neo = new NeoSkill()
+const tr = new ToolRoute()
 
 // 1. Get a recommendation
-const route = await neo.route({ task: 'extract pricing data from competitor websites' })
+const route = await tr.route({ task: 'extract pricing data from competitor websites' })
 console.log(route.recommended_skill) // "firecrawl-mcp"
 
-// 2. Execute the skill (your code)
+// 2. Execute the tool (your code)
 const result = await runSkill(route.recommended_skill, task)
 
 // 3. Report the outcome — earns routing credits
-await neo.report({
+await tr.report({
   skill: route.recommended_skill,
   outcome: result.success ? 'success' : 'failure',
   latency_ms: result.latency,
@@ -30,28 +30,28 @@ That's it. Three calls. Your agent now routes intelligently and contributes to t
 ## Install
 
 ```bash
-npm install @neoskills/sdk
+npm install @toolroute/sdk
 ```
 
 ## API
 
-### `new NeoSkill(config?)`
+### `new ToolRoute(config?)`
 
 | Option | Type | Default | Description |
 |--------|------|---------|-------------|
-| `baseUrl` | string | `https://neo-skill.vercel.app` | NeoSkill API base URL |
-| `timeoutMs` | number | `800` | Hard timeout — NeoSkill never blocks your agent |
+| `baseUrl` | string | `https://toolroute.io` | ToolRoute API base URL |
+| `timeoutMs` | number | `800` | Hard timeout — ToolRoute never blocks your agent |
 | `agentName` | string | — | Agent name for telemetry attribution |
 | `agentKind` | string | — | `autonomous`, `copilot`, `workflow-agent`, `evaluation-agent`, `hybrid` |
 | `modelFamily` | string | — | e.g., `claude-4`, `gpt-4o` |
 | `hostClient` | string | — | e.g., `claude-code`, `cursor` |
 
-### `neo.route(request)`
+### `tr.route(request)`
 
-Get a confidence-scored skill recommendation.
+Get a confidence-scored tool recommendation.
 
 ```typescript
-const route = await neo.route({
+const route = await tr.route({
   task: 'browser automation for form filling',    // natural language
   constraints: {
     priority: 'best_value',     // best_value | best_quality | lowest_cost | ...
@@ -71,12 +71,12 @@ const route = await neo.route({
 // }
 ```
 
-### `neo.report(request)`
+### `tr.report(request)`
 
 Report execution outcome. Fire-and-forget — never blocks.
 
 ```typescript
-await neo.report({
+await tr.report({
   skill: 'firecrawl-mcp',
   outcome: 'success',           // success | partial_success | failure | aborted
   latency_ms: 2400,
@@ -87,21 +87,21 @@ await neo.report({
 })
 ```
 
-### `neo.preflight()`
+### `tr.preflight()`
 
 Health check. Never throws.
 
 ```typescript
-const health = await neo.preflight()
+const health = await tr.preflight()
 // { healthy: true, latency_ms: 45, version: "1.1.0" }
 ```
 
-### `neo.missions(eventSlug?)`
+### `tr.missions(eventSlug?)`
 
 List available benchmark missions for bonus rewards.
 
 ```typescript
-const { missions } = await neo.missions('web-research-extraction')
+const { missions } = await tr.missions('web-research-extraction')
 ```
 
 ## Design Principles

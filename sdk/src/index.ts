@@ -1,17 +1,17 @@
 /**
- * @neoskill/sdk — Agent skill routing in two lines.
+ * @toolroute/sdk — Agent tool routing in two lines.
  *
  * Usage:
- *   const neo = new NeoSkill()
- *   const route = await neo.route({ task: 'web research' })
- *   // ... execute the skill ...
- *   await neo.report({ skill: route.recommended_skill, outcome: 'success', latency_ms: 1200 })
+ *   const tr = new ToolRoute()
+ *   const route = await tr.route({ task: 'web research' })
+ *   // ... execute the tool ...
+ *   await tr.report({ skill: route.recommended_skill, outcome: 'success', latency_ms: 1200 })
  */
 
-export interface NeoSkillConfig {
-  /** Base URL of the NeoSkill API. Default: https://neo-skill.vercel.app */
+export interface ToolRouteConfig {
+  /** Base URL of the ToolRoute API. Default: https://toolroute.io */
   baseUrl?: string
-  /** Hard timeout in ms. Default: 800. NeoSkill never blocks your agent. */
+  /** Hard timeout in ms. Default: 800. ToolRoute never blocks your agent. */
   timeoutMs?: number
   /** Agent name for telemetry attribution */
   agentName?: string
@@ -88,7 +88,7 @@ export interface PreflightResponse {
   version: string
 }
 
-export class NeoSkill {
+export class ToolRoute {
   private baseUrl: string
   private timeoutMs: number
   private agentName?: string
@@ -96,8 +96,8 @@ export class NeoSkill {
   private modelFamily?: string
   private hostClient?: string
 
-  constructor(config: NeoSkillConfig = {}) {
-    this.baseUrl = (config.baseUrl || 'https://neo-skill.vercel.app').replace(/\/$/, '')
+  constructor(config: ToolRouteConfig = {}) {
+    this.baseUrl = (config.baseUrl || 'https://toolroute.io').replace(/\/$/, '')
     this.timeoutMs = config.timeoutMs ?? 800
     this.agentName = config.agentName
     this.agentKind = config.agentKind
@@ -106,7 +106,7 @@ export class NeoSkill {
   }
 
   /**
-   * Check if NeoSkill is reachable. Never throws — returns health status.
+   * Check if ToolRoute is reachable. Never throws — returns health status.
    */
   async preflight(): Promise<PreflightResponse> {
     const start = Date.now()
@@ -128,7 +128,7 @@ export class NeoSkill {
   }
 
   /**
-   * Get a skill recommendation for a task. Never throws — returns null on failure.
+   * Get a tool recommendation for a task. Never throws — returns null on failure.
    */
   async route(request: RouteRequest): Promise<RouteResponse> {
     try {
@@ -153,7 +153,6 @@ export class NeoSkill {
       let payload: Record<string, any>
 
       if (isFallback) {
-        // fallback_chain expects a chain array with 2+ entries
         payload = {
           chain: [
             {
@@ -173,7 +172,6 @@ export class NeoSkill {
           ],
         }
       } else {
-        // run_telemetry expects skill_slug + outcome
         payload = {
           skill_slug: request.skill,
           outcome_status: request.outcome,
@@ -240,7 +238,7 @@ export class NeoSkill {
     return {
       recommended_skill: null,
       confidence: 0,
-      reasoning: 'NeoSkill unreachable — proceed with your default skill.',
+      reasoning: 'ToolRoute unreachable — proceed with your default tool.',
       alternatives: [],
       recommended_combo: null,
       fallback: null,
@@ -252,4 +250,7 @@ export class NeoSkill {
   }
 }
 
-export default NeoSkill
+/** @deprecated Use ToolRoute instead */
+export const NeoSkill = ToolRoute
+
+export default ToolRoute
