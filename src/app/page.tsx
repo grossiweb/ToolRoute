@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { HeroSection } from '@/components/HeroSection'
 import { SkillCard } from '@/components/SkillCard'
+import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 
 export const revalidate = 3600 // revalidate every hour
@@ -120,7 +121,7 @@ export default async function HomePage({
 
       {/* Sidebar + Grid layout */}
       <div className="flex gap-6">
-        <Sidebar />
+        <Suspense><Sidebar /></Suspense>
 
         {/* Main content */}
         <div className="flex-1 min-w-0">

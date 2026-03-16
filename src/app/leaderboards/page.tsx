@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 
 export const revalidate = 3600
@@ -60,7 +61,7 @@ export default async function LeaderboardsPage() {
 
       {/* Sidebar + Grid layout */}
       <div className="flex gap-6">
-        <Sidebar context="leaderboards" />
+        <Suspense><Sidebar context="leaderboards" /></Suspense>
         <div className="flex-1 min-w-0">
       {/* Category Grid */}
       {toolTypes && toolTypes.length > 0 ? (

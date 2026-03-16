@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatScore, getScoreColor } from '@/lib/scoring'
+import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import Link from 'next/link'
 
@@ -75,7 +76,7 @@ export default async function CombinationsPage({
 
       {/* Sidebar + Content layout */}
       <div className="flex gap-6">
-        <Sidebar />
+        <Suspense><Sidebar /></Suspense>
 
         <div className="flex-1 min-w-0">
       {/* Combos grid */}
