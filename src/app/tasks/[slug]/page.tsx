@@ -1,6 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatScore } from '@/lib/scoring'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { Sidebar } from '@/components/Sidebar'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
@@ -66,9 +68,9 @@ export default async function TaskDetailPage({
     .select(`
       relevance_score,
       skills (
-        slug, canonical_name, vendor_type, github_stars,
-        skill_scores ( overall_score, value_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
-        skill_metrics ( p50_latency_ms, success_rate, avg_cost_usd )
+        slug, canonical_name, vendor_type,
+        skill_scores ( overall_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
+        skill_metrics ( github_stars )
       )
     `)
     .eq('task_id', task.id)
@@ -131,7 +133,11 @@ export default async function TaskDetailPage({
         </div>
       </div>
 
-      {/* Leaderboard Table */}
+      {/* Sidebar + Content */}
+      <div className="flex gap-6">
+        <Suspense><Sidebar context="tasks" /></Suspense>
+        <div className="flex-1 min-w-0">
+      {/* Tool Rankings Table */}
       {sortedTools.length > 0 ? (
         <div className="card overflow-hidden p-0">
           <div className="px-5 py-4 border-b border-gray-100">
@@ -163,7 +169,7 @@ export default async function TaskDetailPage({
                   const reliabilityScore = scores?.reliability_score
                   const costScore = scores?.cost_score
                   const relevance = entry.relevance_score
-                  const stars = skill?.github_stars
+                  const stars = skill?.skill_metrics?.github_stars
 
                   return (
                     <tr
@@ -252,6 +258,9 @@ export default async function TaskDetailPage({
           </Link>
         </div>
       )}
+
+        </div>
+      </div>
 
       {/* Related Workflows */}
       {relatedWorkflows && relatedWorkflows.length > 0 && (

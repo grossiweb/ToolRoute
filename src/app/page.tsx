@@ -1,144 +1,74 @@
-import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { HeroSection } from '@/components/HeroSection'
-import { SkillCard } from '@/components/SkillCard'
-import { Suspense } from 'react'
-import { Sidebar } from '@/components/Sidebar'
 import Link from 'next/link'
+import { HeroSection } from '@/components/HeroSection'
+import { Suspense } from 'react'
 
-export const revalidate = 3600 // revalidate every hour
+export const revalidate = 3600
 
-export default async function HomePage({
-  searchParams,
-}: {
-  searchParams: { q?: string; vertical?: string; workflow?: string; sort?: string }
-}) {
-  const supabase = createServerSupabaseClient()
-
-  // Fetch featured skills
-  let query = supabase
-    .from('skills')
-    .select(`
-      id, slug, canonical_name, short_description, vendor_type, status,
-      skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score ),
-      skill_metrics ( github_stars, days_since_last_commit )
-    `)
-    .eq('status', 'active')
-    .limit(120)
-
-  if (searchParams.q) {
-    query = query.ilike('canonical_name', `%${searchParams.q}%`)
-  }
-
-  // Filter by workflow — need to get skill IDs first, then filter
-  if (searchParams.workflow) {
-    const { data: workflowSkills } = await supabase
-      .from('skill_workflows')
-      .select('skill_id, workflows!inner(slug)')
-      .eq('workflows.slug', searchParams.workflow)
-    if (workflowSkills && workflowSkills.length > 0) {
-      const skillIds = workflowSkills.map((ws: any) => ws.skill_id)
-      query = query.in('id', skillIds)
-    } else {
-      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
-    }
-  }
-
-  // Filter by vertical
-  if (searchParams.vertical) {
-    const { data: verticalSkills } = await supabase
-      .from('skill_verticals')
-      .select('skill_id, verticals!inner(slug)')
-      .eq('verticals.slug', searchParams.vertical)
-    if (verticalSkills && verticalSkills.length > 0) {
-      const skillIds = verticalSkills.map((vs: any) => vs.skill_id)
-      query = query.in('id', skillIds)
-    } else {
-      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
-    }
-  }
-
-  const sortBy = searchParams.sort || 'score'
-  const sortMap: Record<string, string> = {
-    score: 'skill_scores(overall_score)',
-    output: 'skill_scores(output_score)',
-    reliability: 'skill_scores(reliability_score)',
-    efficiency: 'skill_scores(efficiency_score)',
-    cost: 'skill_scores(cost_score)',
-    trust: 'skill_scores(trust_score)',
-    stars: 'skill_metrics(github_stars)',
-    recent: 'skill_metrics(days_since_last_commit)',
-  }
-  const sortCol = sortMap[sortBy] || sortMap.score
-  const ascending = sortBy === 'recent' || sortBy === 'cost' ? true : false
-  query = query.order(sortCol, { ascending })
-
-  const { data: skills } = await query
-
-  // Fetch verticals for sidebar
-  const { data: verticals } = await supabase
-    .from('verticals')
-    .select('id, slug, name')
-    .order('name')
-    .limit(20)
-
+export default function HomePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <HeroSection />
+      <Suspense>
+        <HeroSection />
+      </Suspense>
 
-      {/* Stats bar */}
-      <div className="flex items-center justify-between mt-10 mb-6">
-        <p className="text-sm text-gray-500">
-          {skills ? `${skills.length} servers` : 'Loading...'}{' '}
-          {searchParams.q && <span>matching <strong>&quot;{searchParams.q}&quot;</strong></span>}
-          {searchParams.workflow && <span>in <strong>{searchParams.workflow.replace(/-/g, ' ')}</strong> <Link href="/" scroll={false} className="text-brand hover:underline ml-1">✕ clear</Link></span>}
-          {searchParams.vertical && <span>in <strong>{searchParams.vertical.replace(/-/g, ' ')}</strong> <Link href="/" scroll={false} className="text-brand hover:underline ml-1">✕ clear</Link></span>}
-        </p>
-        <div className="flex items-center gap-2 text-sm overflow-x-auto">
-          <span className="text-gray-400 flex-shrink-0">Sort:</span>
+      {/* Feature cards */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-16">
+        <Link href="/servers" className="card group hover:border-brand/30 transition-all duration-200 text-center">
+          <div className="text-3xl mb-3">🔌</div>
+          <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors mb-2">Servers</h3>
+          <p className="text-sm text-gray-500">Browse 100+ MCP servers ranked by real execution benchmarks and agent telemetry.</p>
+        </Link>
+
+        <Link href="/leaderboards" className="card group hover:border-teal/30 transition-all duration-200 text-center">
+          <div className="text-3xl mb-3">🏆</div>
+          <h3 className="font-bold text-gray-900 group-hover:text-teal transition-colors mb-2">Leaderboards</h3>
+          <p className="text-sm text-gray-500">AI tools ranked by category — language models, vector databases, code gen, and more.</p>
+        </Link>
+
+        <Link href="/tasks" className="card group hover:border-brand/30 transition-all duration-200 text-center">
+          <div className="text-3xl mb-3">⚡</div>
+          <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors mb-2">Tasks</h3>
+          <p className="text-sm text-gray-500">Find the best tool for each specific task with real benchmark data and confidence scoring.</p>
+        </Link>
+      </div>
+
+      {/* How it works */}
+      <div className="mt-20 text-center">
+        <h2 className="text-2xl font-black text-gray-900 mb-8">How It Works</h2>
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
           {[
-            { key: 'score', label: 'Overall Score' },
-            { key: 'output', label: 'Output Quality' },
-            { key: 'reliability', label: 'Reliability' },
-            { key: 'efficiency', label: 'Efficiency' },
-            { key: 'cost', label: 'Cost' },
-            { key: 'trust', label: 'Trust' },
-            { key: 'stars', label: 'GitHub Stars' },
-            { key: 'recent', label: 'Last Commit' },
-          ].map(opt => (
-            <Link
-              key={opt.key}
-              href={`?sort=${opt.key}${searchParams.workflow ? `&workflow=${searchParams.workflow}` : ''}${searchParams.vertical ? `&vertical=${searchParams.vertical}` : ''}`}
-              scroll={false}
-              className={`px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${
-                sortBy === opt.key
-                  ? 'bg-brand text-white'
-                  : 'text-gray-600 hover:text-brand'
-              }`}
-            >
-              {opt.label}
-            </Link>
+            { step: '1', title: 'Agent Queries', desc: 'Your agent sends a natural-language task to the routing API.' },
+            { step: '2', title: 'Score & Rank', desc: 'ToolRoute scores tools using output quality, reliability, efficiency, cost, and trust.' },
+            { step: '3', title: 'Route & Execute', desc: 'The best tool is returned with confidence scoring and fallback chains.' },
+            { step: '4', title: 'Report & Learn', desc: 'Agents report outcomes, improving routing for everyone.' },
+          ].map(item => (
+            <div key={item.step} className="text-center">
+              <div className="w-10 h-10 rounded-full bg-brand text-white font-bold text-lg flex items-center justify-center mx-auto mb-3">
+                {item.step}
+              </div>
+              <h3 className="font-bold text-gray-900 mb-1 text-sm">{item.title}</h3>
+              <p className="text-xs text-gray-500">{item.desc}</p>
+            </div>
           ))}
         </div>
       </div>
 
-      {/* Sidebar + Grid layout */}
-      <div className="flex gap-6">
-        <Suspense><Sidebar /></Suspense>
-
-        {/* Main content */}
-        <div className="flex-1 min-w-0">
-          {skills && skills.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {skills.map((skill: any) => (
-                <SkillCard key={skill.id} skill={skill} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20 text-gray-400">
-              <p className="text-lg font-medium">No servers found</p>
-              <p className="text-sm mt-1">Try a different search or <a href="/submit" className="text-brand hover:underline">submit a server</a></p>
-            </div>
-          )}
+      {/* CTA */}
+      <div className="mt-16 text-center">
+        <div className="card max-w-xl mx-auto text-center">
+          <h3 className="font-bold text-gray-900 mb-2">Route Tasks Programmatically</h3>
+          <p className="text-sm text-gray-500 mb-4">
+            Use the ToolRoute API to match natural-language tasks to the best tools
+            with confidence scoring and fallback chains.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/api-docs" className="btn-primary text-sm">
+              API Docs
+            </Link>
+            <Link href="/servers" className="btn-secondary text-sm">
+              Browse Servers
+            </Link>
+          </div>
         </div>
       </div>
     </div>

@@ -214,7 +214,7 @@ function DefaultSidebar({
     <>
       <SidebarSection title="Workflows">
         {WORKFLOWS.map((wf) => {
-          const href = wf.slug ? `/?workflow=${wf.slug}` : '/'
+          const href = wf.slug ? `/servers?workflow=${wf.slug}` : '/servers'
           const active = wf.slug
             ? activeWorkflow === wf.slug
             : !activeWorkflow && !activeVertical
@@ -231,7 +231,7 @@ function DefaultSidebar({
 
       <SidebarSection title="Industries">
         {INDUSTRIES.map((ind) => {
-          const href = ind.slug ? `/?vertical=${ind.slug}` : '/'
+          const href = ind.slug ? `/servers?vertical=${ind.slug}` : '/servers'
           const active = ind.slug
             ? activeVertical === ind.slug
             : false

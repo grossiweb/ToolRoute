@@ -17,7 +17,7 @@ export function HeroSection() {
     } else {
       params.delete('q')
     }
-    router.push(`/?${params.toString()}`)
+    router.push(`/servers?${params.toString()}`)
   }
 
   return (
@@ -25,11 +25,11 @@ export function HeroSection() {
       {/* Headline */}
       <div className="text-center mb-8">
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-4">
-          ToolRoute — The Routing Engine<br />
+          Intelligent Routing<br />
           <span className="text-brand">for AI Tools</span>
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          Agents query ToolRoute to decide which MCP server will actually work best for a task.
+          Agents query ToolRoute to decide which tool will actually work best for a task.
           Powered by real execution benchmarks, outcome scoring, and agent telemetry.
         </p>
       </div>

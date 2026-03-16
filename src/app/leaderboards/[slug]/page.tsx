@@ -1,6 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatScore } from '@/lib/scoring'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { Sidebar } from '@/components/Sidebar'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
@@ -57,9 +59,9 @@ export default async function LeaderboardDetailPage({
     .from('skill_tool_types')
     .select(`
       skills (
-        slug, canonical_name, vendor_type, github_stars,
-        skill_scores ( overall_score, value_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
-        skill_metrics ( p50_latency_ms, success_rate, avg_cost_usd )
+        slug, canonical_name, vendor_type,
+        skill_scores ( overall_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
+        skill_metrics ( github_stars )
       )
     `)
     .eq('tool_type_id', toolType.id)
@@ -108,6 +110,10 @@ export default async function LeaderboardDetailPage({
         </div>
       </div>
 
+      {/* Sidebar + Content */}
+      <div className="flex gap-6">
+        <Suspense><Sidebar context="leaderboards" /></Suspense>
+        <div className="flex-1 min-w-0">
       {/* Leaderboard Table */}
       {sortedTools.length > 0 ? (
         <div className="card overflow-hidden p-0">
@@ -142,7 +148,7 @@ export default async function LeaderboardDetailPage({
                   const efficiencyScore = scores?.efficiency_score
                   const costScore = scores?.cost_score
                   const trustScore = scores?.trust_score
-                  const stars = skill?.github_stars
+                  const stars = skill?.skill_metrics?.github_stars
 
                   return (
                     <tr
@@ -240,6 +246,9 @@ export default async function LeaderboardDetailPage({
           </Link>
         </div>
       )}
+
+        </div>
+      </div>
 
       {/* Score Legend */}
       <div className="mt-8 card">
