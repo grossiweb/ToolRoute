@@ -1,0 +1,44 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+@layer base {
+  :root {
+    --brand: #6C47D8;
+    --brand-light: #EEE9FF;
+    --brand-dark: #3C3489;
+    --teal: #0F6E56;
+    --teal-light: #E1F5EE;
+  }
+
+  html {
+    font-family: Inter, system-ui, sans-serif;
+    -webkit-font-smoothing: antialiased;
+  }
+
+  body {
+    @apply bg-gray-50 text-gray-900;
+  }
+}
+
+@layer components {
+  .btn-primary {
+    @apply inline-flex items-center gap-2 bg-brand text-white font-semibold px-4 py-2 rounded-lg hover:bg-brand-dark transition-colors text-sm;
+  }
+
+  .btn-secondary {
+    @apply inline-flex items-center gap-2 bg-white border border-gray-200 text-gray-700 font-semibold px-4 py-2 rounded-lg hover:border-brand hover:text-brand transition-colors text-sm;
+  }
+
+  .card {
+    @apply bg-white border border-gray-200 rounded-xl p-5 hover:border-brand/40 hover:shadow-sm transition-all;
+  }
+
+  .badge {
+    @apply inline-flex items-center px-2 py-0.5 rounded text-xs font-semibold;
+  }
+
+  .score-ring {
+    @apply inline-flex items-center justify-center w-10 h-10 rounded-full text-sm font-bold border-2;
+  }
+}
