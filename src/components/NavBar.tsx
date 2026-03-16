@@ -21,8 +21,9 @@ export function NavBar() {
         {/* Desktop nav */}
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
           <Link href="/" className="hover:text-brand transition-colors">Skills</Link>
+          <Link href="/olympics" className="hover:text-brand transition-colors">Olympics</Link>
+          <Link href="/leaderboard" className="hover:text-brand transition-colors">Leaderboard</Link>
           <Link href="/combinations" className="hover:text-brand transition-colors">Combinations</Link>
-          <Link href="/verticals" className="hover:text-brand transition-colors">Verticals</Link>
           <Link href="/compare" className="hover:text-brand transition-colors">Compare</Link>
         </div>
 
@@ -56,8 +57,9 @@ export function NavBar() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-3 text-sm font-medium">
           <Link href="/" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Skills</Link>
+          <Link href="/olympics" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Olympics</Link>
+          <Link href="/leaderboard" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Leaderboard</Link>
           <Link href="/combinations" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Combinations</Link>
-          <Link href="/verticals" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Verticals</Link>
           <Link href="/compare" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Compare</Link>
           <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a skill →</Link>
         </div>

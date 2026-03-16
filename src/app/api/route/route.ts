@@ -1,6 +1,50 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
+// Task keywords → workflow slug mapping for NL task matching
+const TASK_WORKFLOW_MAP: Record<string, string[]> = {
+  'research-competitive-intelligence': [
+    'research', 'scrape', 'crawl', 'extract', 'competitor', 'pricing',
+    'web search', 'find information', 'look up', 'gather data', 'source finding',
+  ],
+  'developer-workflow-code-management': [
+    'code', 'repository', 'repo', 'pull request', 'pr', 'commit', 'branch',
+    'github', 'codebase', 'refactor', 'debug', 'deploy', 'ci/cd',
+  ],
+  'qa-testing-automation': [
+    'browser', 'navigate', 'click', 'fill form', 'screenshot', 'test',
+    'automate', 'playwright', 'selenium', 'e2e', 'end-to-end',
+  ],
+  'data-analysis-reporting': [
+    'database', 'sql', 'query', 'bigquery', 'postgres', 'analytics',
+    'report', 'data analysis', 'dashboard', 'chart', 'aggregate',
+  ],
+  'sales-research-outreach': [
+    'prospect', 'lead', 'crm', 'salesforce', 'hubspot', 'enrich',
+    'outreach', 'pipeline', 'sales', 'contact', 'company data',
+  ],
+  'content-creation-publishing': [
+    'content', 'blog', 'article', 'publish', 'cms', 'seo',
+    'write', 'draft', 'editorial', 'social media',
+  ],
+  'customer-support-automation': [
+    'support', 'ticket', 'triage', 'issue', 'jira', 'helpdesk',
+    'customer', 'escalation', 'incident',
+  ],
+  'knowledge-management': [
+    'notion', 'confluence', 'wiki', 'knowledge base', 'documentation',
+    'docs', 'notes', 'workspace',
+  ],
+  'design-to-code-workflow': [
+    'figma', 'design', 'ui', 'component', 'layout', 'mockup',
+    'wireframe', 'prototype',
+  ],
+  'it-devops-platform-operations': [
+    'aws', 'cloud', 'infrastructure', 'devops', 'deploy', 'monitor',
+    'kubernetes', 'docker', 'terraform',
+  ],
+}
+
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient()
 
@@ -11,7 +55,13 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { workflow_slug, vertical_slug, constraints = {} } = body
+  const {
+    task,
+    workflow_slug: explicitWorkflow,
+    vertical_slug,
+    constraints = {},
+  } = body
+
   const {
     priority = 'best_value',
     max_cost_usd,
@@ -19,33 +69,59 @@ export async function POST(request: NextRequest) {
     latency_preference = 'medium',
   } = constraints
 
-  if (!workflow_slug) {
-    return NextResponse.json({ error: 'workflow_slug required' }, { status: 400 })
+  // Require either task or workflow_slug
+  if (!task && !explicitWorkflow) {
+    return NextResponse.json(
+      { error: 'Either "task" (natural language) or "workflow_slug" is required.' },
+      { status: 400 }
+    )
   }
 
-  // Fetch skills with scores that match the workflow
-  const { data: skills } = await supabase
+  // Resolve workflow from task if not explicitly provided
+  const resolvedWorkflow = explicitWorkflow || matchWorkflowFromTask(task)
+  const confidence = explicitWorkflow ? 0.95 : calcTaskConfidence(task, resolvedWorkflow)
+
+  // Fetch skills with scores
+  let query = supabase
     .from('skills')
     .select(`
-      id, slug, canonical_name, short_description,
+      id, slug, canonical_name, short_description, vendor_type,
       skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score, value_score ),
       skill_metrics ( github_stars, days_since_last_commit ),
       skill_cost_models ( monthly_base_cost_usd, pricing_model )
     `)
     .eq('status', 'active')
     .not('skill_scores', 'is', null)
-    .gte('skill_scores.trust_score', trust_floor)
     .limit(50)
+
+  const { data: skills } = await query
 
   if (!skills || skills.length === 0) {
     return NextResponse.json({
       recommended_skill: null,
-      message: 'No scored skills found for this workflow yet. Data accumulating.',
+      confidence: 0,
+      message: 'No scored skills found yet. Data accumulating.',
     })
   }
 
+  // Filter by trust floor
+  const filtered = skills.filter((s: any) => {
+    const trust = s.skill_scores?.trust_score ?? 0
+    return trust >= trust_floor
+  })
+
+  // Filter by max cost if specified
+  const costFiltered = max_cost_usd != null
+    ? filtered.filter((s: any) => {
+        const cost = s.skill_cost_models?.monthly_base_cost_usd
+        return cost == null || cost <= max_cost_usd
+      })
+    : filtered
+
+  const candidates = costFiltered.length > 0 ? costFiltered : filtered
+
   // Sort by priority mode
-  const sorted = [...skills].sort((a: any, b: any) => {
+  const sorted = [...candidates].sort((a: any, b: any) => {
     const sa = a.skill_scores
     const sb = b.skill_scores
     if (!sa || !sb) return 0
@@ -55,32 +131,149 @@ export async function POST(request: NextRequest) {
       case 'lowest_cost': return (sb.cost_score || 0) - (sa.cost_score || 0)
       case 'highest_trust': return (sb.trust_score || 0) - (sa.trust_score || 0)
       case 'most_reliable': return (sb.reliability_score || 0) - (sa.reliability_score || 0)
-      default: return (sb.overall_score || 0) - (sa.overall_score || 0) // best_value
+      default: return (sb.value_score || sb.overall_score || 0) - (sa.value_score || sa.overall_score || 0)
     }
   })
 
+  if (sorted.length === 0) {
+    return NextResponse.json({
+      recommended_skill: null,
+      confidence: 0,
+      message: 'No skills match your constraints. Try relaxing trust_floor or max_cost_usd.',
+    })
+  }
+
   const top = sorted[0] as any
-  const alternatives = sorted.slice(1, 3).map((s: any) => s.slug)
+  const alternatives = sorted.slice(1, 4).map((s: any) => s.slug)
+
+  // Recommend combo if available
+  const combo = await getRecommendedCombo(supabase, top.slug, alternatives)
+
+  // Determine fallback
+  const fallback = alternatives.length > 0 ? alternatives[0] : null
 
   return NextResponse.json({
     recommended_skill: top.slug,
     recommended_skill_name: top.canonical_name,
+    confidence: Math.round(confidence * 100) / 100,
+    reasoning: buildReasoning(top, priority, task, resolvedWorkflow),
     alternatives,
+    recommended_combo: combo,
+    fallback,
     scores: top.skill_scores,
-    reasoning_summary: buildReasoning(top, priority),
-    non_mcp_alternative: getNonMcpAlternative(workflow_slug),
+    non_mcp_alternative: getNonMcpAlternative(resolvedWorkflow),
+    routing_metadata: {
+      resolved_workflow: resolvedWorkflow,
+      priority_mode: priority,
+      candidates_evaluated: candidates.length,
+      trust_floor_applied: trust_floor,
+      latency_preference: latency_preference,
+    },
     wanted_telemetry: {
       reward_multiplier: 1.5,
-      fields: ['latency_ms', 'estimated_cost_usd', 'output_quality_rating', 'fallback_chain_if_any'],
+      comparative_bonus: 2.5,
+      fields: ['latency_ms', 'estimated_cost_usd', 'output_quality_rating', 'outcome_status', 'fallback_chain'],
+      endpoint: '/api/contributions',
     },
   })
 }
 
-function buildReasoning(skill: any, priority: string): string {
+function matchWorkflowFromTask(task: string): string {
+  if (!task) return 'research-competitive-intelligence'
+  const lower = task.toLowerCase()
+
+  let bestMatch = 'research-competitive-intelligence'
+  let bestScore = 0
+
+  for (const [workflow, keywords] of Object.entries(TASK_WORKFLOW_MAP)) {
+    let score = 0
+    for (const kw of keywords) {
+      if (lower.includes(kw)) {
+        score += kw.length // longer keyword matches are more specific
+      }
+    }
+    if (score > bestScore) {
+      bestScore = score
+      bestMatch = workflow
+    }
+  }
+
+  return bestMatch
+}
+
+function calcTaskConfidence(task: string, resolvedWorkflow: string): number {
+  if (!task) return 0.5
+  const lower = task.toLowerCase()
+  const keywords = TASK_WORKFLOW_MAP[resolvedWorkflow] || []
+
+  let matchedKeywords = 0
+  for (const kw of keywords) {
+    if (lower.includes(kw)) matchedKeywords++
+  }
+
+  // Base confidence from keyword matches, capped at 0.92
+  const keywordConfidence = Math.min(0.92, 0.5 + (matchedKeywords * 0.1))
+  return Math.round(keywordConfidence * 100) / 100
+}
+
+function buildReasoning(skill: any, priority: string, task: string | undefined, workflow: string): string {
   const scores = skill.skill_scores
   if (!scores) return 'Recommended based on catalog metadata.'
-  const score = scores.overall_score?.toFixed(1)
-  return `${skill.canonical_name} scores ${score}/10 overall. Selected for ${priority.replace(/_/g, ' ')}.`
+
+  const valueScore = scores.value_score?.toFixed(1) ?? scores.overall_score?.toFixed(1)
+  const parts: string[] = []
+
+  parts.push(`${skill.canonical_name} scores ${valueScore}/10 value.`)
+
+  if (priority !== 'best_value') {
+    parts.push(`Selected for ${priority.replace(/_/g, ' ')} priority.`)
+  } else {
+    parts.push('Highest value score in this category with strong reliability.')
+  }
+
+  if (task) {
+    parts.push(`Matched to workflow: ${workflow.replace(/-/g, ' ')}.`)
+  }
+
+  return parts.join(' ')
+}
+
+async function getRecommendedCombo(
+  supabase: any,
+  topSkillSlug: string,
+  alternativeSlugs: string[]
+): Promise<string[] | null> {
+  // Find combinations that include the top skill
+  const { data: combos } = await supabase
+    .from('combination_skills')
+    .select(`
+      combination_id,
+      skill:skills ( slug ),
+      combinations ( slug, name )
+    `)
+    .limit(20)
+
+  if (!combos || combos.length === 0) return null
+
+  // Group by combination and find one that includes our top skill
+  const comboMap = new Map<string, string[]>()
+  for (const c of combos) {
+    const comboSlug = (c as any).combinations?.slug
+    const skillSlug = (c as any).skill?.slug
+    if (!comboSlug || !skillSlug) continue
+    if (!comboMap.has(comboSlug)) comboMap.set(comboSlug, [])
+    comboMap.get(comboSlug)!.push(skillSlug)
+  }
+
+  const keys = Array.from(comboMap.keys())
+  for (const key of keys) {
+    const skillSlugs = comboMap.get(key)!
+    if (skillSlugs.includes(topSkillSlug)) {
+      return skillSlugs
+    }
+  }
+
+  return null
 }
 
 function getNonMcpAlternative(workflowSlug: string): object | null {
@@ -96,6 +289,18 @@ function getNonMcpAlternative(workflowSlug: string): object | null {
       example: 'Direct SQL via psql or database client',
       when_to_prefer: 'Structured, deterministic queries where the schema is known',
       tradeoff: 'No natural language interface, but faster and cheaper for batch operations',
+    },
+    'research-competitive-intelligence': {
+      approach: 'direct_api',
+      example: 'curl https://api.example.com/search?q=query',
+      when_to_prefer: 'Simple deterministic queries where speed matters more than reasoning',
+      tradeoff: 'No LLM synthesis, but lower cost and predictable latency',
+    },
+    'it-devops-platform-operations': {
+      approach: 'direct_cli',
+      example: 'aws ec2 describe-instances --filters ...',
+      when_to_prefer: 'Well-known CLI commands with predictable outputs',
+      tradeoff: 'No intelligent interpretation, but zero token cost and sub-second latency',
     },
   }
   return alternatives[workflowSlug] || null
