@@ -158,6 +158,7 @@ function SidebarItem({
     <li>
       <Link
         href={href}
+        scroll={false}
         className={`block text-sm px-2 py-1.5 rounded-md transition-colors ${
           active
             ? 'bg-brand-light text-brand font-semibold'

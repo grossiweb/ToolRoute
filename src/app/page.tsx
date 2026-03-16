@@ -3,6 +3,7 @@ import { HeroSection } from '@/components/HeroSection'
 import { SkillCard } from '@/components/SkillCard'
 import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
+import Link from 'next/link'
 
 export const revalidate = 3600 // revalidate every hour
 
@@ -89,8 +90,8 @@ export default async function HomePage({
         <p className="text-sm text-gray-500">
           {skills ? `${skills.length} servers` : 'Loading...'}{' '}
           {searchParams.q && <span>matching <strong>&quot;{searchParams.q}&quot;</strong></span>}
-          {searchParams.workflow && <span>in <strong>{searchParams.workflow.replace(/-/g, ' ')}</strong> <a href="/" className="text-brand hover:underline ml-1">✕ clear</a></span>}
-          {searchParams.vertical && <span>in <strong>{searchParams.vertical.replace(/-/g, ' ')}</strong> <a href="/" className="text-brand hover:underline ml-1">✕ clear</a></span>}
+          {searchParams.workflow && <span>in <strong>{searchParams.workflow.replace(/-/g, ' ')}</strong> <Link href="/" scroll={false} className="text-brand hover:underline ml-1">✕ clear</Link></span>}
+          {searchParams.vertical && <span>in <strong>{searchParams.vertical.replace(/-/g, ' ')}</strong> <Link href="/" scroll={false} className="text-brand hover:underline ml-1">✕ clear</Link></span>}
         </p>
         <div className="flex items-center gap-2 text-sm overflow-x-auto">
           <span className="text-gray-400 flex-shrink-0">Sort:</span>
@@ -104,9 +105,10 @@ export default async function HomePage({
             { key: 'stars', label: 'GitHub Stars' },
             { key: 'recent', label: 'Last Commit' },
           ].map(opt => (
-            <a
+            <Link
               key={opt.key}
               href={`?sort=${opt.key}${searchParams.workflow ? `&workflow=${searchParams.workflow}` : ''}${searchParams.vertical ? `&vertical=${searchParams.vertical}` : ''}`}
+              scroll={false}
               className={`px-3 py-1 rounded-full transition-colors whitespace-nowrap flex-shrink-0 ${
                 sortBy === opt.key
                   ? 'bg-brand text-white'
@@ -114,7 +116,7 @@ export default async function HomePage({
               }`}
             >
               {opt.label}
-            </a>
+            </Link>
           ))}
         </div>
       </div>
