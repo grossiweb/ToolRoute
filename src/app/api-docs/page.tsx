@@ -159,7 +159,7 @@ const endpoints = [
   },
 ]
 
-const sdkExample = `import { NeoSkill } from '@neoskill/sdk'
+const sdkExample = `import { NeoSkill } from '@neoskills/sdk'
 
 const neo = new NeoSkill()
 

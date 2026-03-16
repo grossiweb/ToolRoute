@@ -147,27 +147,51 @@ export class NeoSkill {
    */
   async report(request: ReportRequest): Promise<ReportResponse> {
     try {
-      const payload = {
-        contribution_type: request.fallback_skill ? 'fallback_chain' : 'run_telemetry',
-        agent_name: this.agentName || 'anonymous',
-        agent_kind: this.agentKind || 'autonomous',
-        model_family: this.modelFamily,
-        host_client: this.hostClient,
-        skill_slug: request.skill,
-        runs: [
-          {
-            task_fingerprint: request.task_fingerprint || 'sdk-report',
-            outcome: request.outcome,
-            latency_ms: request.latency_ms,
-            estimated_cost_usd: request.cost_usd,
-            output_quality_rating: request.quality_rating,
-            human_correction_minutes: request.human_correction_minutes,
-            fallback_used_skill_slug: request.fallback_skill,
-          },
-        ],
+      const isFallback = !!request.fallback_skill
+      const contributionType = isFallback ? 'fallback_chain' : 'run_telemetry'
+
+      let payload: Record<string, any>
+
+      if (isFallback) {
+        // fallback_chain expects a chain array with 2+ entries
+        payload = {
+          chain: [
+            {
+              skill_slug: request.skill,
+              outcome: request.outcome,
+              latency_ms: request.latency_ms,
+              estimated_cost_usd: request.cost_usd,
+              output_quality_rating: request.quality_rating,
+              task_fingerprint: request.task_fingerprint,
+            },
+            {
+              skill_slug: request.fallback_skill,
+              outcome: request.outcome,
+              latency_ms: request.latency_ms,
+              task_fingerprint: request.task_fingerprint,
+            },
+          ],
+        }
+      } else {
+        // run_telemetry expects skill_slug + outcome
+        payload = {
+          skill_slug: request.skill,
+          outcome_status: request.outcome,
+          latency_ms: request.latency_ms,
+          estimated_cost_usd: request.cost_usd,
+          output_quality_rating: request.quality_rating,
+          task_fingerprint: request.task_fingerprint,
+          human_correction_minutes: request.human_correction_minutes,
+        }
       }
 
-      const res = await this.fetch('POST', '/api/contributions', payload)
+      const body = {
+        contribution_type: contributionType,
+        payload,
+        proof_type: 'self_reported',
+      }
+
+      const res = await this.fetch('POST', '/api/contributions', body)
       if (!res.ok) {
         return { accepted: false }
       }

@@ -1,11 +1,11 @@
-# @neoskill/sdk
+# @neoskills/sdk
 
 **Agent skill routing in two lines.** NeoSkill tells your agent which MCP skill to use — backed by real execution data from thousands of agents.
 
 ## Quick Start
 
 ```typescript
-import { NeoSkill } from '@neoskill/sdk'
+import { NeoSkill } from '@neoskills/sdk'
 
 const neo = new NeoSkill()
 
@@ -30,7 +30,7 @@ That's it. Three calls. Your agent now routes intelligently and contributes to t
 ## Install
 
 ```bash
-npm install @neoskill/sdk
+npm install @neoskills/sdk
 ```
 
 ## API

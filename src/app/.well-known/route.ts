@@ -42,7 +42,7 @@ export async function GET() {
 
     // SDK
     sdk: {
-      npm: '@neoskill/sdk',
+      npm: '@neoskills/sdk',
       github: 'https://github.com/grossiweb/NeoSkill/tree/main/sdk',
     },
 

@@ -1,20 +1,30 @@
 {
-  "name": "@neoskill/sdk",
+  "name": "@neoskills/sdk",
   "version": "0.1.0",
   "description": "NeoSkill SDK — route, execute, report. Two-line agent integration.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
   "files": ["dist"],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
-    "dev": "tsup src/index.ts --format cjs,esm --dts --watch"
+    "prepublishOnly": "npm run build"
   },
-  "keywords": ["neoskill", "mcp", "ai-agent", "skill-routing", "telemetry"],
+  "keywords": ["neoskill", "mcp", "ai-agent", "skill-routing", "telemetry", "benchmark"],
+  "author": "Grossi Consulting",
   "license": "MIT",
+  "homepage": "https://neo-skill.vercel.app",
   "repository": {
     "type": "git",
-    "url": "https://github.com/grossiweb/NeoSkill"
+    "url": "https://github.com/grossiweb/NeoSkill",
+    "directory": "sdk"
   },
   "devDependencies": {
     "tsup": "^8.0.0",
