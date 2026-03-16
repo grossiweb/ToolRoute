@@ -1,6 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } from '@/lib/scoring'
+import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
 
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
@@ -16,6 +16,66 @@ function checkRateLimit(agentId: string): boolean {
   if (record.count >= maxRequests) return false
   record.count++
   return true
+}
+
+// Type-specific payload validation
+interface ValidationResult {
+  valid: boolean
+  error?: string
+  runCount: number
+}
+
+function validatePayload(payload: any, type: string): ValidationResult {
+  if (!payload || typeof payload !== 'object') {
+    return { valid: false, error: 'payload must be a non-empty object', runCount: 0 }
+  }
+
+  switch (type) {
+    case 'run_telemetry': {
+      if (!payload.skill_id && !payload.skill_slug) {
+        return { valid: false, error: 'run_telemetry requires skill_id or skill_slug', runCount: 0 }
+      }
+      if (!payload.outcome_status && !payload.outcome) {
+        return { valid: false, error: 'run_telemetry requires outcome_status', runCount: 0 }
+      }
+      return { valid: true, runCount: 1 }
+    }
+
+    case 'comparative_eval': {
+      const candidates = payload.candidates || payload.results || []
+      if (!Array.isArray(candidates) || candidates.length < 2) {
+        return { valid: false, error: 'comparative_eval requires at least 2 candidates/results', runCount: 0 }
+      }
+      for (const c of candidates) {
+        if (!c.skill_id && !c.skill_slug) {
+          return { valid: false, error: 'Each candidate must have skill_id or skill_slug', runCount: 0 }
+        }
+      }
+      return { valid: true, runCount: candidates.length }
+    }
+
+    case 'fallback_chain': {
+      const chain = payload.chain || []
+      if (!Array.isArray(chain) || chain.length < 2) {
+        return { valid: false, error: 'fallback_chain requires a chain array with at least 2 entries', runCount: 0 }
+      }
+      return { valid: true, runCount: chain.length }
+    }
+
+    case 'benchmark_package': {
+      const runs = payload.runs || []
+      if (!Array.isArray(runs) || runs.length === 0) {
+        return { valid: false, error: 'benchmark_package requires a non-empty runs array', runCount: 0 }
+      }
+      if (!payload.benchmark_profile_slug && !payload.benchmark_profile_id) {
+        return { valid: false, error: 'benchmark_package requires benchmark_profile_slug or benchmark_profile_id', runCount: 0 }
+      }
+      return { valid: true, runCount: runs.length }
+    }
+
+    default:
+      return { valid: false, error: 'Unknown contribution type', runCount: 0 }
+  }
 }
 
 export async function POST(request: NextRequest) {
@@ -36,7 +96,13 @@ export async function POST(request: NextRequest) {
 
   const validTypes = ['run_telemetry', 'comparative_eval', 'fallback_chain', 'benchmark_package']
   if (!validTypes.includes(contribution_type)) {
-    return NextResponse.json({ error: 'Invalid contribution_type' }, { status: 400 })
+    return NextResponse.json({ error: `Invalid contribution_type. Must be one of: ${validTypes.join(', ')}` }, { status: 400 })
+  }
+
+  // Type-specific validation
+  const validation = validatePayload(payload, contribution_type)
+  if (!validation.valid) {
+    return NextResponse.json({ error: validation.error }, { status: 400 })
   }
 
   const agentKey = agent_identity_id || request.headers.get('x-forwarded-for') || 'anonymous'
@@ -47,21 +113,43 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Create anonymous contributor if no agent_identity
-  const { data: contrib } = await supabase
-    .from('contributors')
-    .insert({ contributor_type: 'individual', display_name: agent_identity_id || 'Anonymous' })
-    .select('id')
-    .single()
+  // Resolve or create contributor
+  let contributorId: string
+  if (agent_identity_id) {
+    // Look up existing agent's contributor
+    const { data: agent } = await supabase
+      .from('agent_identities')
+      .select('contributor_id')
+      .eq('id', agent_identity_id)
+      .single()
 
-  const contributorId = contrib!.id
+    if (agent?.contributor_id) {
+      contributorId = agent.contributor_id
+    } else {
+      const { data: contrib } = await supabase
+        .from('contributors')
+        .insert({ contributor_type: 'individual', display_name: agent_identity_id })
+        .select('id')
+        .single()
+      contributorId = contrib!.id
+    }
+  } else {
+    const { data: contrib } = await supabase
+      .from('contributors')
+      .insert({ contributor_type: 'individual', display_name: 'Anonymous' })
+      .select('id')
+      .single()
+    contributorId = contrib!.id
+  }
 
+  // Insert contribution event
   const { data: event } = await supabase
     .from('contribution_events')
     .insert({
       contributor_id: contributorId,
       agent_identity_id: agent_identity_id || null,
       contribution_type,
+      run_count: validation.runCount,
       payload_json: payload,
       proof_type,
       accepted: false,
@@ -73,11 +161,15 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to record contribution' }, { status: 500 })
   }
 
-  // Score
+  // Score the contribution
   const validity = estimateValidity(payload, contribution_type)
   const usefulness = estimateUsefulness(payload, contribution_type)
+  const novelty = await estimateNovelty(supabase, payload, contribution_type)
+  const consistency = await estimateConsistency(supabase, contributorId)
+  const antiGaming = estimateAntiGaming(payload, contribution_type)
+
   const overallScore = calcContributionScore({
-    validity, usefulness, novelty: 0.7, consistency: 0.8, antiGaming: estimateAntiGaming(payload)
+    validity, usefulness, novelty, consistency, antiGaming,
   })
   const accepted = overallScore >= 0.4
 
@@ -86,51 +178,217 @@ export async function POST(request: NextRequest) {
     contribution_event_id: event.id,
     validity_score: validity,
     usefulness_score: usefulness,
-    novelty_score: 0.7,
-    consistency_score: 0.8,
-    anti_gaming_score: estimateAntiGaming(payload),
+    novelty_score: novelty,
+    consistency_score: consistency,
+    anti_gaming_score: antiGaming,
     overall_contribution_score: overallScore,
   })
 
+  // Calculate and issue rewards
   const rewards = { routing_credits: 0, economic_credits_usd: 0, reputation_points: 0 }
   if (accepted) {
     const mult = CONTRIBUTION_MULTIPLIERS[contribution_type as keyof typeof CONTRIBUTION_MULTIPLIERS]
-    rewards.routing_credits = calcRoutingCredits(10, overallScore, mult)
-    rewards.economic_credits_usd = parseFloat((0.01 * overallScore * mult).toFixed(4))
-    rewards.reputation_points = Math.round(5 * overallScore * mult)
+
+    // Apply trust tier modifier if agent is known
+    let trustMod = 1.0
+    if (agent_identity_id) {
+      const { data: agent } = await supabase
+        .from('agent_identities')
+        .select('trust_tier')
+        .eq('id', agent_identity_id)
+        .single()
+      if (agent?.trust_tier) {
+        trustMod = TRUST_TIER_MODIFIERS[agent.trust_tier as keyof typeof TRUST_TIER_MODIFIERS] || 1.0
+      }
+    }
+
+    rewards.routing_credits = calcRoutingCredits(10, overallScore, mult * trustMod)
+    rewards.economic_credits_usd = parseFloat((0.01 * overallScore * mult * trustMod).toFixed(4))
+    rewards.reputation_points = Math.round(5 * overallScore * mult * trustMod)
+
     await supabase.from('reward_ledgers').insert({
       contributor_id: contributorId,
+      agent_identity_id: agent_identity_id || null,
       contribution_event_id: event.id,
       ...rewards,
-      reason: `${contribution_type} accepted`,
+      reason: `${contribution_type} accepted (score: ${overallScore.toFixed(2)})`,
     })
   }
 
-  return NextResponse.json({ accepted, contribution_score: parseFloat(overallScore.toFixed(2)), rewards })
+  // Track telemetry rate (increment reported runs)
+  await trackTelemetryRate(supabase, 'report')
+
+  return NextResponse.json({
+    accepted,
+    contribution_score: parseFloat(overallScore.toFixed(2)),
+    contribution_type,
+    run_count: validation.runCount,
+    scores: {
+      validity: parseFloat(validity.toFixed(2)),
+      usefulness: parseFloat(usefulness.toFixed(2)),
+      novelty: parseFloat(novelty.toFixed(2)),
+      consistency: parseFloat(consistency.toFixed(2)),
+      anti_gaming: parseFloat(antiGaming.toFixed(2)),
+    },
+    rewards,
+  })
 }
 
 function estimateValidity(payload: any, type: string): number {
   if (!payload) return 0
-  if (type === 'run_telemetry') {
-    if (!payload.skill_id || !payload.outcome_status) return 0.2
-    if (payload.latency_ms && payload.estimated_cost_usd) return 0.9
-    return 0.6
+
+  switch (type) {
+    case 'run_telemetry': {
+      let score = 0.3 // base for having skill + outcome
+      if (payload.latency_ms != null) score += 0.2
+      if (payload.estimated_cost_usd != null) score += 0.15
+      if (payload.output_quality_rating != null) score += 0.15
+      if (payload.task_fingerprint) score += 0.1
+      if (payload.structured_output_valid != null) score += 0.1
+      return Math.min(score, 1.0)
+    }
+    case 'comparative_eval': {
+      const candidates = payload.candidates || payload.results || []
+      if (candidates.length < 2) return 0.2
+      const hasMetrics = candidates.every((c: any) => c.latency_ms != null || c.output_quality_rating != null)
+      return hasMetrics ? 0.9 : 0.6
+    }
+    case 'fallback_chain': {
+      const chain = payload.chain || []
+      if (chain.length < 2) return 0.2
+      const hasOutcomes = chain.every((c: any) => c.outcome_status || c.outcome)
+      return hasOutcomes ? 0.9 : 0.5
+    }
+    case 'benchmark_package': {
+      const runs = payload.runs || []
+      if (runs.length === 0) return 0.1
+      const completeness = runs.filter((r: any) =>
+        r.outcome_status && r.latency_ms != null && r.output_quality_rating != null
+      ).length / runs.length
+      return 0.5 + completeness * 0.5
+    }
+    default:
+      return 0.5
   }
-  if (type === 'comparative_eval') return payload.candidates?.length >= 2 ? 0.85 : 0.2
-  if (type === 'fallback_chain') return payload.chain?.length >= 2 ? 0.9 : 0.2
-  return 0.7
 }
 
 function estimateUsefulness(payload: any, type: string): number {
-  if (type === 'comparative_eval') return 0.95
-  if (type === 'fallback_chain') return 0.9
-  if (type === 'benchmark_package') return 1.0
-  return Math.min(0.5 + Object.keys(payload || {}).length * 0.04, 0.9)
+  switch (type) {
+    case 'benchmark_package': return 1.0
+    case 'comparative_eval': return 0.95
+    case 'fallback_chain': return 0.9
+    case 'run_telemetry': {
+      // More fields = more useful
+      const fields = ['latency_ms', 'estimated_cost_usd', 'output_quality_rating',
+        'task_fingerprint', 'structured_output_valid', 'human_correction_minutes']
+      const present = fields.filter(f => payload[f] != null).length
+      return Math.min(0.4 + present * 0.1, 0.9)
+    }
+    default:
+      return 0.5
+  }
 }
 
-function estimateAntiGaming(payload: any): number {
-  if (!payload) return 0
-  if (payload.latency_ms === 0 && payload.retries > 0) return 0.1
-  if (payload.output_quality_rating === 10 && payload.human_correction_required) return 0.4
-  return 0.85
+async function estimateNovelty(supabase: any, payload: any, type: string): Promise<number> {
+  // Check if we've seen this task_fingerprint before
+  if (payload.task_fingerprint) {
+    const { count } = await supabase
+      .from('outcome_records')
+      .select('*', { count: 'exact', head: true })
+      .eq('task_fingerprint', payload.task_fingerprint)
+
+    if (count === 0) return 1.0 // Brand new task
+    if (count != null && count < 5) return 0.8 // Low sample, still valuable
+    if (count != null && count < 20) return 0.5 // Moderate coverage
+    return 0.3 // Well-covered, less novel
+  }
+
+  // No fingerprint — moderate novelty assumption
+  return 0.6
+}
+
+async function estimateConsistency(supabase: any, contributorId: string): Promise<number> {
+  // Check contributor's history
+  const { data: rep } = await supabase
+    .from('contributor_reputation')
+    .select('total_contributions, accepted_contributions')
+    .eq('contributor_id', contributorId)
+    .single()
+
+  if (!rep || rep.total_contributions === 0) return 0.7 // New contributor, neutral
+  const acceptanceRate = rep.accepted_contributions / rep.total_contributions
+  return Math.min(0.5 + acceptanceRate * 0.5, 1.0)
+}
+
+function estimateAntiGaming(payload: any, type: string): number {
+  let score = 0.85 // Default: trust the agent
+
+  // Suspiciously perfect scores
+  if (payload.output_quality_rating === 10 && payload.human_correction_required) {
+    score -= 0.4
+  }
+
+  // Zero latency with retries is suspicious
+  if (payload.latency_ms === 0 && (payload.retries || 0) > 0) {
+    score -= 0.7
+  }
+
+  // All candidates in comparative eval have identical scores
+  if (type === 'comparative_eval') {
+    const candidates = payload.candidates || payload.results || []
+    if (candidates.length >= 2) {
+      const ratings = candidates.map((c: any) => c.output_quality_rating).filter((r: any) => r != null)
+      if (ratings.length >= 2 && new Set(ratings).size === 1) {
+        score -= 0.3 // Identical ratings across all candidates is suspicious
+      }
+    }
+  }
+
+  // Extremely fast benchmark packages
+  if (type === 'benchmark_package') {
+    const runs = payload.runs || []
+    const allInstant = runs.every((r: any) => r.latency_ms != null && r.latency_ms < 10)
+    if (allInstant && runs.length > 3) {
+      score -= 0.5
+    }
+  }
+
+  return Math.max(score, 0)
+}
+
+async function trackTelemetryRate(supabase: any, eventType: 'recommendation' | 'report') {
+  const now = new Date()
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000)
+
+  const { data: existing } = await supabase
+    .from('telemetry_rate_tracking')
+    .select('id, total_recommendations, total_reported_runs')
+    .gte('period_start', periodStart.toISOString())
+    .lt('period_end', periodEnd.toISOString())
+    .single()
+
+  if (existing) {
+    const recs = existing.total_recommendations + (eventType === 'recommendation' ? 1 : 0)
+    const runs = existing.total_reported_runs + (eventType === 'report' ? 1 : 0)
+    const rate = recs > 0 ? runs / recs : 0
+
+    await supabase.from('telemetry_rate_tracking')
+      .update({
+        total_recommendations: recs,
+        total_reported_runs: runs,
+        telemetry_rate: parseFloat(rate.toFixed(4)),
+      })
+      .eq('id', existing.id)
+  } else {
+    const recs = eventType === 'recommendation' ? 1 : 0
+    const runs = eventType === 'report' ? 1 : 0
+    await supabase.from('telemetry_rate_tracking').insert({
+      period_start: periodStart.toISOString(),
+      period_end: periodEnd.toISOString(),
+      total_recommendations: recs,
+      total_reported_runs: runs,
+      telemetry_rate: 0,
+    })
+  }
 }

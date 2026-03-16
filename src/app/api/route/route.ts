@@ -152,6 +152,9 @@ export async function POST(request: NextRequest) {
   // Determine fallback
   const fallback = alternatives.length > 0 ? alternatives[0] : null
 
+  // Track telemetry rate (increment recommendations)
+  trackRecommendation(supabase).catch(() => {})
+
   return NextResponse.json({
     recommended_skill: top.slug,
     recommended_skill_name: top.canonical_name,
@@ -304,4 +307,31 @@ function getNonMcpAlternative(workflowSlug: string): object | null {
     },
   }
   return alternatives[workflowSlug] || null
+}
+
+async function trackRecommendation(supabase: any) {
+  const now = new Date()
+  const periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
+  const periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000)
+
+  const { data: existing } = await supabase
+    .from('telemetry_rate_tracking')
+    .select('id, total_recommendations')
+    .gte('period_start', periodStart.toISOString())
+    .lt('period_end', periodEnd.toISOString())
+    .single()
+
+  if (existing) {
+    await supabase.from('telemetry_rate_tracking')
+      .update({ total_recommendations: existing.total_recommendations + 1 })
+      .eq('id', existing.id)
+  } else {
+    await supabase.from('telemetry_rate_tracking').insert({
+      period_start: periodStart.toISOString(),
+      period_end: periodEnd.toISOString(),
+      total_recommendations: 1,
+      total_reported_runs: 0,
+      telemetry_rate: 0,
+    })
+  }
 }
