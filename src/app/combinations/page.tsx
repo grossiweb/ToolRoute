@@ -75,7 +75,7 @@ export default async function CombinationsPage({
 
       {/* Sidebar + Content layout */}
       <div className="flex gap-6">
-        <Sidebar verticals={(verticals || []).map((v: any) => ({ id: v.slug, slug: v.slug, name: v.name }))} basePath="/combinations" />
+        <Sidebar />
 
         <div className="flex-1 min-w-0">
       {/* Combos grid */}

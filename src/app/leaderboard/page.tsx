@@ -110,7 +110,7 @@ export default async function LeaderboardPage({
 
       {/* Sidebar + Content layout */}
       <div className="flex gap-6">
-        <Sidebar verticals={verticals || []} basePath="/leaderboard" />
+        <Sidebar />
 
         <div className="flex-1 min-w-0">
           {/* Workflow Filter */}

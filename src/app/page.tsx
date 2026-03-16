@@ -90,7 +90,7 @@ export default async function HomePage({
 
       {/* Sidebar + Grid layout */}
       <div className="flex gap-6">
-        <Sidebar verticals={verticals || []} />
+        <Sidebar />
 
         {/* Main content */}
         <div className="flex-1 min-w-0">
