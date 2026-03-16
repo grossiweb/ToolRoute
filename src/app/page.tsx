@@ -27,6 +27,34 @@ export default async function HomePage({
     query = query.ilike('canonical_name', `%${searchParams.q}%`)
   }
 
+  // Filter by workflow — need to get skill IDs first, then filter
+  if (searchParams.workflow) {
+    const { data: workflowSkills } = await supabase
+      .from('skill_workflows')
+      .select('skill_id, workflows!inner(slug)')
+      .eq('workflows.slug', searchParams.workflow)
+    if (workflowSkills && workflowSkills.length > 0) {
+      const skillIds = workflowSkills.map((ws: any) => ws.skill_id)
+      query = query.in('id', skillIds)
+    } else {
+      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
+    }
+  }
+
+  // Filter by vertical
+  if (searchParams.vertical) {
+    const { data: verticalSkills } = await supabase
+      .from('skill_verticals')
+      .select('skill_id, verticals!inner(slug)')
+      .eq('verticals.slug', searchParams.vertical)
+    if (verticalSkills && verticalSkills.length > 0) {
+      const skillIds = verticalSkills.map((vs: any) => vs.skill_id)
+      query = query.in('id', skillIds)
+    } else {
+      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
+    }
+  }
+
   const sortBy = searchParams.sort || 'score'
   const sortMap: Record<string, string> = {
     score: 'skill_scores(overall_score)',
@@ -60,6 +88,8 @@ export default async function HomePage({
         <p className="text-sm text-gray-500">
           {skills ? `${skills.length} servers` : 'Loading...'}{' '}
           {searchParams.q && <span>matching <strong>&quot;{searchParams.q}&quot;</strong></span>}
+          {searchParams.workflow && <span>in <strong>{searchParams.workflow.replace(/-/g, ' ')}</strong> <a href="/" className="text-brand hover:underline ml-1">✕ clear</a></span>}
+          {searchParams.vertical && <span>in <strong>{searchParams.vertical.replace(/-/g, ' ')}</strong> <a href="/" className="text-brand hover:underline ml-1">✕ clear</a></span>}
         </p>
         <div className="flex items-center gap-2 text-sm overflow-x-auto">
           <span className="text-gray-400 flex-shrink-0">Sort:</span>

@@ -244,6 +244,28 @@ function DefaultSidebar({
           )
         })}
       </SidebarSection>
+
+      <SidebarSection title="Tasks">
+        {TASKS.slice(0, 15).map((task) => {
+          const href = task.slug ? `/tasks/${task.slug}` : '/tasks'
+          return (
+            <SidebarItem
+              key={task.slug || '_all_tasks'}
+              href={href}
+              label={task.label}
+              active={false}
+            />
+          )
+        })}
+        <li>
+          <Link
+            href="/tasks"
+            className="block text-xs px-2 py-1 text-brand hover:underline font-medium"
+          >
+            View all tasks →
+          </Link>
+        </li>
+      </SidebarSection>
     </>
   )
 }
