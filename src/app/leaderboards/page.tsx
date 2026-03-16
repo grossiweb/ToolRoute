@@ -1,5 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Sidebar } from '@/components/Sidebar'
 
 export const revalidate = 3600
 
@@ -57,6 +58,10 @@ export default async function LeaderboardsPage() {
         </div>
       </div>
 
+      {/* Sidebar + Grid layout */}
+      <div className="flex gap-6">
+        <Sidebar context="leaderboards" />
+        <div className="flex-1 min-w-0">
       {/* Category Grid */}
       {toolTypes && toolTypes.length > 0 ? (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
@@ -107,6 +112,9 @@ export default async function LeaderboardsPage() {
           <p className="text-sm mt-1">Categories will appear once tool types are seeded.</p>
         </div>
       )}
+
+        </div>
+      </div>
 
       {/* CTA */}
       <div className="mt-12 text-center">
