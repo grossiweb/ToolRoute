@@ -86,6 +86,9 @@ export default async function SkillPage({ params }: { params: { slug: string } }
         </div>
       )}
 
+      {/* Benchmark Performance */}
+      <BenchmarkSection skillId={skill.id} />
+
       {/* Description */}
       {skill.long_description && (
         <div className="mb-8">
@@ -113,8 +116,25 @@ export default async function SkillPage({ params }: { params: { slug: string } }
         <p className="text-sm text-gray-600 mb-4">
           Used this skill? Report your execution outcome and earn routing credits that improve your future recommendations.
         </p>
-        <a href="/contribute" className="btn-primary text-sm">
-          Report an outcome →
+        <div className="space-y-2 mb-4">
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-700">Report an outcome</span>
+            <span className="font-semibold text-teal-700">+3 to +10 routing credits</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-700">Compare two skills</span>
+            <span className="font-semibold text-teal-700">+8 to +25 routing credits</span>
+          </div>
+          <div className="flex items-center justify-between text-sm">
+            <span className="text-gray-700">Submit a benchmark package</span>
+            <span className="font-semibold text-teal-700">+15 to +40 routing credits</span>
+          </div>
+        </div>
+        <div className="bg-gray-900 text-green-400 rounded-lg p-3 font-mono text-xs mb-4">
+          POST /api/report {`{ "skill_slug": "${skill.slug}", "outcome": "success" }`}
+        </div>
+        <a href="/api-docs" className="btn-primary text-sm">
+          See full API docs →
         </a>
       </div>
     </div>
@@ -150,4 +170,73 @@ function GitHubIcon() {
 function formatStars(n: number): string {
   if (n >= 1000) return `${(n / 1000).toFixed(1)}k`
   return String(n)
+}
+
+function getConfidenceLabel(sampleSize: number): { label: string; color: string } {
+  if (sampleSize >= 50) return { label: 'High', color: 'text-teal-700 bg-teal-50' }
+  if (sampleSize >= 20) return { label: 'Medium', color: 'text-amber-700 bg-amber-50' }
+  if (sampleSize >= 5) return { label: 'Low', color: 'text-orange-700 bg-orange-50' }
+  return { label: 'Accumulating', color: 'text-gray-500 bg-gray-100' }
+}
+
+async function BenchmarkSection({ skillId }: { skillId: string }) {
+  const supabase = createServerSupabaseClient()
+
+  const { data: rollups } = await supabase
+    .from('skill_benchmark_rollups')
+    .select(`
+      *,
+      benchmark_profiles ( name )
+    `)
+    .eq('skill_id', skillId)
+    .order('sample_size', { ascending: false })
+
+  if (!rollups || rollups.length === 0) return null
+
+  return (
+    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
+      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Benchmark Performance</h2>
+      <div className="overflow-x-auto">
+        <table className="w-full text-sm">
+          <thead>
+            <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+              <th className="pb-3 pr-4">Profile</th>
+              <th className="pb-3 pr-4 text-right">Samples</th>
+              <th className="pb-3 pr-4 text-right">Success Rate</th>
+              <th className="pb-3 pr-4 text-right">Avg Value</th>
+              <th className="pb-3 pr-4 text-right">Cost/Useful</th>
+              <th className="pb-3 text-right">Confidence</th>
+            </tr>
+          </thead>
+          <tbody className="divide-y divide-gray-200">
+            {rollups.map((r: any) => {
+              const conf = getConfidenceLabel(r.sample_size ?? 0)
+              return (
+                <tr key={r.id}>
+                  <td className="py-2.5 pr-4 font-medium text-gray-900">
+                    {r.benchmark_profiles?.name ?? 'Unknown'}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right text-gray-600">{r.sample_size ?? 0}</td>
+                  <td className="py-2.5 pr-4 text-right text-gray-600">
+                    {r.success_rate != null ? `${(r.success_rate * 100).toFixed(0)}%` : '--'}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right text-gray-600">
+                    {r.avg_value_score != null ? r.avg_value_score.toFixed(1) : '--'}
+                  </td>
+                  <td className="py-2.5 pr-4 text-right text-gray-600">
+                    {r.cost_per_useful_outcome_usd != null ? `$${r.cost_per_useful_outcome_usd.toFixed(3)}` : '--'}
+                  </td>
+                  <td className="py-2.5 text-right">
+                    <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${conf.color}`}>
+                      {conf.label}
+                    </span>
+                  </td>
+                </tr>
+              )
+            })}
+          </tbody>
+        </table>
+      </div>
+    </div>
+  )
 }

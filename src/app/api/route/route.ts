@@ -173,10 +173,17 @@ export async function POST(request: NextRequest) {
       latency_preference: latency_preference,
     },
     wanted_telemetry: {
+      report_endpoint: '/api/report',
       reward_multiplier: 1.5,
       comparative_bonus: 2.5,
-      fields: ['latency_ms', 'estimated_cost_usd', 'output_quality_rating', 'outcome_status', 'fallback_chain'],
-      endpoint: '/api/contributions',
+      estimated_credits: {
+        run_report: '+3 to +10 routing credits',
+        comparative_eval: '+8 to +25 routing credits',
+        fallback_chain: '+5 to +15 routing credits',
+        benchmark_package: '+15 to +40 routing credits',
+      },
+      fields: ['latency_ms', 'cost_usd', 'quality_rating', 'outcome', 'fallback_chain'],
+      one_liner: `neoskill.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
     },
   })
 }
