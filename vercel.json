@@ -1,0 +1,8 @@
+{
+  "crons": [
+    {
+      "path": "/api/github-sync",
+      "schedule": "0 0 * * *"
+    }
+  ]
+}
