@@ -7,7 +7,8 @@
 -- Aggregates reward_ledgers per agent for quick balance lookups
 -- ─────────────────────────────────────────────
 
-CREATE OR REPLACE VIEW agent_credit_balances AS
+DROP VIEW IF EXISTS agent_credit_balances;
+CREATE VIEW agent_credit_balances AS
 SELECT
   ai.id AS agent_identity_id,
   ai.agent_name,
