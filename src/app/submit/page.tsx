@@ -188,7 +188,7 @@ export default function SubmitPage() {
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
-                <Link href="/" className="btn-primary px-6 py-3">
+                <Link href="/servers" className="btn-primary px-6 py-3">
                   Browse skills
                 </Link>
                 <button

@@ -152,7 +152,7 @@ export default function ComparePage() {
                 {selected.map((s) => (
                   <th key={s.id} className="text-center px-4 py-3 min-w-[140px]">
                     <Link
-                      href={`/skills/${s.slug}`}
+                      href={`/mcp-servers/${s.slug}`}
                       className="font-bold text-gray-900 hover:text-brand transition-colors text-sm"
                     >
                       {s.canonical_name}

@@ -167,7 +167,7 @@ export default async function OlympicsPage() {
                             </div>
                             <div className="flex-1 min-w-0">
                               <Link
-                                href={`/skills/${skill?.slug}`}
+                                href={`/mcp-servers/${skill?.slug}`}
                                 className="font-semibold text-sm text-gray-900 hover:text-brand transition-colors"
                               >
                                 {skill?.canonical_name || 'Unknown'}

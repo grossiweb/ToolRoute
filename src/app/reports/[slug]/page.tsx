@@ -160,7 +160,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
                     <div className="flex-1 min-w-0">
                       <div className="flex items-center gap-2 mb-1">
                         <Link
-                          href={`/skills/${skill?.slug}`}
+                          href={`/mcp-servers/${skill?.slug}`}
                           className="font-bold text-gray-900 hover:text-brand transition-colors"
                         >
                           {skill?.canonical_name}

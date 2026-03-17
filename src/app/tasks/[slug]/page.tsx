@@ -183,7 +183,7 @@ export default async function TaskDetailPage({
                       </td>
                       <td className="px-4 py-3">
                         <Link
-                          href={`/skills/${skill?.slug}`}
+                          href={`/mcp-servers/${skill?.slug}`}
                           className="font-semibold text-gray-900 hover:text-brand transition-colors"
                         >
                           {skill?.canonical_name || 'Unknown'}

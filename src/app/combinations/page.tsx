@@ -89,12 +89,12 @@ export default async function CombinationsPage({
             const stats = getComboStats(skills, combo.setup_complexity)
 
             return (
-              <div key={combo.id} className="card">
+              <Link key={combo.id} href={`/combinations/${combo.slug}`} className="card group block">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h2 className="font-bold text-gray-900">{combo.name}</h2>
+                      <h2 className="font-bold text-gray-900 group-hover:text-brand transition-colors">{combo.name}</h2>
                       {combo.featured && (
                         <span className="badge bg-amber-50 text-amber-700 text-[10px]">Featured</span>
                       )}
@@ -139,7 +139,7 @@ export default async function CombinationsPage({
                             </div>
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <Link
-                                href={`/skills/${skill?.slug}`}
+                                href={`/mcp-servers/${skill?.slug}`}
                                 className="text-sm font-medium text-gray-800 hover:text-brand transition-colors truncate"
                               >
                                 {skill?.canonical_name}
@@ -171,7 +171,7 @@ export default async function CombinationsPage({
                     Confidence: <strong className="text-gray-600">{combo.confidence_level}</strong>
                   </span>
                 </div>
-              </div>
+              </Link>
             )
           })}
         </div>

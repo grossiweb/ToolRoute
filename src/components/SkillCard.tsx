@@ -33,7 +33,7 @@ export function SkillCard({ skill }: SkillCardProps) {
   const sampleRuns = score != null ? Math.floor(score * 12 + 40) : null
 
   return (
-    <Link href={`/skills/${skill.slug}`} className="card group block">
+    <Link href={`/mcp-servers/${skill.slug}`} className="card group block">
       {/* Header */}
       <div className="flex items-start justify-between gap-3 mb-3">
         <div className="flex-1 min-w-0">

@@ -39,7 +39,7 @@ export default function RootLayout({
               <span>· The skill intelligence platform for AI agents</span>
             </div>
             <div className="flex items-center gap-6">
-              <a href="/submit" className="hover:text-brand transition-colors">Submit a skill</a>
+              <a href="/submit" className="hover:text-brand transition-colors">Submit a server</a>
               <a href="/privacy-architecture" className="hover:text-brand transition-colors">Privacy</a>
               <a href="https://github.com/grossiweb/ToolRoute" className="hover:text-brand transition-colors">GitHub</a>
             </div>

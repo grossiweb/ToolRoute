@@ -6,10 +6,10 @@ export async function GET() {
   return NextResponse.json({
     // Standard service metadata
     name: 'ToolRoute',
-    description: 'Agent-first MCP skill intelligence platform — routing, benchmarking, and outcome telemetry.',
-    version: '1.1.0',
+    description: 'Intelligent routing for AI tools. Agents query ToolRoute to find which MCP server works best for any task.',
+    version: '1.2.0',
 
-    // MCP Server info
+    // MCP Server info — agents can add this as a tool source
     mcp: {
       protocol_version: '2024-11-05',
       transport: 'streamable-http',
@@ -26,18 +26,34 @@ export async function GET() {
         'toolroute_missions',
         'toolroute_report',
       ],
+      config_snippet: {
+        mcpServers: {
+          toolroute: {
+            url: 'https://toolroute.io/api/mcp',
+          },
+        },
+      },
     },
 
     // REST API endpoints
     api_base: 'https://toolroute.io/api',
     endpoints: {
-      route: 'POST /api/route',
-      skills: 'GET /api/skills',
-      contributions: 'POST /api/contributions',
+      route: 'POST /api/route — Get a confidence-scored MCP server recommendation',
+      search: 'GET /api/skills — Search and filter the MCP server catalog',
+      report: 'POST /api/report — Submit outcome telemetry (earn routing credits)',
+      contributions: 'POST /api/contributions — Detailed telemetry submission',
+      badge: 'GET /api/badge/{slug} — SVG score badge for READMEs',
       missions_available: 'GET /api/missions/available',
       missions_claim: 'POST /api/missions/claim',
       missions_complete: 'POST /api/missions/complete',
-      mcp_server: 'POST /api/mcp',
+      mcp_server: 'POST /api/mcp — JSON-RPC MCP server endpoint',
+    },
+
+    // Quickstart for agents
+    quickstart: {
+      step_1: 'Add ToolRoute to your MCP config: { "mcpServers": { "toolroute": { "url": "https://toolroute.io/api/mcp" } } }',
+      step_2: 'Use toolroute_route to get recommendations for any task',
+      step_3: 'Use toolroute_report to submit outcomes and earn routing credits',
     },
 
     // SDK
@@ -45,6 +61,10 @@ export async function GET() {
       npm: '@toolroute/sdk',
       github: 'https://github.com/grossiweb/ToolRoute/tree/main/sdk',
     },
+
+    // For server maintainers
+    badge_url: 'https://toolroute.io/api/badge/{slug}',
+    submit_url: 'https://toolroute.io/submit',
 
     updated_at: new Date().toISOString(),
   }, {

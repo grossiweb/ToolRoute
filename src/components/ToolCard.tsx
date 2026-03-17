@@ -41,7 +41,7 @@ export function ToolCard({ tool }: ToolCardProps) {
         <div className="flex-1 min-w-0">
           <div className="flex items-center gap-2 flex-wrap mb-1">
             <Link
-              href={`/skills/${tool.slug}`}
+              href={`/mcp-servers/${tool.slug}`}
               className="font-bold text-gray-900 text-sm truncate group-hover:text-brand transition-colors"
             >
               {tool.canonical_name}
@@ -100,7 +100,7 @@ export function ToolCard({ tool }: ToolCardProps) {
             Compare
           </Link>
           <Link
-            href={`/skills/${tool.slug}`}
+            href={`/mcp-servers/${tool.slug}`}
             className="text-xs font-medium text-gray-500 hover:text-gray-700 transition-colors"
           >
             View Details
