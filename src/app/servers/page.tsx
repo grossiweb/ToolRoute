@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Suspense } from 'react'
 import { SortDropdown } from '@/components/SortDropdown'
+import { SearchBar } from '@/components/SearchBar'
 import { Sidebar } from '@/components/Sidebar'
 import { SkillCard } from '@/components/SkillCard'
 import { Metadata } from 'next'
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 export default async function ServersPage({
   searchParams,
 }: {
-  searchParams: { sort?: string; workflow?: string; vertical?: string }
+  searchParams: { sort?: string; workflow?: string; vertical?: string; q?: string }
 }) {
   const supabase = createServerSupabaseClient()
 
@@ -43,8 +44,17 @@ export default async function ServersPage({
     .select('slug, name')
     .order('name')
 
-  // Filter by workflow if selected
+  // Filter by search query
   let filteredServers = servers
+  const searchQuery = searchParams.q?.trim().toLowerCase()
+  if (searchQuery) {
+    filteredServers = filteredServers.filter((s: any) =>
+      s.canonical_name.toLowerCase().includes(searchQuery) ||
+      s.short_description?.toLowerCase().includes(searchQuery)
+    )
+  }
+
+  // Filter by workflow if selected
   if (searchParams.workflow) {
     const { data: workflowSkillIds } = await supabase
       .from('skill_workflows')
@@ -121,9 +131,19 @@ export default async function ServersPage({
       {/* Header */}
       <div className="mb-8">
         <h1 className="text-3xl font-black text-gray-900 mb-2">MCP Servers</h1>
-        <p className="text-gray-500 max-w-2xl">
-          {servers.length}+ servers ranked by real execution data. Every score is outcome-backed on a 0-10 scale across 5 dimensions.
+        <p className="text-gray-500 max-w-2xl mb-4">
+          {servers.length} servers ranked by real execution data. Every score is outcome-backed on a 0-10 scale across 5 dimensions.
         </p>
+        <div className="max-w-md">
+          <Suspense>
+            <SearchBar basePath="/servers" placeholder="Search MCP servers by name or description..." />
+          </Suspense>
+        </div>
+        {searchQuery && (
+          <p className="text-sm text-gray-500 mt-3">
+            Showing <span className="font-semibold text-gray-700">{filteredServers.length}</span> results for &quot;<span className="font-semibold text-brand">{searchParams.q}</span>&quot;
+          </p>
+        )}
       </div>
 
       {/* Stats bar + Sort */}

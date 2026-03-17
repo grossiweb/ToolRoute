@@ -25,6 +25,8 @@ export default function StacksPage() {
   const [stackName, setStackName] = useState('')
   const [search, setSearch] = useState('')
   const [linkCopied, setLinkCopied] = useState(false)
+  const [configCopied, setConfigCopied] = useState(false)
+  const [configFormat, setConfigFormat] = useState<'claude' | 'cursor' | 'json'>('claude')
   const supabase = createBrowserSupabaseClient()
 
   useEffect(() => {
@@ -32,12 +34,12 @@ export default function StacksPage() {
       const { data } = await supabase
         .from('skills')
         .select(`
-          id, slug, canonical_name, vendor_type,
+          id, slug, canonical_name, vendor_type, repo_url,
           skill_scores ( overall_score, value_score, output_score, reliability_score, efficiency_score, cost_score, trust_score )
         `)
         .eq('status', 'active')
         .order('canonical_name')
-        .limit(200)
+        .limit(500)
       setSkills(data || [])
     }
     loadSkills()
@@ -93,13 +95,54 @@ export default function StacksPage() {
     setTimeout(() => setLinkCopied(false), 2000)
   }
 
+  // Generate config based on selected format
+  function generateConfig(): string {
+    if (configFormat === 'claude') {
+      const mcpServers: Record<string, any> = {}
+      for (const s of selected) {
+        mcpServers[s.slug] = {
+          command: 'npx',
+          args: ['-y', `@modelcontextprotocol/${s.slug}`],
+        }
+      }
+      return JSON.stringify({ mcpServers }, null, 2)
+    }
+    if (configFormat === 'cursor') {
+      const mcpServers: Record<string, any> = {}
+      for (const s of selected) {
+        mcpServers[s.slug] = {
+          command: 'npx',
+          args: ['-y', `@modelcontextprotocol/${s.slug}`],
+        }
+      }
+      return JSON.stringify({ mcpServers }, null, 2)
+    }
+    // JSON list
+    return JSON.stringify(
+      selected.map(s => ({
+        name: s.canonical_name,
+        slug: s.slug,
+        repo: s.repo_url || `https://github.com/modelcontextprotocol/${s.slug}`,
+        score: normalize(s.skill_scores?.value_score ?? s.skill_scores?.overall_score),
+      })),
+      null,
+      2
+    )
+  }
+
+  function copyConfig() {
+    navigator.clipboard.writeText(generateConfig())
+    setConfigCopied(true)
+    setTimeout(() => setConfigCopied(false), 2000)
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Build a Tool Stack</h1>
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Build &amp; Deploy a Tool Stack</h1>
         <p className="text-gray-500">
-          Combine MCP servers into shareable stacks for any workflow. Share with your team or embed in agent configs.
+          Select MCP servers, get a ready-to-deploy config, and share with your team.
         </p>
       </div>
 
@@ -165,16 +208,16 @@ export default function StacksPage() {
         </div>
       </div>
 
-      {/* Live Preview + Share */}
-      {selected.length >= 2 && (
+      {/* Deploy Config — Primary action when 1+ tools selected */}
+      {selected.length >= 1 && (
         <div className="card mb-8 border-teal/20">
           <div className="flex items-start justify-between gap-4 mb-4">
             <div>
               <div className="flex items-center gap-2 mb-1">
-                <span className="text-lg">🧩</span>
+                <span className="text-lg">🚀</span>
                 <h2 className="font-bold text-gray-900 text-lg">{stackName || 'My Stack'}</h2>
               </div>
-              <p className="text-sm text-gray-500">{selected.length} tools combined</p>
+              <p className="text-sm text-gray-500">{selected.length} tool{selected.length !== 1 ? 's' : ''} &middot; Ready to deploy</p>
             </div>
             {avgScore != null && (
               <div className={`score-ring flex-shrink-0 ${getScoreColor(avgScore)}`}>
@@ -184,7 +227,7 @@ export default function StacksPage() {
           </div>
 
           {/* Tool list with scores */}
-          <div className="space-y-2 mb-4">
+          <div className="space-y-2 mb-5">
             {selected.map(s => {
               const sc = s.skill_scores || {}
               const vs = normalize(sc.value_score ?? sc.overall_score)
@@ -204,8 +247,60 @@ export default function StacksPage() {
             })}
           </div>
 
-          <div className="flex items-center gap-3 pt-3 border-t border-gray-100">
-            <button onClick={copyLink} className="btn-primary text-sm flex items-center gap-2">
+          {/* Config format selector */}
+          <div className="mb-3">
+            <label className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2 block">Deploy Config</label>
+            <div className="flex items-center gap-2 mb-3">
+              {(['claude', 'cursor', 'json'] as const).map(fmt => (
+                <button
+                  key={fmt}
+                  onClick={() => setConfigFormat(fmt)}
+                  className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-all ${
+                    configFormat === fmt
+                      ? 'bg-gray-900 text-white'
+                      : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
+                  }`}
+                >
+                  {fmt === 'claude' ? 'Claude Desktop' : fmt === 'cursor' ? 'Cursor / VS Code' : 'JSON'}
+                </button>
+              ))}
+            </div>
+            <div className="relative">
+              <pre className="bg-gray-900 rounded-lg px-4 py-3 text-xs text-emerald-400 font-mono overflow-x-auto max-h-64">
+                {generateConfig()}
+              </pre>
+              <button
+                onClick={copyConfig}
+                className="absolute top-2 right-2 px-2.5 py-1 rounded-md bg-gray-700 text-gray-300 hover:bg-gray-600 text-xs font-medium transition-colors"
+              >
+                {configCopied ? 'Copied!' : 'Copy'}
+              </button>
+            </div>
+            <p className="text-[10px] text-gray-400 mt-2">
+              {configFormat === 'claude'
+                ? 'Paste into ~/Library/Application Support/Claude/claude_desktop_config.json'
+                : configFormat === 'cursor'
+                  ? 'Paste into .cursor/mcp.json or .vscode/mcp.json in your project'
+                  : 'Use this JSON in your agent configuration'}
+            </p>
+          </div>
+
+          {/* Action buttons */}
+          <div className="flex items-center gap-3 pt-4 border-t border-gray-100">
+            <button onClick={copyConfig} className="btn-primary text-sm flex items-center gap-2">
+              {configCopied ? (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                  Config Copied!
+                </>
+              ) : (
+                <>
+                  <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 16v1a3 3 0 003 3h10a3 3 0 003-3v-1m-4-4l-4 4m0 0l-4-4m4 4V4" /></svg>
+                  Copy Deploy Config
+                </>
+              )}
+            </button>
+            <button onClick={copyLink} className="btn-secondary text-sm flex items-center gap-2">
               {linkCopied ? (
                 <>
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
@@ -220,9 +315,9 @@ export default function StacksPage() {
             </button>
             <Link
               href={`/compare?servers=${selected.map(s => s.slug).join(',')}`}
-              className="btn-secondary text-sm"
+              className="text-sm text-gray-500 hover:text-brand transition-colors ml-auto"
             >
-              Compare in Detail →
+              Compare scores →
             </Link>
           </div>
         </div>
@@ -231,7 +326,7 @@ export default function StacksPage() {
       {/* Popular Stacks */}
       <div className="mt-12">
         <h2 className="text-xl font-black text-gray-900 mb-2">Popular Stacks</h2>
-        <p className="text-sm text-gray-500 mb-6">Pre-built tool combinations for common workflows. Click to customize.</p>
+        <p className="text-sm text-gray-500 mb-6">Pre-built tool combinations for common workflows. Click to customize and deploy.</p>
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {POPULAR_STACKS.map(stack => (
