@@ -19,11 +19,12 @@ import { semanticMatchWorkflow } from '@/lib/embeddings'
 const TOOLS = [
   {
     name: 'toolroute_route',
-    description: 'Get a confidence-scored skill recommendation for any agent task. Accepts natural language task descriptions.',
+    description: 'Get a confidence-scored MCP server recommendation for any task. Workflow: 1) Call toolroute_register first to get agent_identity_id. 2) Call toolroute_route with your task. 3) Execute the recommended MCP server. 4) Call toolroute_report with the outcome to earn routing credits.',
     inputSchema: {
       type: 'object',
       properties: {
-        task: { type: 'string', description: 'Natural language task description' },
+        task: { type: 'string', description: 'Natural language task description (e.g. "scrape product pricing from competitor sites")' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (optional but recommended for personalized routing)' },
         workflow_slug: { type: 'string', description: 'Explicit workflow slug (optional if task provided)' },
         priority: {
           type: 'string',
@@ -77,7 +78,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_report',
-    description: 'Report skill execution outcome. Earns routing credits and improves recommendations.',
+    description: 'Report skill execution outcome. Earns routing credits and improves recommendations for all agents. Include latency_ms, cost_usd, and quality_rating for maximum credit rewards.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -86,8 +87,27 @@ const TOOLS = [
         latency_ms: { type: 'number', description: 'Execution latency in ms' },
         cost_usd: { type: 'number', description: 'Estimated cost in USD' },
         quality_rating: { type: 'number', description: 'Output quality 0-10' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (earns 2x credits)' },
       },
       required: ['skill_slug', 'outcome'],
+    },
+  },
+  {
+    name: 'toolroute_register',
+    description: 'Register your agent to get a persistent identity. Idempotent — safe to call every time. Returns agent_identity_id to use with toolroute_route and toolroute_report for credit tracking and personalized routing.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_name: { type: 'string', description: 'Unique name for your agent (e.g. "my-research-bot")' },
+        agent_kind: {
+          type: 'string',
+          enum: ['autonomous', 'copilot', 'workflow-agent', 'evaluation-agent', 'hybrid'],
+          description: 'Type of agent. Default: autonomous',
+        },
+        host_client_slug: { type: 'string', description: 'Where this agent runs: cursor, claude-desktop, vscode, custom' },
+        model_family: { type: 'string', description: 'LLM family: claude, gpt, gemini, llama, etc.' },
+      },
+      required: ['agent_name'],
     },
   },
 ]
@@ -113,7 +133,8 @@ export async function POST(request: NextRequest) {
         capabilities: { tools: {} },
         serverInfo: {
           name: 'toolroute',
-          version: '1.0.0',
+          version: '1.1.0',
+          description: 'ToolRoute — intelligent routing layer for MCP servers. Call toolroute_register first, then toolroute_route for task recommendations, then toolroute_report after execution to earn credits.',
         },
       })
 
@@ -271,6 +292,63 @@ async function handleToolCall(id: any, params: any) {
         skill: skill_slug,
         outcome,
         message: 'Outcome recorded. Scores update every 6 hours. Thank you for improving routing for all agents.',
+      }, null, 2))
+    }
+
+    case 'toolroute_register': {
+      const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family } = args || {}
+      if (!agent_name) return toolResult(id, 'Error: agent_name is required.')
+
+      // Check for existing agent
+      let existingQuery = supabase
+        .from('agent_identities')
+        .select('id, agent_name, trust_tier, is_active, created_at')
+        .eq('agent_name', agent_name)
+      if (host_client_slug) existingQuery = existingQuery.eq('host_client_slug', host_client_slug)
+      const { data: existing } = await existingQuery.maybeSingle()
+
+      if (existing) {
+        return toolResult(id, JSON.stringify({
+          agent_identity_id: existing.id,
+          agent_name: existing.agent_name,
+          trust_tier: existing.trust_tier,
+          already_registered: true,
+          message: 'Agent already registered. Use agent_identity_id in toolroute_route and toolroute_report.',
+        }, null, 2))
+      }
+
+      // Create contributor + agent identity
+      const { data: contributor } = await supabase
+        .from('contributors')
+        .insert({ contributor_type: 'individual', display_name: agent_name })
+        .select('id')
+        .single()
+
+      if (!contributor) return toolResult(id, 'Error: Failed to create contributor record.')
+
+      const { data: agent } = await supabase
+        .from('agent_identities')
+        .insert({
+          contributor_id: contributor.id,
+          agent_name,
+          agent_kind,
+          host_client_slug: host_client_slug || null,
+          model_family: model_family || null,
+          trust_tier: 'baseline',
+          is_active: true,
+        })
+        .select('id, agent_name, agent_kind, trust_tier, created_at')
+        .single()
+
+      if (!agent) return toolResult(id, 'Error: Failed to create agent identity.')
+
+      return toolResult(id, JSON.stringify({
+        agent_identity_id: agent.id,
+        agent_name: agent.agent_name,
+        trust_tier: agent.trust_tier,
+        already_registered: false,
+        message: 'Registered! Use agent_identity_id in toolroute_route and toolroute_report to earn credits and improve your trust tier.',
+        next: 'Call toolroute_route with your task to get a recommendation.',
       }, null, 2))
     }
 

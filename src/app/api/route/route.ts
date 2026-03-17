@@ -46,6 +46,93 @@ const TASK_WORKFLOW_MAP: Record<string, string[]> = {
   ],
 }
 
+// GET /api/route — Self-documenting API guide for agents
+export async function GET() {
+  return NextResponse.json({
+    name: 'ToolRoute',
+    version: '1.0.0',
+    description: 'The intelligent routing layer for MCP servers. Find the best tool for every agent task — scored on real execution data.',
+    base_url: 'https://toolroute.io',
+    quick_start: {
+      step_1_register: {
+        description: 'Register your agent to get an identity (idempotent — safe to call every time)',
+        method: 'POST',
+        url: '/api/agents/register',
+        body: {
+          agent_name: 'your-agent-name',
+          agent_kind: 'autonomous | copilot | workflow-agent | evaluation-agent | hybrid',
+          host_client_slug: 'cursor | claude-desktop | vscode | custom (optional)',
+          model_family: 'claude | gpt | gemini | etc (optional)',
+        },
+        returns: 'agent_identity_id (UUID) — use this in all subsequent calls',
+      },
+      step_2_route: {
+        description: 'Ask ToolRoute which MCP server is best for your task',
+        method: 'POST',
+        url: '/api/route',
+        body: {
+          task: 'natural language description of what you need to do',
+          agent_identity_id: 'UUID from step 1 (optional but recommended)',
+          constraints: {
+            priority: 'best_value | best_quality | best_efficiency | lowest_cost | highest_trust | most_reliable',
+            max_cost_usd: 'maximum cost per run (optional)',
+            trust_floor: 'minimum trust score 0-10 (optional)',
+          },
+        },
+        returns: 'recommended_skill slug, confidence score, alternatives, fallback chain',
+      },
+      step_3_execute: {
+        description: 'Install and use the recommended MCP server (ToolRoute does not execute — you do)',
+        note: 'The recommended_skill slug maps to an npm package: npx -y @modelcontextprotocol/{slug}',
+      },
+      step_4_report: {
+        description: 'Report what happened — earns routing credits and improves scores for everyone',
+        method: 'POST',
+        url: '/api/report',
+        body: {
+          skill_slug: 'the slug that was recommended',
+          outcome: 'success | partial_success | failure | aborted',
+          latency_ms: 'execution time in ms (optional but earns more credits)',
+          cost_usd: 'estimated cost (optional)',
+          quality_rating: '0-10 output quality (optional)',
+          agent_identity_id: 'UUID from step 1 (optional but earns 2x credits)',
+        },
+        returns: 'credits_earned, reputation_earned, credit_balance',
+      },
+    },
+    endpoints: {
+      'POST /api/agents/register': 'Register or look up an agent identity',
+      'GET /api/agents/register?name=': 'Look up agent by name or id',
+      'POST /api/route': 'Get a task-based tool recommendation',
+      'GET /api/route': 'This guide',
+      'POST /api/report': 'Submit execution telemetry (simple)',
+      'POST /api/contributions': 'Submit telemetry (advanced — A/B tests, fallback chains, benchmark packages)',
+      'POST /api/mcp': 'JSON-RPC MCP endpoint (5 tools)',
+      'GET /api/skills': 'Search the MCP server catalog',
+      'POST /api/missions/claim': 'Claim a benchmark mission',
+      'POST /api/missions/complete': 'Submit mission results',
+    },
+    mcp_server: {
+      description: 'ToolRoute is itself an MCP server. Add it to your config for tool-assisted routing.',
+      cursor: { url: 'https://toolroute.io/api/mcp', transport: 'http' },
+      claude_desktop: { command: 'npx', args: ['-y', '@toolroute/sdk', '--mcp'] },
+      tools: ['toolroute_route', 'toolroute_search', 'toolroute_compare', 'toolroute_missions', 'toolroute_report', 'toolroute_register'],
+    },
+    scoring: {
+      formula: 'Value Score = 0.35×Output + 0.25×Reliability + 0.15×Efficiency + 0.15×Cost + 0.10×Trust',
+      scale: '0-10, capped at 9.8',
+      methodology: 'Outcome-backed telemetry from real agent executions — not GitHub stars, not vibes',
+    },
+    credit_economy: {
+      run_report: '3-10 credits',
+      comparative_eval: '8-25 credits (2.5x multiplier)',
+      fallback_chain: '5-15 credits (1.5x multiplier)',
+      benchmark_package: '15-40 credits (4x multiplier)',
+      trust_tiers: 'unverified → baseline → trusted → production → enterprise (auto-promoted by reputation)',
+    },
+  })
+}
+
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient()
 
@@ -73,10 +160,18 @@ export async function POST(request: NextRequest) {
 
   // Require either task or workflow_slug
   if (!task && !explicitWorkflow) {
-    return NextResponse.json(
-      { error: 'Either "task" (natural language) or "workflow_slug" is required.' },
-      { status: 400 }
-    )
+    return NextResponse.json({
+      error: 'Either "task" (natural language) or "workflow_slug" is required.',
+      usage: {
+        method: 'POST',
+        url: '/api/route',
+        example_body: {
+          task: 'scrape product pages and extract pricing data',
+          agent_identity_id: 'optional — register at POST /api/agents/register first',
+        },
+      },
+      guide: 'GET /api/route for full API documentation',
+    }, { status: 400 })
   }
 
   // Resolve workflow from task if not explicitly provided

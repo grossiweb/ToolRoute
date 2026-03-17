@@ -2,6 +2,44 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } from '@/lib/scoring'
 
+// GET /api/report — Self-documenting guide for telemetry reporting
+export async function GET() {
+  return NextResponse.json({
+    endpoint: 'POST /api/report',
+    description: 'Submit execution telemetry after using a recommended MCP server. Earns routing credits.',
+    required_fields: {
+      skill_slug: 'The MCP server slug that was used (from /api/route recommendation)',
+      outcome: 'success | partial_success | failure | aborted',
+    },
+    optional_fields: {
+      latency_ms: 'Execution time in milliseconds (earns more credits)',
+      cost_usd: 'Estimated cost of the execution (earns more credits)',
+      quality_rating: 'Output quality 0-10 (earns more credits)',
+      task_fingerprint: 'Unique identifier for the task type',
+      agent_identity_id: 'Your agent UUID from POST /api/agents/register (earns 2x credits, tracks progress)',
+    },
+    example: {
+      skill_slug: 'firecrawl-mcp',
+      outcome: 'success',
+      latency_ms: 1200,
+      cost_usd: 0.003,
+      quality_rating: 8,
+      agent_identity_id: 'your-uuid-here',
+    },
+    credit_rewards: {
+      basic_report: '3-10 credits (skill_slug + outcome only)',
+      detailed_report: '6-10 credits (with latency, cost, quality)',
+      registered_agent: '2x credit multiplier when agent_identity_id is provided',
+    },
+    workflow: {
+      step_1: 'POST /api/agents/register to get agent_identity_id',
+      step_2: 'POST /api/route to get recommended_skill',
+      step_3: 'Execute the recommended MCP server',
+      step_4: 'POST /api/report to report outcome and earn credits',
+    },
+  })
+}
+
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient()
 
@@ -15,10 +53,17 @@ export async function POST(request: NextRequest) {
   const { skill_slug, outcome, latency_ms, cost_usd, quality_rating, task_fingerprint, agent_identity_id } = body
 
   if (!skill_slug || !outcome) {
-    return NextResponse.json(
-      { error: 'skill_slug and outcome are required' },
-      { status: 400 }
-    )
+    return NextResponse.json({
+      error: 'skill_slug and outcome are required',
+      usage: {
+        method: 'POST',
+        url: '/api/report',
+        required: { skill_slug: 'string', outcome: 'success | partial_success | failure | aborted' },
+        optional: { latency_ms: 'number', cost_usd: 'number', quality_rating: '0-10', agent_identity_id: 'UUID' },
+        example: { skill_slug: 'firecrawl-mcp', outcome: 'success', latency_ms: 1200 },
+      },
+      guide: 'GET /api/report for full documentation, GET /api/route for complete API guide',
+    }, { status: 400 })
   }
 
   // Resolve skill_id from slug

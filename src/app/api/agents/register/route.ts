@@ -127,10 +127,32 @@ export async function GET(request: NextRequest) {
   const id = searchParams.get('id')
 
   if (!name && !id) {
-    return NextResponse.json(
-      { error: 'Provide ?name=agent-name or ?id=uuid' },
-      { status: 400 }
-    )
+    // No params — return self-documenting guide
+    return NextResponse.json({
+      endpoint: '/api/agents/register',
+      description: 'Register an agent identity or look up an existing one. Idempotent — safe to call every time.',
+      register: {
+        method: 'POST',
+        body: {
+          agent_name: '(required) Unique name for your agent',
+          agent_kind: '(optional) autonomous | copilot | workflow-agent | evaluation-agent | hybrid',
+          host_client_slug: '(optional) cursor | claude-desktop | vscode | custom',
+          model_family: '(optional) claude | gpt | gemini | llama',
+        },
+        returns: 'agent_identity_id — use in /api/route and /api/report',
+      },
+      lookup: {
+        method: 'GET',
+        params: '?name=agent-name or ?id=uuid',
+        returns: 'Agent profile with credit balance',
+      },
+      full_workflow: [
+        'POST /api/agents/register → get agent_identity_id',
+        'POST /api/route { task, agent_identity_id } → get recommendation',
+        'Execute the recommended MCP server',
+        'POST /api/report { skill_slug, outcome, agent_identity_id } → earn credits',
+      ],
+    })
   }
 
   let query = supabase
