@@ -271,8 +271,8 @@ export default async function LeaderboardDetailPage({
 
       {/* Why #1 Wins */}
       {sortedTools.length >= 2 && (() => {
-        const first = sortedTools[0].skills
-        const second = sortedTools[1].skills
+        const first = sortedTools[0].skills as any
+        const second = sortedTools[1].skills as any
         const s1 = first?.skill_scores
         const s2 = second?.skill_scores
 
