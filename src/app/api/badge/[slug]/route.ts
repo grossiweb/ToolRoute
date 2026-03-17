@@ -19,7 +19,8 @@ export async function GET(
     .eq('status', 'active')
     .single()
 
-  const score = skill?.skill_scores?.overall_score
+  const scores = skill?.skill_scores as any
+  const score = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
   const label = 'ToolRoute'
   const scoreText = score != null ? `${score.toFixed(1)}/10` : 'unrated'
 

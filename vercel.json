@@ -3,6 +3,10 @@
     {
       "path": "/api/github-sync",
       "schedule": "0 0 * * *"
+    },
+    {
+      "path": "/api/cron/recalculate-scores",
+      "schedule": "0 */6 * * *"
     }
   ]
 }

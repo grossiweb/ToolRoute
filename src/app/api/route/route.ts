@@ -118,7 +118,24 @@ export async function POST(request: NextRequest) {
       })
     : filtered
 
-  const candidates = costFiltered.length > 0 ? costFiltered : filtered
+  let candidates = costFiltered.length > 0 ? costFiltered : filtered
+
+  // If we resolved a workflow, filter by junction table (skill_workflows)
+  if (resolvedWorkflow) {
+    const { data: workflowSkillIds } = await supabase
+      .from('skill_workflows')
+      .select('skill_id, workflows!inner(slug)')
+      .eq('workflows.slug', resolvedWorkflow)
+
+    if (workflowSkillIds && workflowSkillIds.length > 0) {
+      const matchedIds = new Set(workflowSkillIds.map((ws: any) => ws.skill_id))
+      const workflowFiltered = candidates.filter((s: any) => matchedIds.has(s.id))
+      if (workflowFiltered.length > 0) {
+        candidates = workflowFiltered
+      }
+      // If no candidates survive the junction filter, fall back to unfiltered list
+    }
+  }
 
   // Sort by priority mode
   const sorted = [...candidates].sort((a: any, b: any) => {
@@ -146,6 +163,26 @@ export async function POST(request: NextRequest) {
   const top = sorted[0] as any
   const alternatives = sorted.slice(1, 4).map((s: any) => s.slug)
 
+  // Fetch outcome count for the recommended skill (more data = higher confidence)
+  const { count: outcomeCount } = await supabase
+    .from('outcome_records')
+    .select('id', { count: 'exact', head: true })
+    .eq('skill_id', top.id)
+
+  const dataBackedOutcomeCount = outcomeCount ?? 0
+
+  // Adjust confidence: boost when we have junction-table matches and outcome data
+  let adjustedConfidence = confidence
+  if (resolvedWorkflow && candidates.length < (costFiltered.length > 0 ? costFiltered : filtered).length) {
+    // Junction table narrowed the results — boost confidence
+    adjustedConfidence = Math.min(0.97, adjustedConfidence + 0.05)
+  }
+  if (dataBackedOutcomeCount > 0) {
+    // More outcome records = higher confidence, diminishing returns
+    const outcomeBoost = Math.min(0.08, Math.log10(dataBackedOutcomeCount + 1) * 0.03)
+    adjustedConfidence = Math.min(0.99, adjustedConfidence + outcomeBoost)
+  }
+
   // Recommend combo if available
   const combo = await getRecommendedCombo(supabase, top.slug, alternatives)
 
@@ -158,17 +195,19 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     recommended_skill: top.slug,
     recommended_skill_name: top.canonical_name,
-    confidence: Math.round(confidence * 100) / 100,
+    confidence: Math.round(adjustedConfidence * 100) / 100,
     reasoning: buildReasoning(top, priority, task, resolvedWorkflow),
     alternatives,
     recommended_combo: combo,
     fallback,
     scores: top.skill_scores,
+    outcome_count: dataBackedOutcomeCount,
     non_mcp_alternative: getNonMcpAlternative(resolvedWorkflow),
     routing_metadata: {
       resolved_workflow: resolvedWorkflow,
       priority_mode: priority,
       candidates_evaluated: candidates.length,
+      junction_table_filtered: resolvedWorkflow ? true : false,
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
     },

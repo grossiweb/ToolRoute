@@ -125,10 +125,10 @@ export default async function CombinationDetailPage({
             <span className="text-gray-400">Confidence:</span>
             <span className="font-bold text-gray-700 ml-1">{combo.confidence_level}</span>
           </div>
-          {combo.workflows?.name && (
+          {(combo.workflows as any)?.name && (
             <div>
               <span className="text-gray-400">Workflow:</span>
-              <span className="font-bold text-gray-700 ml-1">{combo.workflows.name}</span>
+              <span className="font-bold text-gray-700 ml-1">{(combo.workflows as any).name}</span>
             </div>
           )}
         </div>
@@ -222,7 +222,7 @@ export default async function CombinationDetailPage({
           <span className="text-gray-300">{'  '}&quot;task&quot;: </span>
           <span className="text-green-400">&quot;{combo.description?.slice(0, 50) || combo.name}&quot;</span>{'\n'}
           <span className="text-gray-300">{'  '}&quot;workflow_slug&quot;: </span>
-          <span className="text-green-400">&quot;{combo.workflows?.slug || 'general'}&quot;</span>{'\n'}
+          <span className="text-green-400">&quot;{(combo.workflows as any)?.slug || 'general'}&quot;</span>{'\n'}
           <span className="text-gray-300">{'}'}</span>
         </div>
       </div>
