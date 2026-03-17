@@ -3,10 +3,16 @@ import { formatScore } from '@/lib/scoring'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
+import { SortDropdown } from '@/components/SortDropdown'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
 export const revalidate = 3600
+
+function normalizeScore(score: number | null | undefined): number | null {
+  if (score == null) return null
+  return score > 10 ? score / 10 : score
+}
 
 function getScoreColor(score: number): string {
   if (score >= 9) return 'text-emerald-400'
@@ -40,8 +46,10 @@ export async function generateMetadata({
 
 export default async function LeaderboardDetailPage({
   params,
+  searchParams,
 }: {
   params: { slug: string }
+  searchParams: { sort?: string }
 }) {
   const supabase = createServerSupabaseClient()
 
@@ -66,13 +74,24 @@ export default async function LeaderboardDetailPage({
     `)
     .eq('tool_type_id', toolType.id)
 
-  // Sort by overall_score DESC
+  // Sort tools based on selected sort key
+  const sortKey = searchParams.sort || 'score'
+
   const sortedTools = (typeTools || [])
     .filter((t: any) => t.skills)
     .sort((a: any, b: any) => {
-      const aScore = a.skills?.skill_scores?.overall_score || 0
-      const bScore = b.skills?.skill_scores?.overall_score || 0
-      return bScore - aScore
+      const scoresA = a.skills?.skill_scores
+      const scoresB = b.skills?.skill_scores
+
+      switch (sortKey) {
+        case 'output': return (normalizeScore(scoresB?.output_score) ?? 0) - (normalizeScore(scoresA?.output_score) ?? 0)
+        case 'reliability': return (normalizeScore(scoresB?.reliability_score) ?? 0) - (normalizeScore(scoresA?.reliability_score) ?? 0)
+        case 'efficiency': return (normalizeScore(scoresB?.efficiency_score) ?? 0) - (normalizeScore(scoresA?.efficiency_score) ?? 0)
+        case 'cost': return (normalizeScore(scoresB?.cost_score) ?? 0) - (normalizeScore(scoresA?.cost_score) ?? 0)
+        case 'trust': return (normalizeScore(scoresB?.trust_score) ?? 0) - (normalizeScore(scoresA?.trust_score) ?? 0)
+        case 'stars': return (b.skills?.skill_metrics?.github_stars ?? 0) - (a.skills?.skill_metrics?.github_stars ?? 0)
+        default: return (normalizeScore(scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.overall_score) ?? 0)
+      }
     })
 
   return (
@@ -117,11 +136,14 @@ export default async function LeaderboardDetailPage({
       {/* Leaderboard Table */}
       {sortedTools.length > 0 ? (
         <div className="card overflow-hidden p-0">
-          <div className="px-5 py-4 border-b border-gray-100">
-            <h2 className="font-bold text-gray-900">{toolType.name} Rankings</h2>
-            <p className="text-xs text-gray-400 mt-0.5">
-              Ranked by overall ToolRoute Score across all benchmark dimensions
-            </p>
+          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+            <div>
+              <h2 className="font-bold text-gray-900">{toolType.name} Rankings</h2>
+              <p className="text-xs text-gray-400 mt-0.5">Ranked by overall ToolRoute Score across all benchmark dimensions</p>
+            </div>
+            <Suspense>
+              <SortDropdown currentSort={searchParams.sort || 'score'} basePath={`/leaderboards/${params.slug}`} />
+            </Suspense>
           </div>
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
@@ -142,12 +164,12 @@ export default async function LeaderboardDetailPage({
                 {sortedTools.map((entry: any, idx: number) => {
                   const skill = entry.skills
                   const scores = skill?.skill_scores
-                  const overallScore = scores?.overall_score
-                  const outputScore = scores?.output_score
-                  const reliabilityScore = scores?.reliability_score
-                  const efficiencyScore = scores?.efficiency_score
-                  const costScore = scores?.cost_score
-                  const trustScore = scores?.trust_score
+                  const overallScore = normalizeScore(scores?.overall_score)
+                  const outputScore = normalizeScore(scores?.output_score)
+                  const reliabilityScore = normalizeScore(scores?.reliability_score)
+                  const efficiencyScore = normalizeScore(scores?.efficiency_score)
+                  const costScore = normalizeScore(scores?.cost_score)
+                  const trustScore = normalizeScore(scores?.trust_score)
                   const stars = skill?.skill_metrics?.github_stars
 
                   return (

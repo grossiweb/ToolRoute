@@ -1,7 +1,14 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { formatScore } from '@/lib/scoring'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { SortDropdown } from '@/components/SortDropdown'
 import { Metadata } from 'next'
+
+function normalizeScore(score: number | null | undefined): number | null {
+  if (score == null) return null
+  return score > 10 ? score / 10 : score
+}
 
 export const revalidate = 3600
 
@@ -10,7 +17,11 @@ export const metadata: Metadata = {
   description: 'Browse 200+ MCP servers ranked by real execution benchmarks. Find the best tool for any agent task.',
 }
 
-export default async function ServersPage() {
+export default async function ServersPage({
+  searchParams,
+}: {
+  searchParams: { sort?: string }
+}) {
   const supabase = createServerSupabaseClient()
 
   const { data: skills } = await supabase
@@ -32,6 +43,27 @@ export default async function ServersPage() {
     .select('slug, name')
     .order('name')
 
+  // Sort servers based on selected sort key
+  const sortKey = searchParams.sort || 'score'
+
+  const sortedServers = [...servers].sort((a: any, b: any) => {
+    const scoresA = Array.isArray(a.skill_scores) ? a.skill_scores[0] : a.skill_scores
+    const scoresB = Array.isArray(b.skill_scores) ? b.skill_scores[0] : b.skill_scores
+    const metricsA = Array.isArray(a.skill_metrics) ? a.skill_metrics[0] : a.skill_metrics
+    const metricsB = Array.isArray(b.skill_metrics) ? b.skill_metrics[0] : b.skill_metrics
+
+    switch (sortKey) {
+      case 'output': return (normalizeScore(scoresB?.output_score) ?? 0) - (normalizeScore(scoresA?.output_score) ?? 0)
+      case 'reliability': return (normalizeScore(scoresB?.reliability_score) ?? 0) - (normalizeScore(scoresA?.reliability_score) ?? 0)
+      case 'efficiency': return (normalizeScore(scoresB?.efficiency_score) ?? 0) - (normalizeScore(scoresA?.efficiency_score) ?? 0)
+      case 'cost': return (normalizeScore(scoresB?.cost_score) ?? 0) - (normalizeScore(scoresA?.cost_score) ?? 0)
+      case 'trust': return (normalizeScore(scoresB?.trust_score) ?? 0) - (normalizeScore(scoresA?.trust_score) ?? 0)
+      case 'stars': return (metricsB?.github_stars ?? 0) - (metricsA?.github_stars ?? 0)
+      case 'recent': return (metricsA?.days_since_last_commit ?? 999) - (metricsB?.days_since_last_commit ?? 999)
+      default: return (normalizeScore(scoresB?.value_score ?? scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.value_score ?? scoresA?.overall_score) ?? 0)
+    }
+  })
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
@@ -43,30 +75,35 @@ export default async function ServersPage() {
       </div>
 
       {/* Stats bar */}
-      <div className="flex items-center gap-6 mb-8 text-sm">
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-900">{servers.length}</span>
-          <span className="text-gray-500">servers</span>
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900">{servers.length}</span>
+            <span className="text-gray-500">servers</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900">{workflows?.length || 0}</span>
+            <span className="text-gray-500">categories</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900">5</span>
+            <span className="text-gray-500">score dimensions</span>
+          </div>
         </div>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-900">{workflows?.length || 0}</span>
-          <span className="text-gray-500">categories</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <span className="font-bold text-gray-900">5</span>
-          <span className="text-gray-500">score dimensions</span>
-        </div>
+        <Suspense>
+          <SortDropdown currentSort={searchParams.sort || 'score'} basePath="/servers" />
+        </Suspense>
       </div>
 
       {/* Grid */}
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {servers.map((skill: any) => {
+        {sortedServers.map((skill: any) => {
           const scores = skill.skill_scores as any
           const metrics = skill.skill_metrics as any
           const valueScore = Array.isArray(scores) ? scores[0]?.value_score : scores?.value_score
           const overallScore = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
           const stars = Array.isArray(metrics) ? metrics[0]?.github_stars : metrics?.github_stars
-          const displayScore = valueScore ?? overallScore
+          const displayScore = normalizeScore(valueScore ?? overallScore)
 
           return (
             <Link

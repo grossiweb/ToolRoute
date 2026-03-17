@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { semanticMatchWorkflow } from '@/lib/embeddings'
 
 // Task keywords → workflow slug mapping for NL task matching
 const TASK_WORKFLOW_MAP: Record<string, string[]> = {
@@ -78,8 +79,26 @@ export async function POST(request: NextRequest) {
   }
 
   // Resolve workflow from task if not explicitly provided
-  const resolvedWorkflow = explicitWorkflow || matchWorkflowFromTask(task)
-  const confidence = explicitWorkflow ? 0.95 : calcTaskConfidence(task, resolvedWorkflow)
+  let resolvedWorkflow = explicitWorkflow || ''
+  let confidence = explicitWorkflow ? 0.95 : 0.5
+  let matchMethod: 'explicit' | 'semantic' | 'keyword' = explicitWorkflow ? 'explicit' : 'keyword'
+
+  if (!explicitWorkflow && task) {
+    // Try semantic matching first
+    const semanticResult = await semanticMatchWorkflow(task)
+
+    if (semanticResult.method === 'semantic' && semanticResult.similarity > 0.3) {
+      resolvedWorkflow = semanticResult.workflow
+      // Semantic confidence: similarity score maps to 0.65-0.95 range
+      confidence = Math.min(0.95, 0.65 + semanticResult.similarity * 0.3)
+      matchMethod = 'semantic'
+    } else {
+      // Fall back to keyword matching
+      resolvedWorkflow = matchWorkflowFromTask(task)
+      confidence = calcTaskConfidence(task, resolvedWorkflow)
+      matchMethod = 'keyword'
+    }
+  }
 
   // Fetch skills with scores
   let query = supabase
@@ -210,6 +229,7 @@ export async function POST(request: NextRequest) {
       junction_table_filtered: resolvedWorkflow ? true : false,
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
+      match_method: matchMethod,
     },
     wanted_telemetry: {
       report_endpoint: '/api/report',

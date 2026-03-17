@@ -10,10 +10,17 @@ export const metadata: Metadata = {
   description: 'Find, combine, and deploy the right MCP skills for your AI agents. Outcome-scored, community-verified, agent-first.',
   openGraph: {
     title: 'ToolRoute',
-    description: 'The skill intelligence platform for AI agents.',
+    description: 'Intelligent routing for AI tools. Find the best MCP server for any agent task.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
+    images: ['/api/og?title=ToolRoute&type=server'],
+  },
+  twitter: {
+    card: 'summary_large_image',
+    title: 'ToolRoute — Intelligent Routing for AI Tools',
+    description: 'Find the best MCP server for any agent task with real benchmark data.',
+    images: ['/api/og?title=ToolRoute&type=server'],
   },
 }
 

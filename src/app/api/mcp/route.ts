@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { semanticMatchWorkflow } from '@/lib/embeddings'
 
 /**
  * ToolRoute MCP Server — JSON-RPC over HTTP
@@ -162,7 +163,11 @@ async function handleToolCall(id: any, params: any) {
 
       // Filter by workflow junction tables if task provided
       if (task) {
-        const resolvedWorkflow = matchWorkflow(task)
+        // Try semantic matching, fall back to keyword
+        const semanticResult = await semanticMatchWorkflow(task)
+        const resolvedWorkflow = semanticResult.method === 'semantic' && semanticResult.similarity > 0.3
+          ? semanticResult.workflow
+          : matchWorkflow(task)
         if (resolvedWorkflow) {
           const { data: wfSkills } = await supabase
             .from('skill_workflows')

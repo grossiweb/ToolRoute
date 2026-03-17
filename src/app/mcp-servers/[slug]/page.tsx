@@ -14,7 +14,7 @@ export async function generateMetadata({
   const supabase = createServerSupabaseClient()
   const { data: skill } = await supabase
     .from('skills')
-    .select('canonical_name, short_description')
+    .select('canonical_name, short_description, skill_scores(value_score, overall_score)')
     .eq('slug', params.slug)
     .single()
 
@@ -22,9 +22,25 @@ export async function generateMetadata({
     return { title: 'Server Not Found — ToolRoute' }
   }
 
+  const scores = (skill as any).skill_scores
+  const scoreVal = Array.isArray(scores) ? scores[0]?.value_score ?? scores[0]?.overall_score : scores?.value_score ?? scores?.overall_score
+  const scoreParam = scoreVal != null ? `&score=${scoreVal}` : ''
+  const ogImage = `/api/og?title=${encodeURIComponent(skill.canonical_name)}${scoreParam}&type=server`
+
   return {
     title: `${skill.canonical_name} MCP Server — ToolRoute`,
     description: skill.short_description || `${skill.canonical_name} MCP server benchmarks, scores, and routing intelligence on ToolRoute.`,
+    openGraph: {
+      title: `${skill.canonical_name} MCP Server`,
+      description: skill.short_description || `${skill.canonical_name} MCP server benchmarks and scores on ToolRoute.`,
+      images: [ogImage],
+    },
+    twitter: {
+      card: 'summary_large_image',
+      title: `${skill.canonical_name} MCP Server`,
+      description: skill.short_description || `${skill.canonical_name} MCP server benchmarks and scores on ToolRoute.`,
+      images: [ogImage],
+    },
   }
 }
 
