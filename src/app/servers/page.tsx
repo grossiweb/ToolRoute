@@ -1,139 +1,120 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { SkillCard } from '@/components/SkillCard'
-import { Suspense } from 'react'
-import { Sidebar } from '@/components/Sidebar'
-import { SortDropdown } from '@/components/SortDropdown'
+import { formatScore } from '@/lib/scoring'
+import Link from 'next/link'
+import { Metadata } from 'next'
 
 export const revalidate = 3600
 
-export const metadata = {
-  title: 'Servers — ToolRoute',
-  description: 'Browse and compare MCP servers ranked by real benchmark data. Find the best AI tools for your workflow.',
+export const metadata: Metadata = {
+  title: 'MCP Servers — ToolRoute',
+  description: 'Browse 200+ MCP servers ranked by real execution benchmarks. Find the best tool for any agent task.',
 }
 
-export default async function ServersPage({
-  searchParams,
-}: {
-  searchParams: { q?: string; vertical?: string; workflow?: string; sort?: string }
-}) {
+export default async function ServersPage() {
   const supabase = createServerSupabaseClient()
 
-  let query = supabase
+  const { data: skills } = await supabase
     .from('skills')
     .select(`
-      id, slug, canonical_name, short_description, vendor_type, status,
-      skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score ),
+      id, slug, canonical_name, short_description, vendor_type,
+      skill_scores ( overall_score, value_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
       skill_metrics ( github_stars, days_since_last_commit )
     `)
     .eq('status', 'active')
-    .limit(200)
+    .order('canonical_name')
+    .limit(300)
 
-  if (searchParams.q) {
-    query = query.ilike('canonical_name', `%${searchParams.q}%`)
-  }
+  const servers = skills || []
 
-  if (searchParams.workflow) {
-    const { data: workflowSkills } = await supabase
-      .from('skill_workflows')
-      .select('skill_id, workflows!inner(slug)')
-      .eq('workflows.slug', searchParams.workflow)
-    if (workflowSkills && workflowSkills.length > 0) {
-      const skillIds = workflowSkills.map((ws: any) => ws.skill_id)
-      query = query.in('id', skillIds)
-    } else {
-      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
-    }
-  }
-
-  if (searchParams.vertical) {
-    const { data: verticalSkills } = await supabase
-      .from('skill_verticals')
-      .select('skill_id, verticals!inner(slug)')
-      .eq('verticals.slug', searchParams.vertical)
-    if (verticalSkills && verticalSkills.length > 0) {
-      const skillIds = verticalSkills.map((vs: any) => vs.skill_id)
-      query = query.in('id', skillIds)
-    } else {
-      query = query.in('id', ['00000000-0000-0000-0000-000000000000'])
-    }
-  }
-
-  const sortBy = searchParams.sort || 'score'
-  const sortMap: Record<string, string> = {
-    score: 'skill_scores(overall_score)',
-    output: 'skill_scores(output_score)',
-    reliability: 'skill_scores(reliability_score)',
-    efficiency: 'skill_scores(efficiency_score)',
-    cost: 'skill_scores(cost_score)',
-    trust: 'skill_scores(trust_score)',
-    stars: 'skill_metrics(github_stars)',
-    recent: 'skill_metrics(days_since_last_commit)',
-  }
-  const sortCol = sortMap[sortBy] || sortMap.score
-  const ascending = sortBy === 'recent' || sortBy === 'cost' ? true : false
-  query = query.order(sortCol, { ascending })
-
-  const { data: skills } = await query
+  // Get unique workflows for filter
+  const { data: workflows } = await supabase
+    .from('workflows')
+    .select('slug, name')
+    .order('name')
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4">
-          MCP SERVER DIRECTORY
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          Servers
-        </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          Browse MCP servers ranked by real execution benchmarks. Filter by workflow, industry, or sort by the metrics that matter to you.
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">MCP Servers</h1>
+        <p className="text-gray-500 max-w-2xl">
+          {servers.length}+ servers ranked by real execution data. Every score is outcome-backed on a 0-10 scale across 5 dimensions.
         </p>
       </div>
 
-      {/* Stats + Sort bar */}
-      <div className="flex items-center justify-between mb-6">
-        <p className="text-sm text-gray-500">
-          {skills ? `${skills.length} servers` : 'Loading...'}
-          {searchParams.q && <span> matching <strong>&quot;{searchParams.q}&quot;</strong></span>}
-          {searchParams.workflow && (
-            <span> in <strong>{searchParams.workflow.replace(/-/g, ' ')}</strong>{' '}
-              <a href="/servers" className="text-brand hover:underline ml-1">✕ clear</a>
-            </span>
-          )}
-          {searchParams.vertical && (
-            <span> in <strong>{searchParams.vertical.replace(/-/g, ' ')}</strong>{' '}
-              <a href="/servers" className="text-brand hover:underline ml-1">✕ clear</a>
-            </span>
-          )}
-        </p>
-        <Suspense>
-          <SortDropdown
-            currentSort={sortBy}
-            workflow={searchParams.workflow}
-            vertical={searchParams.vertical}
-            basePath="/servers"
-          />
-        </Suspense>
-      </div>
-
-      {/* Sidebar + Grid */}
-      <div className="flex gap-6">
-        <Suspense><Sidebar /></Suspense>
-        <div className="flex-1 min-w-0">
-          {skills && skills.length > 0 ? (
-            <div className="grid grid-cols-1 lg:grid-cols-2 xl:grid-cols-3 gap-4">
-              {skills.map((skill: any) => (
-                <SkillCard key={skill.id} skill={skill} />
-              ))}
-            </div>
-          ) : (
-            <div className="text-center py-20 text-gray-400">
-              <p className="text-lg font-medium">No servers found</p>
-              <p className="text-sm mt-1">Try a different search or <a href="/submit" className="text-brand hover:underline">submit a server</a></p>
-            </div>
-          )}
+      {/* Stats bar */}
+      <div className="flex items-center gap-6 mb-8 text-sm">
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-gray-900">{servers.length}</span>
+          <span className="text-gray-500">servers</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-gray-900">{workflows?.length || 0}</span>
+          <span className="text-gray-500">categories</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <span className="font-bold text-gray-900">5</span>
+          <span className="text-gray-500">score dimensions</span>
         </div>
       </div>
+
+      {/* Grid */}
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+        {servers.map((skill: any) => {
+          const scores = skill.skill_scores as any
+          const metrics = skill.skill_metrics as any
+          const valueScore = Array.isArray(scores) ? scores[0]?.value_score : scores?.value_score
+          const overallScore = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
+          const stars = Array.isArray(metrics) ? metrics[0]?.github_stars : metrics?.github_stars
+          const displayScore = valueScore ?? overallScore
+
+          return (
+            <Link
+              key={skill.id}
+              href={`/mcp-servers/${skill.slug}`}
+              className="card group hover:border-brand/30 transition-all duration-200"
+            >
+              <div className="flex items-start justify-between mb-2">
+                <div className="flex-1 min-w-0">
+                  <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors truncate">
+                    {skill.canonical_name}
+                  </h3>
+                  <div className="flex items-center gap-2 mt-1">
+                    {skill.vendor_type && (
+                      <span className="badge text-[10px] bg-gray-100 text-gray-500">{skill.vendor_type}</span>
+                    )}
+                    {stars != null && stars > 0 && (
+                      <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                        ★ {stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : stars}
+                      </span>
+                    )}
+                  </div>
+                </div>
+                {displayScore != null && (
+                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm ${
+                    displayScore >= 8.5 ? 'bg-teal-50 text-teal-700' :
+                    displayScore >= 7.0 ? 'bg-brand-light text-brand' :
+                    displayScore >= 5.0 ? 'bg-amber-50 text-amber-700' :
+                    'bg-red-50 text-red-700'
+                  }`}>
+                    {formatScore(displayScore)}
+                  </div>
+                )}
+              </div>
+              <p className="text-xs text-gray-500 line-clamp-2">
+                {skill.short_description || 'No description available.'}
+              </p>
+            </Link>
+          )
+        })}
+      </div>
+
+      {servers.length === 0 && (
+        <div className="text-center py-20 text-gray-400">
+          <p className="text-lg font-bold mb-2">No servers found</p>
+          <p className="text-sm">Check back soon — servers are being added to the catalog.</p>
+        </div>
+      )}
     </div>
   )
 }

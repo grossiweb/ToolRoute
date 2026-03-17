@@ -164,7 +164,7 @@ export default function SubmitPage() {
                 </svg>
               </div>
 
-              <h1 className="text-3xl font-black text-gray-900 mb-3">Skill Submitted!</h1>
+              <h1 className="text-3xl font-black text-gray-900 mb-3">Server Submitted!</h1>
 
               {resultData?.auto_approved ? (
                 <div className="inline-flex items-center gap-2 bg-teal-light text-teal px-4 py-2 rounded-full text-sm font-semibold mb-4">
@@ -183,13 +183,13 @@ export default function SubmitPage() {
               )}
 
               <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
-                Your skill has been added to the ToolRoute pipeline. Once approved, it will appear
+                Your server has been added to the ToolRoute pipeline. Once approved, it will appear
                 in the catalog and be available for agent routing recommendations.
               </p>
 
               <div className="flex flex-col sm:flex-row items-center justify-center gap-3">
                 <Link href="/servers" className="btn-primary px-6 py-3">
-                  Browse skills
+                  Browse servers
                 </Link>
                 <button
                   onClick={() => {
@@ -224,12 +224,12 @@ export default function SubmitPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-black text-gray-900">Submit a Skill</h1>
+            <h1 className="text-3xl font-black text-gray-900">Submit a Server</h1>
             <p className="text-sm text-gray-500">Add an MCP server to the ToolRoute catalog</p>
           </div>
         </div>
         <p className="text-gray-600 leading-relaxed max-w-2xl">
-          ToolRoute is the open intelligence layer for MCP skills. Submit your server and it enters
+          ToolRoute is the open intelligence layer for MCP skills. Submit your MCP server and it enters
           the benchmark pipeline — scored on output quality, reliability, efficiency, cost, and trust.
           Agents use these scores to route tasks to the best tool automatically.
         </p>
@@ -256,7 +256,7 @@ export default function SubmitPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal font-bold mt-0.5">&#x2713;</span>
-                Once approved, your skill enters the benchmark pipeline and earns a Value Score
+                Once approved, your server enters the benchmark pipeline and earns a Value Score
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal font-bold mt-0.5">&#x2713;</span>
@@ -298,7 +298,7 @@ export default function SubmitPage() {
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
                 <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                  Skill Name <span className="text-red-500">*</span>
+                  Server Name <span className="text-red-500">*</span>
                 </label>
                 <input
                   type="text"
@@ -331,7 +331,7 @@ export default function SubmitPage() {
               <input
                 type="text"
                 required
-                placeholder="What does this skill do for an agent?"
+                placeholder="What does this server do for an agent?"
                 value={form.short_description}
                 onChange={e => setForm(f => ({ ...f, short_description: e.target.value }))}
                 className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
@@ -507,7 +507,7 @@ export default function SubmitPage() {
               </label>
               <textarea
                 rows={3}
-                placeholder="Any context about this skill, its use cases, or why it should be featured..."
+                placeholder="Any context about this server, its use cases, or why it should be featured..."
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
                 className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors resize-none"
@@ -544,7 +544,7 @@ export default function SubmitPage() {
                 </>
               ) : (
                 <>
-                  Submit Skill
+                  Submit Server
                   <svg className="w-5 h-5" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M13.5 4.5L21 12m0 0l-7.5 7.5M21 12H3" />
                   </svg>
@@ -553,7 +553,7 @@ export default function SubmitPage() {
             </span>
           </button>
           <p className="text-xs text-gray-400 text-center mt-3">
-            By submitting, you confirm this is a legitimate MCP server and you have the right to list it.
+            By submitting, you confirm this is a legitimate MCP server and you have the right to list it on ToolRoute.
           </p>
         </div>
       </form>

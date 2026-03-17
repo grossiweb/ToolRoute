@@ -142,8 +142,7 @@ async function handleToolCall(id: any, params: any) {
   switch (name) {
     case 'toolroute_route': {
       const { task, workflow_slug, priority = 'best_value', trust_floor = 0 } = args || {}
-      // Delegate to the route API logic inline
-      let query = supabase
+      let routeQuery = supabase
         .from('skills')
         .select(`
           id, slug, canonical_name, short_description,
@@ -151,16 +150,33 @@ async function handleToolCall(id: any, params: any) {
         `)
         .eq('status', 'active')
         .not('skill_scores', 'is', null)
-        .limit(20)
+        .limit(50)
 
-      const { data: skills } = await query
+      const { data: skills } = await routeQuery
 
       if (!skills || skills.length === 0) {
         return toolResult(id, 'No scored skills found yet. Data accumulating.')
       }
 
-      const filtered = skills.filter((s: any) => (s.skill_scores?.trust_score ?? 0) >= trust_floor)
-      const sorted = [...filtered].sort((a: any, b: any) => {
+      let candidates = skills.filter((s: any) => (s.skill_scores?.trust_score ?? 0) >= trust_floor)
+
+      // Filter by workflow junction tables if task provided
+      if (task) {
+        const resolvedWorkflow = matchWorkflow(task)
+        if (resolvedWorkflow) {
+          const { data: wfSkills } = await supabase
+            .from('skill_workflows')
+            .select('skill_id, workflows!inner(slug)')
+            .eq('workflows.slug', resolvedWorkflow)
+          if (wfSkills && wfSkills.length > 0) {
+            const matchedIds = new Set(wfSkills.map((ws: any) => ws.skill_id))
+            const wfFiltered = candidates.filter((s: any) => matchedIds.has(s.id))
+            if (wfFiltered.length > 0) candidates = wfFiltered
+          }
+        }
+      }
+
+      const sorted = [...candidates].sort((a: any, b: any) => {
         const key = priority === 'best_quality' ? 'output_score' : 'value_score'
         return ((b.skill_scores as any)?.[key] || 0) - ((a.skill_scores as any)?.[key] || 0)
       })
@@ -168,12 +184,19 @@ async function handleToolCall(id: any, params: any) {
       const top = sorted[0] as any
       if (!top) return toolResult(id, 'No skills match your constraints.')
 
+      const { count: outcomeCount } = await supabase
+        .from('outcome_records')
+        .select('id', { count: 'exact', head: true })
+        .eq('skill_id', top.id)
+
       return toolResult(id, JSON.stringify({
         recommended_skill: top.slug,
         name: top.canonical_name,
-        confidence: 0.85,
+        confidence: Math.min(0.95, 0.75 + Math.min(0.15, Math.log10((outcomeCount || 0) + 1) * 0.05)),
         value_score: top.skill_scores?.value_score,
+        outcome_count: outcomeCount || 0,
         alternatives: sorted.slice(1, 4).map((s: any) => s.slug),
+        fallback: sorted.length > 1 ? sorted[1].slug : null,
       }, null, 2))
     }
 
@@ -220,28 +243,29 @@ async function handleToolCall(id: any, params: any) {
     case 'toolroute_report': {
       const { skill_slug, outcome, latency_ms, cost_usd, quality_rating } = args || {}
 
-      // Find the skill
       const { data: skill } = await supabase
         .from('skills')
         .select('id')
         .eq('slug', skill_slug)
         .single()
 
-      if (!skill) return toolResult(id, `Error: Skill "${skill_slug}" not found.`)
+      if (!skill) return toolResult(id, `Error: Server "${skill_slug}" not found.`)
 
-      // Insert telemetry event
-      await supabase.from('telemetry_events').insert({
+      // Insert into outcome_records (feeds score recalculation pipeline)
+      await supabase.from('outcome_records').insert({
         skill_id: skill.id,
-        success: outcome === 'success',
-        response_ms: latency_ms || null,
-        anonymous_agent_id: 'mcp-server-client',
+        outcome_status: outcome,
+        latency_ms: latency_ms ?? null,
+        estimated_cost_usd: cost_usd ?? null,
+        output_quality_rating: quality_rating ?? null,
+        proof_type: 'self_reported',
       })
 
       return toolResult(id, JSON.stringify({
         recorded: true,
         skill: skill_slug,
         outcome,
-        message: 'Telemetry recorded. Thank you for contributing to the intelligence graph.',
+        message: 'Outcome recorded. Scores update every 6 hours. Thank you for improving routing for all agents.',
       }, null, 2))
     }
 
@@ -262,4 +286,32 @@ function toolResult(id: any, text: string) {
   return jsonRpcResult(id, {
     content: [{ type: 'text', text }],
   })
+}
+
+// Lightweight keyword → workflow matcher for MCP routing
+const TASK_KEYWORDS: Record<string, string[]> = {
+  'research-competitive-intelligence': ['research', 'scrape', 'crawl', 'extract', 'competitor', 'pricing', 'web search'],
+  'developer-workflow-code-management': ['code', 'repository', 'pull request', 'github', 'refactor', 'debug'],
+  'qa-testing-automation': ['browser', 'navigate', 'click', 'test', 'automate', 'playwright', 'e2e'],
+  'data-analysis-reporting': ['database', 'sql', 'query', 'analytics', 'report', 'data analysis'],
+  'sales-research-outreach': ['prospect', 'lead', 'crm', 'salesforce', 'outreach', 'sales'],
+  'content-creation-publishing': ['content', 'blog', 'article', 'publish', 'seo', 'write'],
+  'customer-support-automation': ['support', 'ticket', 'triage', 'jira', 'helpdesk'],
+  'knowledge-management': ['notion', 'confluence', 'wiki', 'knowledge base', 'documentation'],
+  'design-to-code-workflow': ['figma', 'design', 'ui', 'component', 'layout'],
+  'it-devops-platform-operations': ['aws', 'cloud', 'infrastructure', 'devops', 'kubernetes', 'docker'],
+}
+
+function matchWorkflow(task: string): string | null {
+  const lower = task.toLowerCase()
+  let best: string | null = null
+  let bestScore = 0
+  for (const [wf, kws] of Object.entries(TASK_KEYWORDS)) {
+    let score = 0
+    for (const kw of kws) {
+      if (lower.includes(kw)) score += kw.length
+    }
+    if (score > bestScore) { bestScore = score; best = wf }
+  }
+  return best
 }

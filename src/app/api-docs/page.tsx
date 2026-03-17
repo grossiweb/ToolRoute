@@ -27,10 +27,16 @@ const endpoints = [
   "recommended_skill_name": "Firecrawl MCP",
   "confidence": 0.82,
   "reasoning": "Firecrawl MCP scores 8.7/10 value...",
+  "outcome_count": 47,
   "alternatives": ["exa-mcp-server", "playwright-mcp"],
   "recommended_combo": ["firecrawl-mcp", "exa-mcp-server"],
   "fallback": "exa-mcp-server",
   "scores": { "value_score": 8.7, "output_score": 9.0, ... },
+  "routing_metadata": {
+    "resolved_workflow": "research-competitive-intelligence",
+    "junction_table_filtered": true,
+    "candidates_evaluated": 12
+  },
   "non_mcp_alternative": { "approach": "direct_api", ... },
   "wanted_telemetry": { "reward_multiplier": 1.5, ... }
 }`,
@@ -62,16 +68,74 @@ const endpoints = [
   "skill_slug": "firecrawl-mcp",
   "outcome": "success",
   "latency_ms": 2400,
-  "estimated_cost_usd": 0.003,
+  "cost_usd": 0.003,
   "output_quality_rating": 8.5,
-  "agent_name": "my-research-agent"
+  "agent_identity_id": "my-research-agent"
 }`,
     response: `{
   "accepted": true,
-  "routing_credits": 5,
-  "message": "Outcome recorded. +5 routing credits."
+  "credits_earned": 7,
+  "reputation_earned": 4,
+  "contribution_score": 0.72,
+  "credit_balance": {
+    "total_routing_credits": 142,
+    "total_reputation_points": 68
+  },
+  "message": "Thanks! +7 routing credits earned."
 }`,
     notes: 'Minimal required fields: skill_slug, outcome. Outcome values: success, partial_success, failure, error. Credits: +3 to +10 per report.',
+  },
+  {
+    method: 'POST',
+    path: '/api/mcp',
+    title: 'MCP Server — JSON-RPC Endpoint',
+    description: 'ToolRoute is itself an MCP server. Connect it as a tool source in any MCP-compatible agent. Implements JSON-RPC 2.0 with 5 tools.',
+    request: `// Add to your MCP config:
+{
+  "mcpServers": {
+    "toolroute": {
+      "url": "https://toolroute.io/api/mcp"
+    }
+  }
+}
+
+// Or call directly:
+{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "method": "tools/call",
+  "params": {
+    "name": "toolroute_route",
+    "arguments": {
+      "task": "scrape competitor pricing"
+    }
+  }
+}`,
+    response: `{
+  "jsonrpc": "2.0",
+  "id": 1,
+  "result": {
+    "content": [{
+      "type": "text",
+      "text": "{ \\"recommended_skill\\": \\"firecrawl-mcp\\", ... }"
+    }]
+  }
+}`,
+    notes: 'Tools: toolroute_route, toolroute_search, toolroute_compare, toolroute_missions, toolroute_report. No API key required.',
+  },
+  {
+    method: 'GET',
+    path: '/api/badge/{slug}',
+    title: 'Badge — SVG Score Badge',
+    description: 'Get a shields.io-style SVG badge showing the ToolRoute score for any MCP server. Use in README files.',
+    request: `GET /api/badge/firecrawl-mcp
+
+<!-- Markdown usage -->
+![ToolRoute Score](https://toolroute.io/api/badge/firecrawl-mcp)`,
+    response: `<svg xmlns="http://www.w3.org/2000/svg" ...>
+  <!-- SVG badge showing "ToolRoute | 8.7/10" -->
+</svg>`,
+    notes: 'Returns image/svg+xml. Cached for 1 hour. Color-coded: emerald (>=9), green (>=8), yellow (>=7), orange (>=6), red (<6).',
   },
   {
     method: 'POST',
@@ -181,10 +245,10 @@ const endpoints = [
 
 const sdkExample = `import { ToolRoute } from '@toolroute/sdk'
 
-const neo = new ToolRoute()
+const tr = new ToolRoute()
 
 // 1. Get a recommendation
-const route = await neo.route({
+const route = await tr.route({
   task: 'extract pricing data from competitor websites'
 })
 console.log(route.recommended_skill) // "firecrawl-mcp"
@@ -193,7 +257,7 @@ console.log(route.recommended_skill) // "firecrawl-mcp"
 const result = await runSkill(route.recommended_skill, task)
 
 // 3. Report the outcome
-await neo.report({
+await tr.report({
   skill: route.recommended_skill,
   outcome: result.success ? 'success' : 'failure',
   latency_ms: result.latency,
@@ -251,7 +315,7 @@ export default function ApiDocsPage() {
       <div className="card mb-10">
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-lg font-bold text-gray-900">SDK Quick Start</h2>
-          <span className="badge bg-amber-50 text-amber-700 text-[10px]">Coming Soon</span>
+          <span className="badge bg-green-50 text-green-700 text-[10px]">npm install @toolroute/sdk</span>
         </div>
         <p className="text-sm text-gray-500 mb-4">
           Two-line integration. Route, execute, report — the entire loop in 3 calls.
