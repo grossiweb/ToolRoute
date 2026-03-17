@@ -269,6 +269,72 @@ export default async function LeaderboardDetailPage({
         </div>
       )}
 
+      {/* Why #1 Wins */}
+      {sortedTools.length >= 2 && (() => {
+        const first = sortedTools[0].skills
+        const second = sortedTools[1].skills
+        const s1 = first?.skill_scores
+        const s2 = second?.skill_scores
+
+        if (!s1 || !s2) return null
+
+        // Find which dimensions #1 leads in
+        const dimensions = [
+          { key: 'output_score', label: 'Output Quality', weight: '35%' },
+          { key: 'reliability_score', label: 'Reliability', weight: '25%' },
+          { key: 'efficiency_score', label: 'Efficiency', weight: '15%' },
+          { key: 'cost_score', label: 'Cost', weight: '15%' },
+          { key: 'trust_score', label: 'Trust', weight: '10%' },
+        ]
+
+        const advantages = dimensions
+          .map(d => ({
+            ...d,
+            diff: (normalizeScore(s1[d.key]) ?? 0) - (normalizeScore(s2[d.key]) ?? 0),
+            score1: normalizeScore(s1[d.key]),
+            score2: normalizeScore(s2[d.key]),
+          }))
+          .filter(d => d.diff > 0)
+          .sort((a, b) => b.diff - a.diff)
+
+        const biggestAdvantage = advantages[0]
+
+        return (
+          <div className="mt-6 card border-teal/20 bg-gradient-to-r from-teal-50/50 to-white">
+            <div className="flex items-center gap-2 mb-3">
+              <span className="text-lg">💡</span>
+              <h3 className="font-bold text-gray-900 text-sm">Why {first?.canonical_name} is #1</h3>
+            </div>
+            <p className="text-sm text-gray-600 mb-4">
+              {first?.canonical_name} leads {second?.canonical_name} by{' '}
+              <span className="font-bold text-teal">
+                {biggestAdvantage ? `+${biggestAdvantage.diff.toFixed(1)}` : '—'}
+              </span>{' '}
+              in {biggestAdvantage?.label || 'overall score'}
+              {advantages.length > 1 && `, and also wins in ${advantages.slice(1).map(a => a.label).join(', ')}`}.
+            </p>
+            <div className="grid grid-cols-5 gap-2">
+              {dimensions.map(d => {
+                const v1 = normalizeScore(s1[d.key])
+                const v2 = normalizeScore(s2[d.key])
+                const leads = (v1 ?? 0) > (v2 ?? 0)
+                return (
+                  <div key={d.key} className={`text-center p-2 rounded-lg ${leads ? 'bg-teal-50' : 'bg-gray-50'}`}>
+                    <div className="text-[10px] text-gray-400 mb-1">{d.label}</div>
+                    <div className={`text-sm font-bold ${leads ? 'text-teal-700' : 'text-gray-500'}`}>
+                      {v1 != null ? formatScore(v1) : '—'}
+                    </div>
+                    <div className="text-[10px] text-gray-400">
+                      vs {v2 != null ? formatScore(v2) : '—'}
+                    </div>
+                  </div>
+                )
+              })}
+            </div>
+          </div>
+        )
+      })()}
+
         </div>
       </div>
 

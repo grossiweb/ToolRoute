@@ -1,9 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatScore } from '@/lib/scoring'
-import Link from 'next/link'
 import { Suspense } from 'react'
 import { SortDropdown } from '@/components/SortDropdown'
 import { Sidebar } from '@/components/Sidebar'
+import { SkillCard } from '@/components/SkillCard'
 import { Metadata } from 'next'
 
 function normalizeScore(score: number | null | undefined): number | null {
@@ -92,6 +91,31 @@ export default async function ServersPage({
     }
   })
 
+  // Compute badges for servers
+  const serverBadges = new Map<string, string[]>()
+  for (const skill of sortedServers) {
+    const scores = Array.isArray(skill.skill_scores) ? skill.skill_scores[0] : skill.skill_scores
+    const metrics = Array.isArray(skill.skill_metrics) ? skill.skill_metrics[0] : skill.skill_metrics
+    if (!scores) continue
+
+    const badges: string[] = []
+    const vs = normalizeScore(scores.value_score ?? scores.overall_score)
+    const os = normalizeScore(scores.output_score)
+    const rs = normalizeScore(scores.reliability_score)
+    const cs = normalizeScore(scores.cost_score)
+    const stars = metrics?.github_stars
+
+    if (vs != null && vs >= 9.0) badges.push('Top Rated')
+    else if (os != null && os >= 9.0) badges.push('Best Output')
+    else if (rs != null && rs >= 9.0) badges.push('Most Reliable')
+    else if (cs != null && cs >= 9.0) badges.push('Best Budget')
+
+    if (stars != null && stars >= 5000) badges.push('Popular')
+    // Note: "Active" badge handled natively by SkillCard via isFresh check
+
+    if (badges.length > 0) serverBadges.set(skill.id, badges.slice(0, 2))
+  }
+
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
@@ -129,50 +153,18 @@ export default async function ServersPage({
         <div className="flex-1 min-w-0">
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
             {sortedServers.map((skill: any) => {
-              const scores = skill.skill_scores as any
-              const metrics = skill.skill_metrics as any
-              const valueScore = Array.isArray(scores) ? scores[0]?.value_score : scores?.value_score
-              const overallScore = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
-              const stars = Array.isArray(metrics) ? metrics[0]?.github_stars : metrics?.github_stars
-              const displayScore = normalizeScore(valueScore ?? overallScore)
-
+              const scores = Array.isArray(skill.skill_scores) ? skill.skill_scores[0] : skill.skill_scores
+              const metrics = Array.isArray(skill.skill_metrics) ? skill.skill_metrics[0] : skill.skill_metrics
               return (
-                <Link
+                <SkillCard
                   key={skill.id}
-                  href={`/mcp-servers/${skill.slug}`}
-                  className="card group hover:border-brand/30 transition-all duration-200"
-                >
-                  <div className="flex items-start justify-between mb-2">
-                    <div className="flex-1 min-w-0">
-                      <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors truncate">
-                        {skill.canonical_name}
-                      </h3>
-                      <div className="flex items-center gap-2 mt-1">
-                        {skill.vendor_type && (
-                          <span className="badge text-[10px] bg-gray-100 text-gray-500">{skill.vendor_type}</span>
-                        )}
-                        {stars != null && stars > 0 && (
-                          <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                            ★ {stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : stars}
-                          </span>
-                        )}
-                      </div>
-                    </div>
-                    {displayScore != null && (
-                      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm ${
-                        displayScore >= 8.5 ? 'bg-teal-50 text-teal-700' :
-                        displayScore >= 7.0 ? 'bg-brand-light text-brand' :
-                        displayScore >= 5.0 ? 'bg-amber-50 text-amber-700' :
-                        'bg-red-50 text-red-700'
-                      }`}>
-                        {formatScore(displayScore)}
-                      </div>
-                    )}
-                  </div>
-                  <p className="text-xs text-gray-500 line-clamp-2">
-                    {skill.short_description || 'No description available.'}
-                  </p>
-                </Link>
+                  skill={{
+                    ...skill,
+                    skill_scores: scores,
+                    skill_metrics: metrics,
+                  }}
+                  badges={serverBadges.get(skill.id)}
+                />
               )
             })}
           </div>

@@ -1,5 +1,6 @@
 import Link from 'next/link'
 import { HeroSection } from '@/components/HeroSection'
+import { DecisionFeed } from '@/components/DecisionFeed'
 import { Suspense } from 'react'
 
 export const revalidate = 3600
@@ -10,6 +11,13 @@ export default function HomePage() {
       <Suspense>
         <HeroSection />
       </Suspense>
+
+      {/* Decision Feed — What's Winning Right Now */}
+      <div className="mt-12">
+        <Suspense>
+          <DecisionFeed />
+        </Suspense>
+      </div>
 
       {/* Feature cards */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">

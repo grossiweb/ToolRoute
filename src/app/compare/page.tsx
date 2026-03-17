@@ -10,6 +10,7 @@ export default function ComparePage() {
   const [selected, setSelected] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [rollups, setRollups] = useState<Record<string, any>>({})
+  const [linkCopied, setLinkCopied] = useState(false)
   const supabase = createBrowserSupabaseClient()
 
   useEffect(() => {
@@ -29,6 +30,16 @@ export default function ComparePage() {
     }
     loadSkills()
   }, [])
+
+  // Auto-select from URL params
+  useEffect(() => {
+    const params = new URLSearchParams(window.location.search)
+    const serverSlugs = params.get('servers')?.split(',')
+    if (serverSlugs && serverSlugs.length > 0 && skills.length > 0 && selected.length === 0) {
+      const matched = skills.filter(s => serverSlugs.includes(s.slug))
+      if (matched.length > 0) setSelected(matched.slice(0, 4))
+    }
+  }, [skills])
 
   // Fetch rollups for selected skills
   useEffect(() => {
@@ -139,6 +150,37 @@ export default function ComparePage() {
           {selected.length}/4 MCP servers selected
         </p>
       </div>
+
+      {/* Share comparison */}
+      {selected.length >= 2 && (
+        <div className="flex items-center justify-between mb-8">
+          <p className="text-sm text-gray-500">
+            Comparing <span className="font-semibold text-gray-700">{selected.length}</span> servers across {dimensions.length} dimensions
+          </p>
+          <button
+            onClick={() => {
+              const slugs = selected.map(s => s.slug).join(',')
+              const url = `${window.location.origin}/compare?servers=${slugs}`
+              navigator.clipboard.writeText(url)
+              setLinkCopied(true)
+              setTimeout(() => setLinkCopied(false), 2000)
+            }}
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-brand/30 hover:text-brand transition-all"
+          >
+            {linkCopied ? (
+              <>
+                <svg className="w-4 h-4 text-teal" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 13l4 4L19 7" /></svg>
+                Link Copied!
+              </>
+            ) : (
+              <>
+                <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M8.684 13.342C8.886 12.938 9 12.482 9 12c0-.482-.114-.938-.316-1.342m0 2.684a3 3 0 110-2.684m0 2.684l6.632 3.316m-6.632-6l6.632-3.316m0 0a3 3 0 105.367-2.684 3 3 0 00-5.367 2.684zm0 9.316a3 3 0 105.368 2.684 3 3 0 00-5.368-2.684z" /></svg>
+                Share Comparison
+              </>
+            )}
+          </button>
+        </div>
+      )}
 
       {/* Comparison table */}
       {selected.length >= 2 ? (

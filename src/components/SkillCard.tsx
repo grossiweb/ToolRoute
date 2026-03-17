@@ -1,6 +1,11 @@
 import Link from 'next/link'
 import { getScoreColor, formatScore } from '@/lib/scoring'
 
+function normalizeScore(score: number | null | undefined): number | null {
+  if (score == null) return null
+  return score > 10 ? score / 10 : score
+}
+
 interface SkillCardProps {
   skill: {
     id: string
@@ -8,22 +13,27 @@ interface SkillCardProps {
     canonical_name: string
     short_description: string
     vendor_type: string
-    status: string
+    status?: string
     skill_scores?: {
-      overall_score: number | null
-      trust_score: number | null
-      reliability_score: number | null
-      output_score: number | null
+      overall_score?: number | null
+      value_score?: number | null
+      trust_score?: number | null
+      reliability_score?: number | null
+      output_score?: number | null
+      efficiency_score?: number | null
+      cost_score?: number | null
     } | null
     skill_metrics?: {
-      github_stars: number | null
-      days_since_last_commit: number | null
+      github_stars?: number | null
+      days_since_last_commit?: number | null
     } | null
   }
+  badges?: string[]
 }
 
-export function SkillCard({ skill }: SkillCardProps) {
-  const score = skill.skill_scores?.overall_score
+export function SkillCard({ skill, badges }: SkillCardProps) {
+  const rawScore = skill.skill_scores?.value_score ?? skill.skill_scores?.overall_score
+  const score = normalizeScore(rawScore)
   const stars = skill.skill_metrics?.github_stars
   const daysSince = skill.skill_metrics?.days_since_last_commit
   const isOfficial = skill.vendor_type === 'official'
@@ -50,6 +60,18 @@ export function SkillCard({ skill }: SkillCardProps) {
             {isFresh && (
               <span className="badge bg-green-50 text-green-700 text-[10px]">Active</span>
             )}
+            {badges?.map(badge => (
+              <span key={badge} className={`badge text-[10px] ${
+                badge === 'Top Rated' ? 'bg-teal-50 text-teal-700' :
+                badge === 'Best Output' ? 'bg-purple-50 text-purple-700' :
+                badge === 'Most Reliable' ? 'bg-blue-50 text-blue-700' :
+                badge === 'Best Budget' ? 'bg-green-50 text-green-700' :
+                badge === 'Popular' ? 'bg-amber-50 text-amber-700' :
+                'bg-brand-light text-brand'
+              }`}>
+                {badge}
+              </span>
+            ))}
           </div>
           <p className="text-xs text-gray-500 line-clamp-2">{skill.short_description}</p>
         </div>
@@ -69,9 +91,9 @@ export function SkillCard({ skill }: SkillCardProps) {
       {/* Score breakdown */}
       {skill.skill_scores && (
         <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100">
-          <ScorePill label="Output" value={skill.skill_scores.output_score} />
-          <ScorePill label="Reliability" value={skill.skill_scores.reliability_score} />
-          <ScorePill label="Trust" value={skill.skill_scores.trust_score} />
+          <ScorePill label="Output" value={normalizeScore(skill.skill_scores.output_score)} />
+          <ScorePill label="Reliability" value={normalizeScore(skill.skill_scores.reliability_score)} />
+          <ScorePill label="Trust" value={normalizeScore(skill.skill_scores.trust_score)} />
         </div>
       )}
 
