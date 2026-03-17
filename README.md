@@ -336,8 +336,8 @@ Overall Score = Value Score × 0.60 + Adoption × 0.20 + Freshness × 0.20
 
 ```bash
 # Clone
-git clone https://github.com/grossiweb/NeoSkill.git
-cd NeoSkill
+git clone https://github.com/grossiweb/ToolRoute.git
+cd ToolRoute
 
 # Environment
 cp .env.local.example .env.local

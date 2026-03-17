@@ -1,6 +1,6 @@
 {
   "name": "@toolroute/sdk",
-  "version": "0.1.0",
+  "version": "0.1.1",
   "description": "ToolRoute SDK — route, execute, report. Two-line agent integration.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -23,7 +23,7 @@
   "homepage": "https://toolroute.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/grossiweb/NeoSkill",
+    "url": "https://github.com/grossiweb/ToolRoute",
     "directory": "sdk"
   },
   "devDependencies": {
