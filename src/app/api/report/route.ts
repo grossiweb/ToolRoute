@@ -75,6 +75,28 @@ export async function POST(request: NextRequest) {
   const reputation = result.rewards?.reputation_points ?? 0
   const score = result.contribution_score ?? 0
 
+  // Update agent stats and auto-promote trust tier
+  if (agent_identity_id && credits > 0) {
+    await supabase.rpc('update_agent_stats', {
+      p_agent_id: agent_identity_id,
+      p_credits_delta: credits,
+      p_rep_delta: Math.floor(credits * 0.5),
+    }).catch(() => {}) // Non-blocking — don't fail the response
+  }
+
+  // Record in agent_runs for per-agent analytics
+  if (agent_identity_id && skill) {
+    supabase.from('agent_runs').insert({
+      agent_identity_id,
+      skill_id: skill.id,
+      task_fingerprint: task_fingerprint || `report-${Date.now()}`,
+      outcome: outcome,
+      latency_ms: latency_ms ?? null,
+      estimated_cost_usd: cost_usd ?? null,
+      output_quality_rating: quality_rating ?? null,
+    }).then(() => {})
+  }
+
   // Get agent's total credit balance if they have an identity
   let credit_balance = null
   if (agent_identity_id) {
@@ -91,6 +113,7 @@ export async function POST(request: NextRequest) {
 
   return NextResponse.json({
     accepted: result.accepted,
+    agent_identity_id: agent_identity_id ?? null,
     credits_earned: credits,
     reputation_earned: reputation,
     contribution_score: score,

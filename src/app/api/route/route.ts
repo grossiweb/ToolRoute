@@ -61,6 +61,7 @@ export async function POST(request: NextRequest) {
     workflow_slug: explicitWorkflow,
     vertical_slug,
     constraints = {},
+    agent_identity_id,
   } = body
 
   const {
@@ -211,6 +212,24 @@ export async function POST(request: NextRequest) {
   // Track telemetry rate (increment recommendations)
   trackRecommendation(supabase).catch(() => {})
 
+  // If agent is registered, log the routing event for personalization
+  let agentContext: any = null
+  if (agent_identity_id) {
+    const { data: agent } = await supabase
+      .from('agent_identities')
+      .select('agent_name, trust_tier')
+      .eq('id', agent_identity_id)
+      .single()
+
+    if (agent) {
+      agentContext = {
+        agent_name: agent.agent_name,
+        trust_tier: agent.trust_tier,
+        recognized: true,
+      }
+    }
+  }
+
   return NextResponse.json({
     recommended_skill: top.slug,
     recommended_skill_name: top.canonical_name,
@@ -244,6 +263,8 @@ export async function POST(request: NextRequest) {
       fields: ['latency_ms', 'cost_usd', 'quality_rating', 'outcome', 'fallback_chain'],
       one_liner: `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
     },
+    agent: agentContext,
+    register_url: !agent_identity_id ? '/api/agents/register' : undefined,
   })
 }
 
