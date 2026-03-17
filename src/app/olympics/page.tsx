@@ -122,12 +122,19 @@ export default async function OlympicsPage() {
                     <h2 className="text-lg font-bold text-gray-900">{event.name}</h2>
                     <p className="text-sm text-gray-500 mt-1">{event.description}</p>
                   </div>
-                  <Link
-                    href={`/reports/${event.slug}`}
-                    className="btn-secondary text-xs flex-shrink-0"
-                  >
-                    Full Report
-                  </Link>
+                  {hasResults ? (
+                    <Link
+                      href={`/reports/${event.slug}`}
+                      className="btn-secondary text-xs flex-shrink-0"
+                    >
+                      Full Report
+                    </Link>
+                  ) : (
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-400 flex-shrink-0 cursor-default">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
+                      Report Coming Soon
+                    </span>
+                  )}
                 </div>
 
                 {/* Event stats bar */}

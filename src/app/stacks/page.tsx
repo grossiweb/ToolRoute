@@ -235,10 +235,16 @@ export default function StacksPage() {
 
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
           {POPULAR_STACKS.map(stack => (
-            <Link
+            <button
               key={stack.name}
-              href={`/stacks?name=${encodeURIComponent(stack.name)}&tools=${stack.tools.join(',')}`}
-              className="card group hover:border-brand/30 transition-all"
+              onClick={() => {
+                const matched = skills.filter(s => stack.tools.includes(s.slug))
+                setStackName(stack.name)
+                setSelected(matched.slice(0, 6))
+                setSearch('')
+                window.scrollTo({ top: 0, behavior: 'smooth' })
+              }}
+              className="card group hover:border-brand/30 transition-all text-left"
             >
               <div className="flex items-center gap-2 mb-2">
                 <span className="text-lg">🧩</span>
@@ -254,7 +260,7 @@ export default function StacksPage() {
                   </span>
                 ))}
               </div>
-            </Link>
+            </button>
           ))}
         </div>
       </div>

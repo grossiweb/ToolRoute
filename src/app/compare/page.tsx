@@ -25,7 +25,7 @@ export default function ComparePage() {
         `)
         .eq('status', 'active')
         .order('canonical_name')
-        .limit(100)
+        .limit(500)
       setSkills(data || [])
     }
     loadSkills()

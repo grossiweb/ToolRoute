@@ -80,10 +80,10 @@ export default async function TaskDetailPage({
       case 'trust': return (normalizeScore(scoresB?.trust_score) ?? 0) - (normalizeScore(scoresA?.trust_score) ?? 0)
       case 'stars': return (skillB?.skill_metrics?.github_stars ?? 0) - (skillA?.skill_metrics?.github_stars ?? 0)
       default: {
-        // Default: relevance first, then overall score
-        const relDiff = (normalizeScore(b.relevance_score) ?? 0) - (normalizeScore(a.relevance_score) ?? 0)
-        if (relDiff !== 0) return relDiff
-        return (normalizeScore(scoresB?.value_score ?? scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.value_score ?? scoresA?.overall_score) ?? 0)
+        // Default: ToolRoute Score first, then relevance as tiebreaker
+        const scoreDiff = (normalizeScore(scoresB?.value_score ?? scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.value_score ?? scoresA?.overall_score) ?? 0)
+        if (scoreDiff !== 0) return scoreDiff
+        return (normalizeScore(b.relevance_score) ?? 0) - (normalizeScore(a.relevance_score) ?? 0)
       }
     }
   })
@@ -146,7 +146,7 @@ export default async function TaskDetailPage({
           <div className="px-5 py-3 border-b border-gray-100 flex items-center justify-between">
             <div>
               <h2 className="font-bold text-gray-900">Tool Rankings</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Ranked by task relevance and overall ToolRoute Score</p>
+              <p className="text-xs text-gray-400 mt-0.5">Ranked by ToolRoute Score with task relevance as tiebreaker</p>
             </div>
             <Suspense>
               <SortDropdown currentSort={searchParams.sort || 'score'} basePath={`/tasks/${params.slug}`} />
@@ -158,8 +158,8 @@ export default async function TaskDetailPage({
                 <tr className="border-b border-gray-100 bg-gray-50">
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-14">Rank</th>
                   <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Tool Name</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Relevance</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">ToolRoute Score</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Relevance</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Output</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Reliability</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Efficiency</th>
@@ -203,18 +203,18 @@ export default async function TaskDetailPage({
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {relevance != null ? (
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${getScoreBadgeColor(relevance)}`}>
-                            {formatScore(relevance)}
+                        {overallScore != null ? (
+                          <span className={`font-bold text-base ${getScoreTextColor(overallScore)}`}>
+                            {formatScore(overallScore)}
                           </span>
                         ) : (
                           <span className="text-gray-300">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
-                        {overallScore != null ? (
-                          <span className={`font-bold ${getScoreTextColor(overallScore)}`}>
-                            {formatScore(overallScore)}
+                        {relevance != null ? (
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${getScoreBadgeColor(relevance)}`}>
+                            {formatScore(relevance)}
                           </span>
                         ) : (
                           <span className="text-gray-300">--</span>
@@ -276,14 +276,26 @@ export default async function TaskDetailPage({
           </div>
         </div>
       ) : (
-        <div className="text-center py-20">
-          <p className="text-lg font-medium text-gray-600">No tools benchmarked for this task yet</p>
-          <p className="text-sm text-gray-400 mt-1 max-w-md mx-auto">
-            Submit telemetry data to start ranking tools for this task.
+        <div className="text-center py-16">
+          <div className="inline-flex items-center justify-center w-16 h-16 rounded-full bg-gray-100 mb-4">
+            <svg className="w-8 h-8 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={1.5} d="M9.75 17L9 20l-1 1h8l-1-1-.75-3M3 13h18M5 17h14a2 2 0 002-2V5a2 2 0 00-2-2H5a2 2 0 00-2 2v10a2 2 0 002 2z" /></svg>
+          </div>
+          <p className="text-lg font-bold text-gray-700 mb-2">Benchmark data collecting</p>
+          <p className="text-sm text-gray-400 max-w-md mx-auto mb-2">
+            We&apos;re gathering real-world telemetry for <strong className="text-gray-600">{task.name}</strong>.
+            Once agents report enough outcome data, tool rankings will appear here automatically.
           </p>
-          <Link href="/api-docs" className="btn-primary text-sm mt-4 inline-block">
-            Get Started with the API
-          </Link>
+          <p className="text-xs text-gray-400 mb-6">
+            Agents earn routing credits for every telemetry submission.
+          </p>
+          <div className="flex items-center justify-center gap-3">
+            <Link href="/api-docs" className="btn-primary text-sm">
+              Submit Telemetry
+            </Link>
+            <Link href="/tasks" className="btn-secondary text-sm">
+              Browse All Tasks
+            </Link>
+          </div>
         </div>
       )}
 
