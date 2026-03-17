@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatScore } from '@/lib/scoring'
+import { formatScore, getScoreTextColor, getScoreBadgeColor, normalizeScore } from '@/lib/scoring'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
@@ -8,28 +8,6 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
 export const revalidate = 3600
-
-function normalizeScore(score: number | null | undefined): number | null {
-  if (score == null) return null
-  // If score > 10, it's likely on a 0-100 scale
-  return score > 10 ? score / 10 : score
-}
-
-function getScoreColor(score: number): string {
-  if (score >= 9) return 'text-emerald-400'
-  if (score >= 8) return 'text-green-400'
-  if (score >= 7) return 'text-yellow-400'
-  if (score >= 6) return 'text-orange-400'
-  return 'text-red-400'
-}
-
-function getScoreBg(score: number): string {
-  if (score >= 9) return 'bg-emerald-50 text-emerald-700'
-  if (score >= 8) return 'bg-green-50 text-green-700'
-  if (score >= 7) return 'bg-yellow-50 text-yellow-700'
-  if (score >= 6) return 'bg-orange-50 text-orange-700'
-  return 'bg-red-50 text-red-700'
-}
 
 export async function generateMetadata({
   params,
@@ -78,7 +56,7 @@ export default async function TaskDetailPage({
       relevance_score,
       skills (
         slug, canonical_name, vendor_type,
-        skill_scores ( overall_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
+        skill_scores ( value_score, overall_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
         skill_metrics ( github_stars )
       )
     `)
@@ -105,7 +83,7 @@ export default async function TaskDetailPage({
         // Default: relevance first, then overall score
         const relDiff = (normalizeScore(b.relevance_score) ?? 0) - (normalizeScore(a.relevance_score) ?? 0)
         if (relDiff !== 0) return relDiff
-        return (normalizeScore(scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.overall_score) ?? 0)
+        return (normalizeScore(scoresB?.value_score ?? scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.value_score ?? scoresA?.overall_score) ?? 0)
       }
     }
   })
@@ -184,7 +162,9 @@ export default async function TaskDetailPage({
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">ToolRoute Score</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Output</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Reliability</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Efficiency</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Cost</th>
+                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Trust</th>
                   <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Stars</th>
                 </tr>
               </thead>
@@ -192,10 +172,12 @@ export default async function TaskDetailPage({
                 {sortedTools.map((entry: any, idx: number) => {
                   const skill = entry.skills
                   const scores = skill?.skill_scores
-                  const overallScore = normalizeScore(scores?.overall_score)
+                  const overallScore = normalizeScore(scores?.value_score ?? scores?.overall_score)
                   const outputScore = normalizeScore(scores?.output_score)
                   const reliabilityScore = normalizeScore(scores?.reliability_score)
+                  const efficiencyScore = normalizeScore(scores?.efficiency_score)
                   const costScore = normalizeScore(scores?.cost_score)
+                  const trustScore = normalizeScore(scores?.trust_score)
                   const relevance = normalizeScore(entry.relevance_score)
                   const stars = skill?.skill_metrics?.github_stars
 
@@ -222,7 +204,7 @@ export default async function TaskDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {relevance != null ? (
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${getScoreBg(relevance)}`}>
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-xs font-bold ${getScoreBadgeColor(relevance)}`}>
                             {formatScore(relevance)}
                           </span>
                         ) : (
@@ -231,7 +213,7 @@ export default async function TaskDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {overallScore != null ? (
-                          <span className={`font-bold ${getScoreColor(overallScore)}`}>
+                          <span className={`font-bold ${getScoreTextColor(overallScore)}`}>
                             {formatScore(overallScore)}
                           </span>
                         ) : (
@@ -240,7 +222,7 @@ export default async function TaskDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {outputScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(outputScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(outputScore)}`}>
                             {formatScore(outputScore)}
                           </span>
                         ) : (
@@ -249,7 +231,7 @@ export default async function TaskDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {reliabilityScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(reliabilityScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(reliabilityScore)}`}>
                             {formatScore(reliabilityScore)}
                           </span>
                         ) : (
@@ -257,9 +239,27 @@ export default async function TaskDetailPage({
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
+                        {efficiencyScore != null ? (
+                          <span className={`font-mono text-xs ${getScoreTextColor(efficiencyScore)}`}>
+                            {formatScore(efficiencyScore)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">--</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
                         {costScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(costScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(costScore)}`}>
                             {formatScore(costScore)}
+                          </span>
+                        ) : (
+                          <span className="text-gray-300">--</span>
+                        )}
+                      </td>
+                      <td className="px-4 py-3 text-right">
+                        {trustScore != null ? (
+                          <span className={`font-mono text-xs ${getScoreTextColor(trustScore)}`}>
+                            {formatScore(trustScore)}
                           </span>
                         ) : (
                           <span className="text-gray-300">--</span>

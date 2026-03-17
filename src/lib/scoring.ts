@@ -111,11 +111,37 @@ export const TRUST_TIER_MODIFIERS = {
   enterprise: 1.50,
 } as const
 
+/** Score color for badges/rings (text + bg + border) */
 export function getScoreColor(score: number): string {
-  if (score >= 8.5) return 'text-teal-700 bg-teal-50 border-teal-300'
+  if (score >= 9.0) return 'text-emerald-700 bg-emerald-50 border-emerald-300'
+  if (score >= 8.0) return 'text-teal-700 bg-teal-50 border-teal-300'
   if (score >= 7.0) return 'text-brand bg-brand-light border-brand/30'
-  if (score >= 5.0) return 'text-amber-700 bg-amber-50 border-amber-300'
+  if (score >= 6.0) return 'text-amber-700 bg-amber-50 border-amber-300'
   return 'text-red-700 bg-red-50 border-red-300'
+}
+
+/** Score text color only — for table cells */
+export function getScoreTextColor(score: number): string {
+  if (score >= 9) return 'text-emerald-500'
+  if (score >= 8) return 'text-teal-500'
+  if (score >= 7) return 'text-yellow-500'
+  if (score >= 6) return 'text-orange-500'
+  return 'text-red-500'
+}
+
+/** Score badge bg + text — for pill badges */
+export function getScoreBadgeColor(score: number): string {
+  if (score >= 9) return 'bg-emerald-50 text-emerald-700'
+  if (score >= 8) return 'bg-teal-50 text-teal-700'
+  if (score >= 7) return 'bg-yellow-50 text-yellow-700'
+  if (score >= 6) return 'bg-orange-50 text-orange-700'
+  return 'bg-red-50 text-red-700'
+}
+
+/** Normalize score: auto-convert 0-100 to 0-10 */
+export function normalizeScore(score: number | null | undefined): number | null {
+  if (score == null) return null
+  return score > 10 ? score / 10 : score
 }
 
 export function getGradeLabel(

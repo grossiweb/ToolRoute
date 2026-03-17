@@ -1,5 +1,5 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { formatScore } from '@/lib/scoring'
+import { formatScore, getScoreTextColor, normalizeScore } from '@/lib/scoring'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
@@ -8,19 +8,6 @@ import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
 export const revalidate = 3600
-
-function normalizeScore(score: number | null | undefined): number | null {
-  if (score == null) return null
-  return score > 10 ? score / 10 : score
-}
-
-function getScoreColor(score: number): string {
-  if (score >= 9) return 'text-emerald-400'
-  if (score >= 8) return 'text-green-400'
-  if (score >= 7) return 'text-yellow-400'
-  if (score >= 6) return 'text-orange-400'
-  return 'text-red-400'
-}
 
 export async function generateMetadata({
   params,
@@ -68,7 +55,7 @@ export default async function LeaderboardDetailPage({
     .select(`
       skills (
         slug, canonical_name, vendor_type,
-        skill_scores ( overall_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
+        skill_scores ( value_score, overall_score, output_score, reliability_score, efficiency_score, cost_score, trust_score ),
         skill_metrics ( github_stars )
       )
     `)
@@ -90,7 +77,7 @@ export default async function LeaderboardDetailPage({
         case 'cost': return (normalizeScore(scoresB?.cost_score) ?? 0) - (normalizeScore(scoresA?.cost_score) ?? 0)
         case 'trust': return (normalizeScore(scoresB?.trust_score) ?? 0) - (normalizeScore(scoresA?.trust_score) ?? 0)
         case 'stars': return (b.skills?.skill_metrics?.github_stars ?? 0) - (a.skills?.skill_metrics?.github_stars ?? 0)
-        default: return (normalizeScore(scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.overall_score) ?? 0)
+        default: return (normalizeScore(scoresB?.value_score ?? scoresB?.overall_score) ?? 0) - (normalizeScore(scoresA?.value_score ?? scoresA?.overall_score) ?? 0)
       }
     })
 
@@ -164,7 +151,7 @@ export default async function LeaderboardDetailPage({
                 {sortedTools.map((entry: any, idx: number) => {
                   const skill = entry.skills
                   const scores = skill?.skill_scores
-                  const overallScore = normalizeScore(scores?.overall_score)
+                  const overallScore = normalizeScore(scores?.value_score ?? scores?.overall_score)
                   const outputScore = normalizeScore(scores?.output_score)
                   const reliabilityScore = normalizeScore(scores?.reliability_score)
                   const efficiencyScore = normalizeScore(scores?.efficiency_score)
@@ -195,7 +182,7 @@ export default async function LeaderboardDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {overallScore != null ? (
-                          <span className={`font-bold text-base ${getScoreColor(overallScore)}`}>
+                          <span className={`font-bold text-base ${getScoreTextColor(overallScore)}`}>
                             {formatScore(overallScore)}
                           </span>
                         ) : (
@@ -204,7 +191,7 @@ export default async function LeaderboardDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {outputScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(outputScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(outputScore)}`}>
                             {formatScore(outputScore)}
                           </span>
                         ) : (
@@ -213,7 +200,7 @@ export default async function LeaderboardDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {reliabilityScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(reliabilityScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(reliabilityScore)}`}>
                             {formatScore(reliabilityScore)}
                           </span>
                         ) : (
@@ -222,7 +209,7 @@ export default async function LeaderboardDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {efficiencyScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(efficiencyScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(efficiencyScore)}`}>
                             {formatScore(efficiencyScore)}
                           </span>
                         ) : (
@@ -231,7 +218,7 @@ export default async function LeaderboardDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {costScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(costScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(costScore)}`}>
                             {formatScore(costScore)}
                           </span>
                         ) : (
@@ -240,7 +227,7 @@ export default async function LeaderboardDetailPage({
                       </td>
                       <td className="px-4 py-3 text-right">
                         {trustScore != null ? (
-                          <span className={`font-mono text-xs ${getScoreColor(trustScore)}`}>
+                          <span className={`font-mono text-xs ${getScoreTextColor(trustScore)}`}>
                             {formatScore(trustScore)}
                           </span>
                         ) : (
@@ -338,31 +325,14 @@ export default async function LeaderboardDetailPage({
         </div>
       </div>
 
-      {/* Score Legend */}
-      <div className="mt-8 card">
-        <h3 className="font-bold text-gray-900 text-sm mb-3">Score Guide</h3>
-        <div className="flex flex-wrap gap-4 text-xs">
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-emerald-400"></span>
-            <span className="text-gray-600">9.0+ Exceptional</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-green-400"></span>
-            <span className="text-gray-600">8.0+ Excellent</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-yellow-400"></span>
-            <span className="text-gray-600">7.0+ Good</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-orange-400"></span>
-            <span className="text-gray-600">6.0+ Fair</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-3 h-3 rounded-full bg-red-400"></span>
-            <span className="text-gray-600">&lt;6.0 Below Average</span>
-          </div>
-        </div>
+      {/* Score Guide — compact inline */}
+      <div className="mt-4 flex items-center gap-4 text-[10px] text-gray-400">
+        <span className="font-semibold text-gray-500">Score Guide:</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400"></span>9+ Exceptional</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400"></span>8+ Excellent</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400"></span>7+ Good</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-orange-400"></span>6+ Fair</span>
+        <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-red-400"></span>&lt;6 Below Avg</span>
       </div>
 
       {/* CTA */}
