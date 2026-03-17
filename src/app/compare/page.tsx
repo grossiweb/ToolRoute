@@ -317,6 +317,109 @@ export default function ComparePage() {
         </div>
       )}
 
+      {/* Why This Tool Wins — Verdict */}
+      {selected.length >= 2 && (() => {
+        const scoreDims = [
+          { key: 'output_score', label: 'Output Quality' },
+          { key: 'reliability_score', label: 'Reliability' },
+          { key: 'efficiency_score', label: 'Efficiency' },
+          { key: 'cost_score', label: 'Cost' },
+          { key: 'trust_score', label: 'Trust' },
+        ]
+
+        // Find winner by value_score
+        const ranked = [...selected]
+          .map(s => {
+            const sc = s.skill_scores || {}
+            const vs = sc.value_score ?? sc.overall_score ?? 0
+            return { ...s, _vs: vs }
+          })
+          .sort((a, b) => b._vs - a._vs)
+
+        const winner = ranked[0]
+        const runnerUp = ranked[1]
+        if (!winner || !runnerUp) return null
+
+        const wScores = winner.skill_scores || {}
+        const rScores = runnerUp.skill_scores || {}
+
+        const advantages: { label: string; delta: number }[] = []
+        const runnerUpWins: { label: string; delta: number }[] = []
+
+        for (const dim of scoreDims) {
+          const wVal = wScores[dim.key] ?? 0
+          const rVal = rScores[dim.key] ?? 0
+          const delta = wVal - rVal
+          if (delta > 0.05) advantages.push({ label: dim.label, delta })
+          else if (delta < -0.05) runnerUpWins.push({ label: dim.label, delta: Math.abs(delta) })
+        }
+
+        const winCount = advantages.length
+
+        return (
+          <div className="mt-8 card border-teal/20">
+            <div className="flex items-start gap-3 mb-4">
+              <span className="text-2xl">🏆</span>
+              <div>
+                <h3 className="font-bold text-gray-900">
+                  Why <span className="text-teal">{winner.canonical_name}</span> Wins
+                </h3>
+                <p className="text-sm text-gray-500 mt-1">
+                  {winner.canonical_name} leads in {winCount} of {scoreDims.length} scoring dimensions
+                  with a <span className="font-bold text-teal">{formatScore(winner._vs)}</span> value score
+                  vs {runnerUp.canonical_name}&apos;s <span className="font-semibold text-brand">{formatScore(runnerUp._vs)}</span>.
+                </p>
+              </div>
+            </div>
+
+            {advantages.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Key Advantages</h4>
+                <div className="flex flex-wrap gap-2">
+                  {advantages.map(a => (
+                    <span key={a.label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-medium">
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M5 10l7-7m0 0l7 7m-7-7v18" /></svg>
+                      +{a.delta.toFixed(1)} {a.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            {runnerUpWins.length > 0 && (
+              <div className="mb-4">
+                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                  Where <span className="text-brand">{runnerUp.canonical_name}</span> is stronger
+                </h4>
+                <div className="flex flex-wrap gap-2">
+                  {runnerUpWins.map(a => (
+                    <span key={a.label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-medium">
+                      +{a.delta.toFixed(1)} {a.label}
+                    </span>
+                  ))}
+                </div>
+              </div>
+            )}
+
+            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
+              <p className="text-[10px] text-gray-400">Verdict based on {scoreDims.length}-dimension outcome scoring</p>
+              <button
+                onClick={() => {
+                  const slugs = selected.map(s => s.slug).join(',')
+                  const url = `${window.location.origin}/compare?servers=${slugs}`
+                  navigator.clipboard.writeText(url)
+                  setLinkCopied(true)
+                  setTimeout(() => setLinkCopied(false), 2000)
+                }}
+                className="text-xs text-gray-500 hover:text-brand transition-colors"
+              >
+                {linkCopied ? '✓ Copied!' : 'Share verdict →'}
+              </button>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Olympics CTA */}
       {selected.length >= 2 && (
         <div className="mt-8 card text-center">
