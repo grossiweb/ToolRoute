@@ -1,0 +1,48 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
+  <defs>
+    <linearGradient id="bg2" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="280" rx="12" fill="url(#bg2)"/>
+
+  <!-- Header -->
+  <text x="24" y="36" fill="#06b6d4" font-family="system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">5-DIMENSION SCORING</text>
+  <text x="24" y="62" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Real execution data.</text>
+  <text x="24" y="84" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Not GitHub stars.</text>
+
+  <!-- Score bars -->
+  <!-- Output -->
+  <text x="24" y="118" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Output Quality</text>
+  <text x="340" y="118" fill="#22c55e" font-family="system-ui, sans-serif" font-size="12" font-weight="700">9.1</text>
+  <rect x="24" y="123" width="308" height="6" rx="3" fill="#1e293b"/>
+  <rect x="24" y="123" width="280" height="6" rx="3" fill="#22c55e"/>
+
+  <!-- Reliability -->
+  <text x="24" y="150" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Reliability</text>
+  <text x="340" y="150" fill="#22c55e" font-family="system-ui, sans-serif" font-size="12" font-weight="700">8.8</text>
+  <rect x="24" y="155" width="308" height="6" rx="3" fill="#1e293b"/>
+  <rect x="24" y="155" width="271" height="6" rx="3" fill="#22c55e"/>
+
+  <!-- Efficiency -->
+  <text x="24" y="182" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Efficiency</text>
+  <text x="340" y="182" fill="#eab308" font-family="system-ui, sans-serif" font-size="12" font-weight="700">7.4</text>
+  <rect x="24" y="187" width="308" height="6" rx="3" fill="#1e293b"/>
+  <rect x="24" y="187" width="228" height="6" rx="3" fill="#eab308"/>
+
+  <!-- Cost -->
+  <text x="24" y="214" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Cost</text>
+  <text x="340" y="214" fill="#22c55e" font-family="system-ui, sans-serif" font-size="12" font-weight="700">8.2</text>
+  <rect x="24" y="219" width="308" height="6" rx="3" fill="#1e293b"/>
+  <rect x="24" y="219" width="252" height="6" rx="3" fill="#22c55e"/>
+
+  <!-- Trust -->
+  <text x="24" y="246" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="11" font-weight="600">Trust</text>
+  <text x="340" y="246" fill="#22c55e" font-family="system-ui, sans-serif" font-size="12" font-weight="700">8.5</text>
+  <rect x="24" y="251" width="308" height="6" rx="3" fill="#1e293b"/>
+  <rect x="24" y="251" width="262" height="6" rx="3" fill="#22c55e"/>
+
+  <!-- Overall -->
+  <rect x="24" y="265" width="352" height="1" fill="#334155"/>
+</svg>

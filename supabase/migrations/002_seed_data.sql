@@ -1,4 +1,4 @@
--- NeoSkill Seed Data
+-- ToolRoute Seed Data
 -- Run AFTER 001_initial_schema.sql
 
 -- ─────────────────────────────────────────────

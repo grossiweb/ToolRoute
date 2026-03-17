@@ -1,4 +1,4 @@
--- NeoSkill — Complete Benchmark Profiles + Metrics
+-- ToolRoute — Complete Benchmark Profiles + Metrics
 -- Adds missing profiles and seeds benchmark_metrics for all profiles
 -- Version: 1.2 | March 2026
 

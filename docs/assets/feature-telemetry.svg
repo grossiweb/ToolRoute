@@ -1,0 +1,57 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
+  <defs>
+    <linearGradient id="bg4" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="280" rx="12" fill="url(#bg4)"/>
+
+  <!-- Header -->
+  <text x="24" y="36" fill="#f97316" font-family="system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">TELEMETRY FLYWHEEL</text>
+  <text x="24" y="62" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Report outcomes.</text>
+  <text x="24" y="84" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Earn credits. Route better.</text>
+
+  <!-- Flywheel diagram -->
+  <!-- Center -->
+  <circle cx="200" cy="185" r="55" fill="none" stroke="#334155" stroke-width="1.5" stroke-dasharray="4,4"/>
+
+  <!-- Route node -->
+  <circle cx="200" cy="128" r="22" fill="#8b5cf6" opacity="0.2" stroke="#8b5cf6" stroke-width="1.5"/>
+  <text x="200" y="132" fill="#c084fc" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">ROUTE</text>
+
+  <!-- Execute node -->
+  <circle cx="253" cy="175" r="22" fill="#06b6d4" opacity="0.2" stroke="#06b6d4" stroke-width="1.5"/>
+  <text x="253" y="172" fill="#67e8f9" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">EXE-</text>
+  <text x="253" y="183" fill="#67e8f9" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">CUTE</text>
+
+  <!-- Report node -->
+  <circle cx="230" cy="230" r="22" fill="#22c55e" opacity="0.2" stroke="#22c55e" stroke-width="1.5"/>
+  <text x="230" y="234" fill="#86efac" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">REPORT</text>
+
+  <!-- Reward node -->
+  <circle cx="170" cy="230" r="22" fill="#f97316" opacity="0.2" stroke="#f97316" stroke-width="1.5"/>
+  <text x="170" y="234" fill="#fdba74" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">EARN</text>
+
+  <!-- Improve node -->
+  <circle cx="147" cy="175" r="22" fill="#ec4899" opacity="0.2" stroke="#ec4899" stroke-width="1.5"/>
+  <text x="147" y="172" fill="#f9a8d4" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">IM-</text>
+  <text x="147" y="183" fill="#f9a8d4" font-family="system-ui, sans-serif" font-size="9" font-weight="700" text-anchor="middle">PROVE</text>
+
+  <!-- Arrows (clockwise) -->
+  <path d="M218,136 Q240,145 248,157" fill="none" stroke="#8b5cf6" stroke-width="1.5" marker-end="url(#arrow)"/>
+  <path d="M265,192 Q260,210 245,222" fill="none" stroke="#06b6d4" stroke-width="1.5"/>
+  <path d="M210,235 Q195,240 185,235" fill="none" stroke="#22c55e" stroke-width="1.5"/>
+  <path d="M155,218 Q140,205 143,192" fill="none" stroke="#f97316" stroke-width="1.5"/>
+  <path d="M155,158 Q165,142 185,132" fill="none" stroke="#ec4899" stroke-width="1.5"/>
+
+  <!-- Credit callouts -->
+  <rect x="290" y="118" width="95" height="22" rx="4" fill="#22c55e" opacity="0.15"/>
+  <text x="337" y="133" fill="#86efac" font-family="monospace" font-size="10" font-weight="600" text-anchor="middle">+3-10 credits</text>
+
+  <rect x="290" y="146" width="95" height="22" rx="4" fill="#f97316" opacity="0.15"/>
+  <text x="337" y="161" fill="#fdba74" font-family="monospace" font-size="10" font-weight="600" text-anchor="middle">+8-25 A/B test</text>
+
+  <rect x="290" y="174" width="95" height="22" rx="4" fill="#8b5cf6" opacity="0.15"/>
+  <text x="337" y="189" fill="#c084fc" font-family="monospace" font-size="10" font-weight="600" text-anchor="middle">+15-40 bench</text>
+</svg>

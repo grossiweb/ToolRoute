@@ -1,4 +1,4 @@
--- NeoSkill Migration 009: Outcome Data & Coverage Gaps
+-- ToolRoute Migration 009: Outcome Data & Coverage Gaps
 -- Part 1: Seed ~200 realistic outcome records across top 20 skills
 -- Part 2: Fill task mapping coverage gaps
 -- Part 3: Fill tool_type coverage gaps for leaderboard categories

@@ -1,4 +1,4 @@
--- NeoSkill Migration 007: Fill Missing Workflow Categories
+-- ToolRoute Migration 007: Fill Missing Workflow Categories
 -- Migration 006 covered 10 workflows. This adds 7 more:
 -- Marketing, Finance, Legal, HR, E-commerce, Security, Productivity
 -- Run AFTER 006_expand_skill_catalog.sql

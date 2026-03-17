@@ -1,4 +1,4 @@
--- NeoSkill — Full Database Migration
+-- ToolRoute — Full Database Migration
 -- Run this in your Supabase SQL Editor
 -- Version: 1.0 | March 2026
 

@@ -1,0 +1,37 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
+  <defs>
+    <linearGradient id="bg1" x1="0%" y1="0%" x2="100%" y2="100%">
+      <stop offset="0%" style="stop-color:#0f172a"/>
+      <stop offset="100%" style="stop-color:#1e293b"/>
+    </linearGradient>
+  </defs>
+  <rect width="400" height="280" rx="12" fill="url(#bg1)"/>
+
+  <!-- Header -->
+  <text x="24" y="36" fill="#8b5cf6" font-family="system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">ROUTING ENGINE</text>
+  <text x="24" y="62" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Ask in plain English.</text>
+  <text x="24" y="84" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Get the best MCP server.</text>
+
+  <!-- Code block -->
+  <rect x="24" y="100" width="352" height="155" rx="8" fill="#020617" stroke="#334155" stroke-width="1"/>
+  <!-- Terminal dots -->
+  <circle cx="40" cy="115" r="4" fill="#ef4444"/>
+  <circle cx="52" cy="115" r="4" fill="#eab308"/>
+  <circle cx="64" cy="115" r="4" fill="#22c55e"/>
+
+  <text x="36" y="140" fill="#64748b" font-family="monospace" font-size="10">// Your agent asks ToolRoute</text>
+  <text x="36" y="156" fill="#c084fc" font-family="monospace" font-size="11">const</text>
+  <text x="72" y="156" fill="#e2e8f0" font-family="monospace" font-size="11"> rec = </text>
+  <text x="120" y="156" fill="#c084fc" font-family="monospace" font-size="11">await</text>
+  <text x="162" y="156" fill="#67e8f9" font-family="monospace" font-size="11"> tr.route</text>
+  <text x="225" y="156" fill="#e2e8f0" font-family="monospace" font-size="11">({</text>
+  <text x="48" y="172" fill="#22c55e" font-family="monospace" font-size="11">task</text>
+  <text x="78" y="172" fill="#e2e8f0" font-family="monospace" font-size="11">: </text>
+  <text x="88" y="172" fill="#fbbf24" font-family="monospace" font-size="11">'scrape pricing data'</text>
+  <text x="36" y="188" fill="#e2e8f0" font-family="monospace" font-size="11">})</text>
+
+  <text x="36" y="210" fill="#64748b" font-family="monospace" font-size="10">// ToolRoute responds</text>
+  <text x="36" y="226" fill="#e2e8f0" font-family="monospace" font-size="11">→ firecrawl-mcp </text>
+  <text x="168" y="226" fill="#22c55e" font-family="monospace" font-size="11">confidence: 0.91</text>
+  <text x="36" y="242" fill="#64748b" font-family="monospace" font-size="11">  fallbacks: browserbase, playwright</text>
+</svg>

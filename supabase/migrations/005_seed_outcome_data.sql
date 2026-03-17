@@ -1,4 +1,4 @@
--- NeoSkill — Seed Outcome & Activity Data
+-- ToolRoute — Seed Outcome & Activity Data
 -- Makes the platform look alive with realistic benchmark results
 -- Run AFTER 004_benchmark_metrics_and_profiles.sql
 -- Version: 1.3 | March 2026

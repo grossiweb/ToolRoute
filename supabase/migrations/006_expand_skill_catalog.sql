@@ -1,4 +1,4 @@
--- NeoSkill — Expand Skill Catalog to 45+ skills
+-- ToolRoute — Expand Skill Catalog to 45+ skills
 -- Adds ~38 new real MCP servers across all 10 workflow categories
 -- Also seeds workflow joins, vertical joins, cost models, and outcome records
 -- Run AFTER 005_seed_outcome_data.sql

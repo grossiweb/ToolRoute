@@ -1,4 +1,4 @@
--- NeoSkill — Olympics, Missions & Agent Leaderboard
+-- ToolRoute — Olympics, Missions & Agent Leaderboard
 -- Run AFTER 002_seed_data.sql
 -- Version: 1.1 | March 2026
 
