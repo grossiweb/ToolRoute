@@ -14,13 +14,14 @@ export async function GET(
 
   const { data: skill } = await supabase
     .from('skills')
-    .select('canonical_name, skill_scores ( overall_score )')
+    .select('canonical_name, skill_scores ( value_score, overall_score )')
     .eq('slug', params.slug)
     .eq('status', 'active')
     .single()
 
   const scores = skill?.skill_scores as any
-  const score = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
+  const rawScore = Array.isArray(scores) ? (scores[0]?.value_score ?? scores[0]?.overall_score) : (scores?.value_score ?? scores?.overall_score)
+  const score = rawScore != null && rawScore > 10 ? rawScore / 10 : rawScore
   const label = 'ToolRoute'
   const scoreText = score != null ? `${score.toFixed(1)}/10` : 'unrated'
 

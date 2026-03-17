@@ -124,10 +124,10 @@ export default async function MCPServerPage({ params }: { params: { slug: string
           </div>
         </div>
 
-        {score?.overall_score && (
+        {(score?.value_score || score?.overall_score) && (
           <div className="text-center flex-shrink-0">
-            <div className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center ${getScoreColor(score.overall_score)}`}>
-              <span className="text-2xl font-black">{formatScore(score.overall_score)}</span>
+            <div className={`w-20 h-20 rounded-2xl border-2 flex flex-col items-center justify-center ${getScoreColor(score.value_score ?? score.overall_score)}`}>
+              <span className="text-2xl font-black">{formatScore(score.value_score ?? score.overall_score)}</span>
               <span className="text-[10px] font-semibold opacity-70">ToolRoute</span>
             </div>
           </div>
@@ -219,7 +219,7 @@ export default async function MCPServerPage({ params }: { params: { slug: string
           <div className="flex items-center gap-2 bg-gray-200 rounded-full px-3 py-1.5">
             <span className="text-xs font-bold text-teal">ToolRoute</span>
             <span className="text-xs text-gray-400">|</span>
-            <span className="text-xs font-bold text-gray-800">{score?.overall_score != null ? `${formatScore(score.overall_score)}/10` : 'unrated'}</span>
+            <span className="text-xs font-bold text-gray-800">{score?.value_score != null ? `${formatScore(score.value_score)}/10` : score?.overall_score != null ? `${formatScore(score.overall_score)}/10` : 'unrated'}</span>
           </div>
           <span className="text-xs text-gray-500">Badge updates automatically as your score changes</span>
         </div>

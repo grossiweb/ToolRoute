@@ -3,6 +3,7 @@ import { formatScore } from '@/lib/scoring'
 import Link from 'next/link'
 import { Suspense } from 'react'
 import { SortDropdown } from '@/components/SortDropdown'
+import { Sidebar } from '@/components/Sidebar'
 import { Metadata } from 'next'
 
 function normalizeScore(score: number | null | undefined): number | null {
@@ -20,7 +21,7 @@ export const metadata: Metadata = {
 export default async function ServersPage({
   searchParams,
 }: {
-  searchParams: { sort?: string }
+  searchParams: { sort?: string; workflow?: string; vertical?: string }
 }) {
   const supabase = createServerSupabaseClient()
 
@@ -43,10 +44,37 @@ export default async function ServersPage({
     .select('slug, name')
     .order('name')
 
+  // Filter by workflow if selected
+  let filteredServers = servers
+  if (searchParams.workflow) {
+    const { data: workflowSkillIds } = await supabase
+      .from('skill_workflows')
+      .select('skill_id, workflows!inner(slug)')
+      .eq('workflows.slug', searchParams.workflow)
+
+    if (workflowSkillIds && workflowSkillIds.length > 0) {
+      const matchedIds = new Set(workflowSkillIds.map((ws: any) => ws.skill_id))
+      filteredServers = servers.filter((s: any) => matchedIds.has(s.id))
+    }
+  }
+
+  // Filter by vertical if selected
+  if (searchParams.vertical) {
+    const { data: verticalSkillIds } = await supabase
+      .from('skill_verticals')
+      .select('skill_id, verticals!inner(slug)')
+      .eq('verticals.slug', searchParams.vertical)
+
+    if (verticalSkillIds && verticalSkillIds.length > 0) {
+      const matchedIds = new Set(verticalSkillIds.map((vs: any) => vs.skill_id))
+      filteredServers = filteredServers.filter((s: any) => matchedIds.has(s.id))
+    }
+  }
+
   // Sort servers based on selected sort key
   const sortKey = searchParams.sort || 'score'
 
-  const sortedServers = [...servers].sort((a: any, b: any) => {
+  const sortedServers = [...filteredServers].sort((a: any, b: any) => {
     const scoresA = Array.isArray(a.skill_scores) ? a.skill_scores[0] : a.skill_scores
     const scoresB = Array.isArray(b.skill_scores) ? b.skill_scores[0] : b.skill_scores
     const metricsA = Array.isArray(a.skill_metrics) ? a.skill_metrics[0] : a.skill_metrics
@@ -74,11 +102,11 @@ export default async function ServersPage({
         </p>
       </div>
 
-      {/* Stats bar */}
+      {/* Stats bar + Sort */}
       <div className="flex items-center justify-between mb-8">
         <div className="flex items-center gap-6 text-sm">
           <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">{servers.length}</span>
+            <span className="font-bold text-gray-900">{filteredServers.length}</span>
             <span className="text-gray-500">servers</span>
           </div>
           <div className="flex items-center gap-2">
@@ -91,67 +119,72 @@ export default async function ServersPage({
           </div>
         </div>
         <Suspense>
-          <SortDropdown currentSort={searchParams.sort || 'score'} basePath="/servers" />
+          <SortDropdown currentSort={searchParams.sort || 'score'} basePath="/servers" workflow={searchParams.workflow} vertical={searchParams.vertical} />
         </Suspense>
       </div>
 
-      {/* Grid */}
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-        {sortedServers.map((skill: any) => {
-          const scores = skill.skill_scores as any
-          const metrics = skill.skill_metrics as any
-          const valueScore = Array.isArray(scores) ? scores[0]?.value_score : scores?.value_score
-          const overallScore = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
-          const stars = Array.isArray(metrics) ? metrics[0]?.github_stars : metrics?.github_stars
-          const displayScore = normalizeScore(valueScore ?? overallScore)
+      {/* Sidebar + Grid */}
+      <div className="flex gap-6">
+        <Suspense><Sidebar context="default" /></Suspense>
+        <div className="flex-1 min-w-0">
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {sortedServers.map((skill: any) => {
+              const scores = skill.skill_scores as any
+              const metrics = skill.skill_metrics as any
+              const valueScore = Array.isArray(scores) ? scores[0]?.value_score : scores?.value_score
+              const overallScore = Array.isArray(scores) ? scores[0]?.overall_score : scores?.overall_score
+              const stars = Array.isArray(metrics) ? metrics[0]?.github_stars : metrics?.github_stars
+              const displayScore = normalizeScore(valueScore ?? overallScore)
 
-          return (
-            <Link
-              key={skill.id}
-              href={`/mcp-servers/${skill.slug}`}
-              className="card group hover:border-brand/30 transition-all duration-200"
-            >
-              <div className="flex items-start justify-between mb-2">
-                <div className="flex-1 min-w-0">
-                  <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors truncate">
-                    {skill.canonical_name}
-                  </h3>
-                  <div className="flex items-center gap-2 mt-1">
-                    {skill.vendor_type && (
-                      <span className="badge text-[10px] bg-gray-100 text-gray-500">{skill.vendor_type}</span>
-                    )}
-                    {stars != null && stars > 0 && (
-                      <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
-                        ★ {stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : stars}
-                      </span>
+              return (
+                <Link
+                  key={skill.id}
+                  href={`/mcp-servers/${skill.slug}`}
+                  className="card group hover:border-brand/30 transition-all duration-200"
+                >
+                  <div className="flex items-start justify-between mb-2">
+                    <div className="flex-1 min-w-0">
+                      <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors truncate">
+                        {skill.canonical_name}
+                      </h3>
+                      <div className="flex items-center gap-2 mt-1">
+                        {skill.vendor_type && (
+                          <span className="badge text-[10px] bg-gray-100 text-gray-500">{skill.vendor_type}</span>
+                        )}
+                        {stars != null && stars > 0 && (
+                          <span className="text-[10px] text-gray-400 flex items-center gap-0.5">
+                            ★ {stars >= 1000 ? `${(stars / 1000).toFixed(1)}k` : stars}
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    {displayScore != null && (
+                      <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm ${
+                        displayScore >= 8.5 ? 'bg-teal-50 text-teal-700' :
+                        displayScore >= 7.0 ? 'bg-brand-light text-brand' :
+                        displayScore >= 5.0 ? 'bg-amber-50 text-amber-700' :
+                        'bg-red-50 text-red-700'
+                      }`}>
+                        {formatScore(displayScore)}
+                      </div>
                     )}
                   </div>
-                </div>
-                {displayScore != null && (
-                  <div className={`flex-shrink-0 w-12 h-12 rounded-xl flex items-center justify-center font-bold text-sm ${
-                    displayScore >= 8.5 ? 'bg-teal-50 text-teal-700' :
-                    displayScore >= 7.0 ? 'bg-brand-light text-brand' :
-                    displayScore >= 5.0 ? 'bg-amber-50 text-amber-700' :
-                    'bg-red-50 text-red-700'
-                  }`}>
-                    {formatScore(displayScore)}
-                  </div>
-                )}
-              </div>
-              <p className="text-xs text-gray-500 line-clamp-2">
-                {skill.short_description || 'No description available.'}
-              </p>
-            </Link>
-          )
-        })}
-      </div>
+                  <p className="text-xs text-gray-500 line-clamp-2">
+                    {skill.short_description || 'No description available.'}
+                  </p>
+                </Link>
+              )
+            })}
+          </div>
 
-      {servers.length === 0 && (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg font-bold mb-2">No servers found</p>
-          <p className="text-sm">Check back soon — servers are being added to the catalog.</p>
+          {sortedServers.length === 0 && (
+            <div className="text-center py-20 text-gray-400">
+              <p className="text-lg font-bold mb-2">No servers found</p>
+              <p className="text-sm">Try a different filter or check back soon.</p>
+            </div>
+          )}
         </div>
-      )}
+      </div>
     </div>
   )
 }
