@@ -122,11 +122,11 @@ export async function POST(request: NextRequest) {
 
   // Update agent stats and auto-promote trust tier
   if (agent_identity_id && credits > 0) {
-    await supabase.rpc('update_agent_stats', {
+    supabase.rpc('update_agent_stats', {
       p_agent_id: agent_identity_id,
       p_credits_delta: credits,
       p_rep_delta: Math.floor(credits * 0.5),
-    }).catch(() => {}) // Non-blocking — don't fail the response
+    }).then(() => {}) // Non-blocking — don't fail the response
   }
 
   // Record in agent_runs for per-agent analytics
