@@ -122,16 +122,16 @@ WHERE s.status = 'active'
 -- ═══════════════════════════════════════════════
 
 INSERT INTO skill_metrics (
-  skill_id, github_stars, npm_weekly_downloads,
-  days_since_last_commit, open_issues_count,
+  skill_id, github_stars, weekly_downloads,
+  days_since_last_commit, open_issues,
   updated_at
 )
 SELECT
   s.id,
   0,     -- github_stars
-  0,     -- npm_weekly_downloads
+  0,     -- weekly_downloads
   30,    -- days_since_last_commit (assume 30 days)
-  0,     -- open_issues_count
+  0,     -- open_issues
   NOW()
 FROM skills s
 WHERE s.status = 'active'
