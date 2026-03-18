@@ -42,7 +42,7 @@ export default async function AgentsPage() {
   const { data: agents } = await supabase
     .from('agent_identities')
     .select('id, agent_name, trust_tier, agent_kind, created_at')
-    .eq('status', 'active')
+    .eq('is_active', true)
     .order('created_at', { ascending: true })
 
   // Fetch aggregate reward data per agent
