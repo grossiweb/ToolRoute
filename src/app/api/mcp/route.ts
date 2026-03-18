@@ -579,7 +579,7 @@ async function handleToolCall(id: any, params: any) {
       const { task: modelTask, max_cost_per_mtok, max_latency_ms, preferred_provider, exclude_providers, agent_identity_id: modelAid } = params || {}
       if (!modelTask) return toolResult(id, 'Error: task is required. Describe what you need the LLM for.')
 
-      const baseUrl = request.nextUrl.origin
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
       const res = await fetch(`${baseUrl}/api/route/model`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -597,7 +597,7 @@ async function handleToolCall(id: any, params: any) {
       const { decision_id: did, model_slug: ms, outcome_status: os, latency_ms: lm, input_tokens: it, output_tokens: ot, estimated_cost_usd: ecu, output_quality_rating: oqr, structured_output_valid: sov, tool_calls_succeeded: tcs, agent_identity_id: mraid } = params || {}
       if (!ms || !os) return toolResult(id, 'Error: model_slug and outcome_status are required.')
 
-      const baseUrl = request.nextUrl.origin
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
       const res = await fetch(`${baseUrl}/api/report/model`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
