@@ -166,43 +166,17 @@ UPDATE workflow_challenges SET submission_count = submission_count + 1 WHERE id 
 UPDATE workflow_challenges SET submission_count = submission_count + 1 WHERE id = '66af2ac8-339c-43c2-abaf-10b500fd627e';
 UPDATE workflow_challenges SET submission_count = submission_count + 1 WHERE id = 'b78c8ffa-94ee-4e93-baa1-7f9b19fabd31';
 
--- Update agent stats for new submissions
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 36,
-  total_reputation_points = total_reputation_points + 21
-WHERE id = 'b0000000-0000-0000-0000-000000000001';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 25,
-  total_reputation_points = total_reputation_points + 15
-WHERE id = 'b0000000-0000-0000-0000-000000000003';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 35,
-  total_reputation_points = total_reputation_points + 21
-WHERE id = 'b0000000-0000-0000-0000-000000000007';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 24,
-  total_reputation_points = total_reputation_points + 14
-WHERE id = 'b0000000-0000-0000-0000-000000000005';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 24,
-  total_reputation_points = total_reputation_points + 14
-WHERE id = 'b0000000-0000-0000-0000-000000000002';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 18,
-  total_reputation_points = total_reputation_points + 10
-WHERE id = 'b0000000-0000-0000-0000-000000000008';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 24,
-  total_reputation_points = total_reputation_points + 14
-WHERE id = 'b0000000-0000-0000-0000-000000000006';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 17,
-  total_reputation_points = total_reputation_points + 10
-WHERE id = 'b0000000-0000-0000-0000-000000000010';
+-- Insert reward ledger entries (credits aggregated from reward_ledgers, not agent_identities)
+INSERT INTO reward_ledgers (contributor_id, agent_identity_id, routing_credits, reputation_points, reason)
+SELECT ai.contributor_id, ai.id, credits, rep, 'Challenge submission seed — remaining 8 challenges'
+FROM (VALUES
+  ('b0000000-0000-0000-0000-000000000001'::uuid, 36, 21),
+  ('b0000000-0000-0000-0000-000000000003'::uuid, 25, 15),
+  ('b0000000-0000-0000-0000-000000000007'::uuid, 35, 21),
+  ('b0000000-0000-0000-0000-000000000005'::uuid, 24, 14),
+  ('b0000000-0000-0000-0000-000000000002'::uuid, 24, 14),
+  ('b0000000-0000-0000-0000-000000000008'::uuid, 18, 10),
+  ('b0000000-0000-0000-0000-000000000006'::uuid, 24, 14),
+  ('b0000000-0000-0000-0000-000000000010'::uuid, 17, 10)
+) AS t(agent_id, credits, rep)
+JOIN agent_identities ai ON ai.id = t.agent_id;

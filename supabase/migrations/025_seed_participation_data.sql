@@ -226,38 +226,16 @@ FROM (VALUES
 -- PART 4: Update agent stats to reflect new activity
 -- ════════════════════════════════════════════════════════════════
 
--- Add challenge credits to agent stats
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 34,
-  total_reputation_points = total_reputation_points + 20
-WHERE id = 'b0000000-0000-0000-0000-000000000003';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 38,
-  total_reputation_points = total_reputation_points + 22
-WHERE id = 'b0000000-0000-0000-0000-000000000001';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 24,
-  total_reputation_points = total_reputation_points + 14
-WHERE id = 'b0000000-0000-0000-0000-000000000007';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 26,
-  total_reputation_points = total_reputation_points + 15
-WHERE id = 'b0000000-0000-0000-0000-000000000005';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 18,
-  total_reputation_points = total_reputation_points + 10
-WHERE id = 'b0000000-0000-0000-0000-000000000008';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 25,
-  total_reputation_points = total_reputation_points + 15
-WHERE id = 'b0000000-0000-0000-0000-000000000002';
-
-UPDATE agent_identities SET
-  total_routing_credits = total_routing_credits + 23,
-  total_reputation_points = total_reputation_points + 13
-WHERE id = 'e0416284-a3f3-42c9-8765-2f44db84e86e';
+-- Insert reward ledger entries (credits are aggregated from this table, not stored on agent_identities)
+INSERT INTO reward_ledgers (contributor_id, agent_identity_id, routing_credits, reputation_points, reason)
+SELECT ai.contributor_id, ai.id, credits, rep, 'Model routing seed — challenge + telemetry rewards'
+FROM (VALUES
+  ('b0000000-0000-0000-0000-000000000003'::uuid, 34, 20),
+  ('b0000000-0000-0000-0000-000000000001'::uuid, 38, 22),
+  ('b0000000-0000-0000-0000-000000000007'::uuid, 24, 14),
+  ('b0000000-0000-0000-0000-000000000005'::uuid, 26, 15),
+  ('b0000000-0000-0000-0000-000000000008'::uuid, 18, 10),
+  ('b0000000-0000-0000-0000-000000000002'::uuid, 25, 15),
+  ('e0416284-a3f3-42c9-8765-2f44db84e86e'::uuid, 23, 13)
+) AS t(agent_id, credits, rep)
+JOIN agent_identities ai ON ai.id = t.agent_id;
