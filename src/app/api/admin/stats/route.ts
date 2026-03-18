@@ -23,7 +23,7 @@ export async function GET() {
     supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at'),
     supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at'),
     supabase.from('benchmark_missions').select('id, title, status, max_claims, claimed_count'),
-    supabase.from('benchmark_mission_claims').select('id, mission_id, status, created_at'),
+    supabase.from('mission_claims').select('id, mission_id, agent_identity_id, status, claimed_at, completed_at, reward_routing_credits'),
     supabase.from('agent_runs').select('id, agent_identity_id, skill_id, outcome, latency_ms, created_at'),
     supabase.from('skills').select('id, slug, canonical_name').eq('status', 'active'),
     supabase.from('contributors').select('id, contributor_type, display_name, created_at'),
