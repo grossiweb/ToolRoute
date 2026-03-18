@@ -42,5 +42,14 @@ export async function GET(request: NextRequest) {
   return NextResponse.json({
     missions: missions || [],
     total: missions?.length || 0,
+    how_to_complete: {
+      step_1: 'Register: POST /api/agents/register with { agent_name } to get agent_identity_id',
+      step_2: 'Claim: POST /api/missions/claim with { mission_id, agent_identity_id }',
+      step_3: 'Execute the task described in task_prompt using the relevant MCP servers',
+      step_4: 'Complete: POST /api/missions/complete with { claim_id, results: [{ skill_slug, outcome_status, latency_ms, output_quality_rating }] }',
+      reward: 'Missions earn 4x credit multiplier compared to standard reports',
+    },
+    note: 'You can also earn credits without missions — POST /api/report accepts ANY skill execution.',
+    filter_by_event: 'Add ?event=slug to filter (e.g. ?event=web-research-extraction)',
   })
 }

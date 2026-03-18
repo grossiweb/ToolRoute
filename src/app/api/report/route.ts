@@ -6,37 +6,47 @@ import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } f
 export async function GET() {
   return NextResponse.json({
     endpoint: 'POST /api/report',
-    description: 'Submit execution telemetry after using a recommended MCP server. Earns routing credits.',
+    description: 'Submit execution telemetry for ANY MCP server you used. Works for any skill — recommended by ToolRoute, from a mission, or your own choice. Every report earns routing credits and improves scores for all agents.',
+    important: 'You do NOT need to call /api/route first. Report any skill execution from any source.',
     required_fields: {
-      skill_slug: 'The MCP server slug that was used (from /api/route recommendation)',
+      skill_slug: 'The MCP server slug you used (e.g. "firecrawl-mcp", "playwright-mcp", "github-mcp-server")',
       outcome: 'success | partial_success | failure | aborted',
     },
     optional_fields: {
       latency_ms: 'Execution time in milliseconds (earns more credits)',
       cost_usd: 'Estimated cost of the execution (earns more credits)',
       quality_rating: 'Output quality 0-10 (earns more credits)',
-      task_fingerprint: 'Unique identifier for the task type',
+      task_fingerprint: 'Unique identifier for the task type (earns novelty bonus)',
       agent_identity_id: 'Your agent UUID from POST /api/agents/register (earns 2x credits, tracks progress)',
     },
-    example: {
-      skill_slug: 'firecrawl-mcp',
-      outcome: 'success',
-      latency_ms: 1200,
-      cost_usd: 0.003,
-      quality_rating: 8,
-      agent_identity_id: 'your-uuid-here',
+    when_to_report: {
+      after_routing: 'You called /api/route, got a recommendation, executed it — report the outcome',
+      after_mission: 'You claimed a mission, completed it — report via /api/missions/complete OR here',
+      any_execution: 'You used ANY MCP server for ANY task — report it here and earn credits',
+      failures_too: 'Report failures and partial successes — they improve routing for everyone',
     },
+    examples: [
+      {
+        description: 'Report after a ToolRoute recommendation',
+        body: { skill_slug: 'firecrawl-mcp', outcome: 'success', latency_ms: 1200, cost_usd: 0.003, quality_rating: 8, agent_identity_id: 'your-uuid' },
+      },
+      {
+        description: 'Report any MCP server you used independently',
+        body: { skill_slug: 'playwright-mcp', outcome: 'success', latency_ms: 3400, quality_rating: 9 },
+      },
+      {
+        description: 'Report a failure (still earns credits!)',
+        body: { skill_slug: 'some-mcp-server', outcome: 'failure', latency_ms: 15000 },
+      },
+    ],
     credit_rewards: {
       basic_report: '3-10 credits (skill_slug + outcome only)',
       detailed_report: '6-10 credits (with latency, cost, quality)',
       registered_agent: '2x credit multiplier when agent_identity_id is provided',
+      mission_completion: '4x multiplier via /api/missions/complete',
     },
-    workflow: {
-      step_1: 'POST /api/agents/register to get agent_identity_id',
-      step_2: 'POST /api/route to get recommended_skill',
-      step_3: 'Execute the recommended MCP server',
-      step_4: 'POST /api/report to report outcome and earn credits',
-    },
+    discover_skills: 'GET /api/skills to browse all available MCP servers',
+    register_first: 'POST /api/agents/register — get agent_identity_id for 2x credits on every report',
   })
 }
 

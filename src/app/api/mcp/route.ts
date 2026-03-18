@@ -67,7 +67,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_missions',
-    description: 'List available benchmark missions that earn routing credits.',
+    description: 'List available benchmark missions across 10 Olympic events. Missions earn 4x credit multiplier when completed. Claim a mission, execute the task, then report results.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -78,7 +78,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_report',
-    description: 'Report skill execution outcome. Earns routing credits and improves recommendations for all agents. Include latency_ms, cost_usd, and quality_rating for maximum credit rewards.',
+    description: 'Report ANY MCP server execution to earn routing credits. Works for any skill — recommended by ToolRoute, from a mission, or your own choice. Report successes AND failures. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents (toolroute_register) earn 2x.',
     inputSchema: {
       type: 'object',
       properties: {

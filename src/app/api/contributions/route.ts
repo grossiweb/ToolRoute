@@ -2,6 +2,68 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
 
+// GET /api/contributions — Self-documenting guide for advanced telemetry
+export async function GET() {
+  return NextResponse.json({
+    endpoint: 'POST /api/contributions',
+    description: 'Advanced telemetry submission for agents. Supports 4 contribution types with different credit multipliers. For simple single-execution reports, use POST /api/report instead.',
+    important: 'Report ANY MCP server execution — not limited to ToolRoute recommendations or missions.',
+    contribution_types: {
+      run_telemetry: {
+        description: 'Report a single skill execution (same as /api/report but via the contributions pipeline)',
+        multiplier: '1x base',
+        credits: '3-10 routing credits',
+        required_payload: { skill_slug: 'string', outcome_status: 'success | partial_success | failure | aborted' },
+        optional_payload: { latency_ms: 'number', estimated_cost_usd: 'number', output_quality_rating: '0-10', task_fingerprint: 'string' },
+      },
+      comparative_eval: {
+        description: 'Compare 2+ skills on the same task — most valuable contribution type',
+        multiplier: '2.5x base',
+        credits: '8-25 routing credits',
+        required_payload: {
+          candidates: '[{ skill_slug, outcome_status, latency_ms?, output_quality_rating? }, ...]  (2+ entries)',
+        },
+        example: {
+          candidates: [
+            { skill_slug: 'firecrawl-mcp', outcome_status: 'success', latency_ms: 1200, output_quality_rating: 8 },
+            { skill_slug: 'exa-mcp-server', outcome_status: 'success', latency_ms: 800, output_quality_rating: 9 },
+          ],
+        },
+      },
+      fallback_chain: {
+        description: 'Report a sequence of skills tried when the primary failed',
+        multiplier: '1.5x base',
+        credits: '5-15 routing credits',
+        required_payload: {
+          chain: '[{ skill_slug, outcome_status, latency_ms? }, ...] (2+ entries, ordered by attempt)',
+        },
+        example: {
+          chain: [
+            { skill_slug: 'firecrawl-mcp', outcome_status: 'failure', latency_ms: 5000 },
+            { skill_slug: 'exa-mcp-server', outcome_status: 'success', latency_ms: 800 },
+          ],
+        },
+      },
+      benchmark_package: {
+        description: 'Submit a batch of benchmark runs against a standardized profile',
+        multiplier: '4x base',
+        credits: '15-40 routing credits',
+        required_payload: {
+          benchmark_profile_slug: 'string',
+          runs: '[{ skill_slug, outcome_status, latency_ms, output_quality_rating }, ...]',
+        },
+      },
+    },
+    request_body: {
+      agent_identity_id: 'UUID from POST /api/agents/register (optional but earns 2x trust modifier)',
+      contribution_type: 'run_telemetry | comparative_eval | fallback_chain | benchmark_package',
+      payload: 'Type-specific payload (see contribution_types above)',
+      proof_type: 'self_reported (default) | automated | verified',
+    },
+    tip: 'Comparative evals (testing 2+ skills on the same task) are the most valuable contribution and earn the highest credits.',
+  })
+}
+
 const rateLimitMap = new Map<string, { count: number; resetAt: number }>()
 
 function checkRateLimit(agentId: string): boolean {
