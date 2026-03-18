@@ -24,24 +24,24 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto mb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="border border-gray-200 rounded-xl p-5 bg-white">
-            <div className="text-2xl mb-3">$</div>
-            <h3 className="font-bold text-gray-900 mb-2">Cut LLM costs 40-60%</h3>
+            <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-sm mb-3">$</div>
+            <h3 className="font-bold text-gray-900 mb-2">Stop overspending</h3>
             <p className="text-sm text-gray-500">
-              Most agent tasks don't need the most expensive model. ToolRoute matches task complexity to the cheapest model that delivers quality results.
+              A simple extraction doesn't need GPT-4o. ToolRoute matches each task to the cheapest model and best tool that actually delivers.
             </p>
           </div>
           <div className="border border-gray-200 rounded-xl p-5 bg-white">
-            <div className="text-2xl mb-3">~</div>
-            <h3 className="font-bold text-gray-900 mb-2">Automatic escalation</h3>
+            <div className="w-9 h-9 rounded-lg bg-brand-light flex items-center justify-center text-brand font-bold text-sm mb-3">&uarr;</div>
+            <h3 className="font-bold text-gray-900 mb-2">Automatic fallbacks</h3>
             <p className="text-sm text-gray-500">
-              Start cheap. If the model fails or quality drops, ToolRoute tells your agent exactly which model to try next. No wasted tokens.
+              If a model fails or a tool times out, ToolRoute tells your agent exactly what to try next. Fallback chains for models and tools.
             </p>
           </div>
           <div className="border border-gray-200 rounded-xl p-5 bg-white">
-            <div className="text-2xl mb-3">%</div>
-            <h3 className="font-bold text-gray-900 mb-2">Data-driven, not vibes</h3>
+            <div className="w-9 h-9 rounded-lg bg-teal-light flex items-center justify-center text-teal font-bold text-sm mb-3">&infin;</div>
+            <h3 className="font-bold text-gray-900 mb-2">Gets smarter over time</h3>
             <p className="text-sm text-gray-500">
-              Every routing decision improves with real execution data from agents reporting outcomes. The more agents use it, the smarter it gets.
+              Every agent that reports outcomes improves routing for everyone. Real execution data, not benchmarks from a blog post.
             </p>
           </div>
         </div>
@@ -97,10 +97,10 @@ export default function HomePage() {
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { step: '1', title: 'Route', desc: 'Ask which model to use. Get a tier, cost estimate, and escalation chain.' },
-            { step: '2', title: 'Execute', desc: 'Call the model with your own API keys. ToolRoute never proxies.' },
-            { step: '3', title: 'Verify', desc: 'Check output quality. Get a score and recommendation.' },
-            { step: '4', title: 'Report', desc: 'Submit outcomes. Earn credits. Improve routing for everyone.' },
+            { step: '1', title: 'Route', desc: 'Ask which model and tool to use. Get a tier, cost estimate, and fallback chain.' },
+            { step: '2', title: 'Execute', desc: 'Call the model or tool with your own API keys. ToolRoute never proxies.' },
+            { step: '3', title: 'Verify', desc: 'Check output quality. Get a score and next-step recommendation.' },
+            { step: '4', title: 'Report', desc: 'Submit outcomes. Earn credits. Make routing smarter for all agents.' },
           ].map(item => (
             <div key={item.step} className="text-center">
               <div className="w-9 h-9 rounded-full bg-purple-600 text-white font-bold text-sm flex items-center justify-center mx-auto mb-3">

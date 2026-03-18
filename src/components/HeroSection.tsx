@@ -2,11 +2,13 @@
 
 import { useState } from 'react'
 
+type TabKey = 'mcp' | 'python' | 'typescript' | 'curl'
+
 export function HeroSection() {
-  const [activeTab, setActiveTab] = useState<'mcp' | 'python' | 'typescript'>('mcp')
+  const [activeTab, setActiveTab] = useState<TabKey>('mcp')
   const [copied, setCopied] = useState(false)
 
-  const codeSnippets = {
+  const codeSnippets: Record<TabKey, string> = {
     mcp: `{
   "mcpServers": {
     "toolroute": {
@@ -30,6 +32,22 @@ const model = await tr.model.route({ task: "parse CSV file" })
 
 // After execution:
 await tr.model.report({ model_slug: "claude-3-5-sonnet", outcome_status: "success" })`,
+    curl: `# Route a model
+curl -X POST https://toolroute.io/api/route/model \\
+  -H "Content-Type: application/json" \\
+  -d '{"task": "parse CSV file"}'
+
+# Route a tool
+curl -X POST https://toolroute.io/api/route \\
+  -H "Content-Type: application/json" \\
+  -d '{"task": "web scraping", "constraints": {"priority": "best_value"}}'`,
+  }
+
+  const tabLabels: Record<TabKey, string> = {
+    mcp: 'MCP Config',
+    python: 'Python',
+    typescript: 'TypeScript',
+    curl: 'cURL',
   }
 
   const handleCopy = () => {
@@ -47,29 +65,32 @@ await tr.model.report({ model_slug: "claude-3-5-sonnet", outcome_status: "succes
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600" />
           </span>
-          MODEL ROUTING FOR AGENTS
+          FREE ROUTING FOR AGENTS
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-5">
-          Your agents are calling<br />
-          <span className="text-purple-600">the wrong model.</span>
+          Stop guessing which model<br />
+          <span className="text-purple-600">and tool to use.</span>
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-6">
-          Every task has an optimal model. A simple translation doesn't need GPT-4o.
-          A complex architecture review shouldn't use Haiku.
-          ToolRoute picks the right model for every task — saving you money and getting better results.
+          ToolRoute tells your agent which LLM model and which MCP server to use for every task.
+          Data-driven routing across 20+ models and 50+ tools. Completely free.
         </p>
-        <div className="flex items-center justify-center gap-6 text-sm text-gray-400">
+        <div className="flex items-center justify-center gap-6 text-sm text-gray-400 flex-wrap">
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-purple-500" />
-            <span>20+ models scored</span>
+            <span>20+ LLM models</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-brand" />
-            <span>6 routing tiers</span>
+            <span>50+ MCP servers</span>
           </div>
           <div className="flex items-center gap-2">
             <span className="w-2 h-2 rounded-full bg-teal" />
-            <span>$0 to route</span>
+            <span>Always free</span>
+          </div>
+          <div className="flex items-center gap-2">
+            <span className="w-2 h-2 rounded-full bg-amber-500" />
+            <span>No API key</span>
           </div>
         </div>
       </div>
@@ -79,24 +100,24 @@ await tr.model.report({ model_slug: "claude-3-5-sonnet", outcome_status: "succes
         <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Connect in 30 seconds</h2>
-            <p className="text-sm text-gray-500">Add ToolRoute as an MCP server. Your agent gets model routing + tool routing instantly.</p>
+            <p className="text-sm text-gray-500">Add ToolRoute as an MCP server, use the SDK, or call the API directly. Model routing + tool routing instantly.</p>
           </div>
-          <span className="text-[10px] font-semibold text-teal bg-teal-light px-2.5 py-1 rounded-full flex-shrink-0">No API key needed</span>
+          <span className="text-[10px] font-semibold text-teal bg-teal-light px-2.5 py-1 rounded-full flex-shrink-0">100% free</span>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 max-w-sm">
-          {(['mcp', 'python', 'typescript'] as const).map((tab) => (
+        <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 max-w-md">
+          {(['mcp', 'python', 'typescript', 'curl'] as const).map((tab) => (
             <button
               key={tab}
               onClick={() => setActiveTab(tab)}
-              className={`flex-1 px-4 py-1.5 rounded-md text-xs font-semibold transition-colors ${
+              className={`flex-1 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === tab
                   ? 'bg-purple-600 text-white'
                   : 'text-gray-600 hover:text-purple-600'
               }`}
             >
-              {tab === 'mcp' ? 'MCP Config' : tab === 'python' ? 'Python' : 'TypeScript'}
+              {tabLabels[tab]}
             </button>
           ))}
         </div>
@@ -128,22 +149,40 @@ await tr.model.report({ model_slug: "claude-3-5-sonnet", outcome_status: "succes
               <span className="text-purple-400">from</span> toolroute <span className="text-purple-400">import</span> ToolRoute{'\n'}
               {'\n'}
               tr = <span className="text-blue-400">ToolRoute</span>(){'\n'}
+              {'\n'}
+              <span className="text-gray-500">{'# Which model should I use?'}</span>{'\n'}
               model = tr.model.<span className="text-blue-400">route</span>(task=<span className="text-green-400">&quot;parse CSV file&quot;</span>){'\n'}
               <span className="text-gray-500">{'# → { model: "claude-3-5-sonnet", tier: "fast_code", cost: $0.01 }'}</span>{'\n'}
               {'\n'}
-              <span className="text-gray-500">{'# After execution:'}</span>{'\n'}
-              tr.model.<span className="text-blue-400">report</span>(model_slug=<span className="text-green-400">&quot;claude-3-5-sonnet&quot;</span>, outcome=<span className="text-green-400">&quot;success&quot;</span>)
+              <span className="text-gray-500">{'# Which tool should I use?'}</span>{'\n'}
+              tool = tr.<span className="text-blue-400">route</span>(task=<span className="text-green-400">&quot;web scraping&quot;</span>){'\n'}
+              <span className="text-gray-500">{'# → { skill: "firecrawl-mcp", confidence: 0.87, fallback: "exa-mcp" }'}</span>
             </pre>
-          ) : (
+          ) : activeTab === 'typescript' ? (
             <pre className="text-gray-300">
               <span className="text-purple-400">import</span> {'{ ToolRoute }'} <span className="text-purple-400">from</span> <span className="text-green-400">&apos;@toolroute/sdk&apos;</span>{'\n'}
               {'\n'}
               <span className="text-purple-400">const</span> tr = <span className="text-purple-400">new</span> <span className="text-blue-400">ToolRoute</span>(){'\n'}
+              {'\n'}
+              <span className="text-gray-500">{'// Which model should I use?'}</span>{'\n'}
               <span className="text-purple-400">const</span> model = <span className="text-purple-400">await</span> tr.model.<span className="text-blue-400">route</span>({'{'} task: <span className="text-green-400">&quot;parse CSV file&quot;</span> {'}'}){'\n'}
               <span className="text-gray-500">{'// → { model: "claude-3-5-sonnet", tier: "fast_code", cost: $0.01 }'}</span>{'\n'}
               {'\n'}
-              <span className="text-gray-500">{'// After execution:'}</span>{'\n'}
-              <span className="text-purple-400">await</span> tr.model.<span className="text-blue-400">report</span>({'{'} model_slug: <span className="text-green-400">&quot;claude-3-5-sonnet&quot;</span>, outcome_status: <span className="text-green-400">&quot;success&quot;</span> {'}'})
+              <span className="text-gray-500">{'// Which tool should I use?'}</span>{'\n'}
+              <span className="text-purple-400">const</span> tool = <span className="text-purple-400">await</span> tr.<span className="text-blue-400">route</span>({'{'} task: <span className="text-green-400">&quot;web scraping&quot;</span> {'}'}){'\n'}
+              <span className="text-gray-500">{'// → { skill: "firecrawl-mcp", confidence: 0.87, fallback: "exa-mcp" }'}</span>
+            </pre>
+          ) : (
+            <pre className="text-gray-300">
+              <span className="text-gray-500">{'# Which model should I use?'}</span>{'\n'}
+              curl -X POST https://toolroute.io/api/route/model \{'\n'}
+              {'  '}-H <span className="text-green-400">&quot;Content-Type: application/json&quot;</span> \{'\n'}
+              {'  '}-d <span className="text-green-400">&apos;{'{"task": "parse CSV file"}'}&apos;</span>{'\n'}
+              {'\n'}
+              <span className="text-gray-500">{'# Which tool should I use?'}</span>{'\n'}
+              curl -X POST https://toolroute.io/api/route \{'\n'}
+              {'  '}-H <span className="text-green-400">&quot;Content-Type: application/json&quot;</span> \{'\n'}
+              {'  '}-d <span className="text-green-400">&apos;{'{"task": "web scraping"}'}&apos;</span>
             </pre>
           )}
         </div>
