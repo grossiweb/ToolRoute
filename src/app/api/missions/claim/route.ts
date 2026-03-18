@@ -84,14 +84,8 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to create claim' }, { status: 500 })
   }
 
-  // Increment claimed_count on mission
-  await supabase
-    .from('benchmark_missions')
-    .update({
-      claimed_count: mission.claimed_count + 1,
-      status: mission.claimed_count + 1 >= mission.max_claims ? 'fully_claimed' : 'available',
-    })
-    .eq('id', mission_id)
+  // Atomically increment claimed_count (prevents race conditions)
+  await supabase.rpc('increment_mission_claimed', { p_mission_id: mission_id })
 
   return NextResponse.json({
     claim_id: claim.id,

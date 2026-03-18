@@ -181,11 +181,9 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to save submission', detail: insertError?.message }, { status: 500 })
   }
 
-  // ── Increment submission count ─────────────
+  // ── Atomically increment submission count (prevents race conditions) ──
 
-  await supabase.from('workflow_challenges')
-    .update({ submission_count: challenge.submission_count + 1 })
-    .eq('id', challenge.id)
+  await supabase.rpc('increment_challenge_submissions', { p_challenge_id: challenge.id })
 
   // ── Issue rewards ──────────────────────────
 

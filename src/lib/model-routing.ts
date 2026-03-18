@@ -167,7 +167,7 @@ export function rankModelsInTier(
       if (m.sample_size == null || m.sample_size < 5) return { model: m, score: -1 }
       const normQuality = maxQuality > 0 ? (m.avg_quality_rating ?? 0) / maxQuality : 0
       const normSuccess = maxSuccess > 0 ? (m.success_rate ?? 0) / maxSuccess : 0
-      const normCostEff = maxCost > 0 ? 1 - (m.input_cost_per_mtok / maxCost) : 0
+      const normCostEff = maxCost > 0 ? Math.max(0, 1 - (m.input_cost_per_mtok / maxCost)) : 0
       const normLatency = m.avg_latency_ms ? 1 - Math.min(m.avg_latency_ms / 5000, 1) : 0.5
       const score = 0.40 * normQuality + 0.30 * normSuccess + 0.20 * normCostEff + 0.10 * normLatency
       return { model: m, score }

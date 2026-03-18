@@ -139,19 +139,8 @@ export async function POST(request: NextRequest) {
     })
     .eq('id', claim_id)
 
-  // Update mission completed_count
-  const { data: updatedMission } = await supabase
-    .from('benchmark_missions')
-    .select('completed_count')
-    .eq('id', mission.id)
-    .single()
-
-  await supabase
-    .from('benchmark_missions')
-    .update({
-      completed_count: (updatedMission?.completed_count || 0) + 1,
-    })
-    .eq('id', mission.id)
+  // Atomically increment completed_count (prevents race conditions)
+  await supabase.rpc('increment_mission_completed', { p_mission_id: mission.id })
 
   // Create reward ledger entry if contributor exists
   if (agent.contributor_id) {
