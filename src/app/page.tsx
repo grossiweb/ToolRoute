@@ -1,6 +1,7 @@
 import Link from 'next/link'
 import { HeroSection } from '@/components/HeroSection'
 import { DecisionFeed } from '@/components/DecisionFeed'
+import { ModelRoutingDemo } from '@/components/ModelRoutingDemo'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Suspense } from 'react'
 
@@ -69,6 +70,14 @@ export default function HomePage() {
       <Suspense>
         <DecisionFeed />
       </Suspense>
+
+      {/* Model Routing Demo — try it live */}
+      <div className="my-8">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 text-center">Try Model Routing</h2>
+        <Suspense>
+          <ModelRoutingDemo />
+        </Suspense>
+      </div>
 
       {/* Three Pillars — the main ways to use ToolRoute */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
