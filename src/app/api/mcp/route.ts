@@ -189,6 +189,22 @@ const TOOLS = [
       required: ['model_slug', 'outcome_status'],
     },
   },
+  {
+    name: 'toolroute_verify_model',
+    description: 'Lightweight quality check on LLM model output. Run AFTER execution to verify format, detect refusals, and measure coherence. No LLM needed — deterministic checks only. Closes the route → execute → verify loop.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        model_slug: { type: 'string', description: 'The model slug (e.g. "gpt-4o", "claude-3-5-sonnet")' },
+        task: { type: 'string', description: 'The original task description you sent to the model' },
+        output_snippet: { type: 'string', description: 'First 500 chars of the model output' },
+        decision_id: { type: 'string', description: 'The decision_id from toolroute_model_route (links verification to decision)' },
+        expected_format: { type: 'string', enum: ['json', 'code', 'markdown', 'text'], description: 'Expected output format for validation' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+      },
+      required: ['model_slug', 'task', 'output_snippet'],
+    },
+  },
 ]
 
 export async function POST(request: NextRequest) {
@@ -212,7 +228,7 @@ export async function POST(request: NextRequest) {
         capabilities: { tools: {} },
         serverInfo: {
           name: 'toolroute',
-          version: '1.2.0',
+          version: '1.4.0',
           description: 'ToolRoute — intelligent routing layer for MCP servers. Call toolroute_register first, then toolroute_route for task recommendations, then toolroute_report after execution to earn credits.',
         },
       })
@@ -591,6 +607,24 @@ async function handleToolCall(id: any, params: any) {
       })
       const result = await res.json()
       return toolResult(id, JSON.stringify(result, null, 2))
+    }
+
+    case 'toolroute_verify_model': {
+      const { model_slug: vmSlug, task: vmTask, output_snippet: vmOut, decision_id: vmDid, expected_format: vmFmt, agent_identity_id: vmAid } = params || {}
+      if (!vmSlug || !vmTask || vmOut === undefined) return toolResult(id, 'Error: model_slug, task, and output_snippet are required.')
+
+      const baseUrl4 = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
+      const res4 = await fetch(`${baseUrl4}/api/verify/model`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          model_slug: vmSlug, task: vmTask, output_snippet: vmOut,
+          decision_id: vmDid || null, expected_format: vmFmt || null,
+          agent_identity_id: vmAid || null,
+        }),
+      })
+      const result4 = await res4.json()
+      return toolResult(id, JSON.stringify(result4, null, 2))
     }
 
     case 'toolroute_model_report': {

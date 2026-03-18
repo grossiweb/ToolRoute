@@ -79,6 +79,9 @@ export default async function ModelsPage() {
           ToolRoute recommends the right model for every task — based on real execution data, not benchmarks.
           6 tiers, {allModels.length} models, {providers.length} providers.
         </p>
+        <Link href="/models/compare" className="inline-flex items-center gap-1 mt-3 text-sm font-semibold text-brand hover:text-brand/80 transition-colors">
+          Compare Models &rarr;
+        </Link>
       </div>
 
       {/* Stats */}

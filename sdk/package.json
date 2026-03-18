@@ -1,6 +1,6 @@
 {
   "name": "@toolroute/sdk",
-  "version": "0.1.1",
+  "version": "0.2.0",
   "description": "ToolRoute SDK — route, execute, report. Two-line agent integration.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",

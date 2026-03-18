@@ -82,6 +82,80 @@ export interface ReportResponse {
   }
 }
 
+export interface ModelRouteRequest {
+  /** Natural language task description */
+  task: string
+  /** Constraints for model selection */
+  constraints?: {
+    max_cost_per_mtok?: number
+    max_latency_ms?: number
+    min_context_window?: number
+    preferred_providers?: string[]
+    excluded_providers?: string[]
+  }
+}
+
+export interface ModelRouteResponse {
+  recommended_model: string
+  recommended_alias: string
+  provider: string
+  tier: string
+  confidence: number
+  reasoning: string
+  fallback_chain: string[]
+  escalation: { next_tier: string; alias: string } | null
+  cost_estimate: { input_per_mtok: number; output_per_mtok: number; estimated_task_cost: number }
+  routing_metadata: Record<string, any>
+  decision_id: string
+}
+
+export interface ModelReportRequest {
+  /** Model slug that was used */
+  model_slug: string
+  /** Outcome status */
+  outcome_status: 'success' | 'partial_success' | 'failure' | 'aborted'
+  /** Decision ID from model route response */
+  decision_id?: string
+  /** Latency in ms */
+  latency_ms?: number
+  /** Input tokens consumed */
+  input_tokens?: number
+  /** Output tokens generated */
+  output_tokens?: number
+  /** Estimated cost in USD */
+  estimated_cost_usd?: number
+  /** Output quality rating (0-10) */
+  output_quality_rating?: number
+  /** Did structured output parse correctly? */
+  structured_output_valid?: boolean
+  /** Did tool calls succeed? */
+  tool_calls_succeeded?: boolean
+  /** Was hallucination detected? */
+  hallucination_detected?: boolean
+}
+
+export interface ModelVerifyRequest {
+  /** Model slug */
+  model_slug: string
+  /** Original task description */
+  task: string
+  /** First 500 chars of model output */
+  output_snippet: string
+  /** Decision ID from model route */
+  decision_id?: string
+  /** Expected output format */
+  expected_format?: 'json' | 'code' | 'markdown' | 'text'
+}
+
+export interface ModelVerifyResponse {
+  verified: boolean
+  quality_score: number
+  model_slug: string
+  checks: Record<string, { pass: boolean; detail?: string; overlap?: number }>
+  recommendation: 'output_acceptable' | 'retry_suggested' | 'escalate_model'
+  credits_earned: number
+}
+
 export interface PreflightResponse {
   healthy: boolean
   latency_ms: number
@@ -197,6 +271,66 @@ export class ToolRoute {
     } catch {
       return { accepted: false }
     }
+  }
+
+  /**
+   * Model routing namespace — route, report, and verify LLM model outputs.
+   */
+  model = {
+    /**
+     * Get an LLM model recommendation for a task. Returns alias, provider model ID,
+     * fallback chain, escalation path, and cost estimate.
+     */
+    route: async (request: ModelRouteRequest): Promise<ModelRouteResponse> => {
+      try {
+        const res = await this.fetch('POST', '/api/route/model', request)
+        if (!res.ok) {
+          return {
+            recommended_model: '', recommended_alias: '', provider: '', tier: 'fast_code',
+            confidence: 0, reasoning: 'ToolRoute unreachable — use your default model.',
+            fallback_chain: [], escalation: null, cost_estimate: { input_per_mtok: 0, output_per_mtok: 0, estimated_task_cost: 0 },
+            routing_metadata: { error: 'unreachable' }, decision_id: '',
+          }
+        }
+        return await res.json()
+      } catch {
+        return {
+          recommended_model: '', recommended_alias: '', provider: '', tier: 'fast_code',
+          confidence: 0, reasoning: 'ToolRoute unreachable — use your default model.',
+          fallback_chain: [], escalation: null, cost_estimate: { input_per_mtok: 0, output_per_mtok: 0, estimated_task_cost: 0 },
+          routing_metadata: { error: 'timeout' }, decision_id: '',
+        }
+      }
+    },
+
+    /**
+     * Report LLM model execution outcome. Earns routing credits.
+     */
+    report: async (request: ModelReportRequest): Promise<{ accepted: boolean; credits_earned?: number }> => {
+      try {
+        const res = await this.fetch('POST', '/api/report/model', request)
+        if (!res.ok) return { accepted: false }
+        return await res.json()
+      } catch {
+        return { accepted: false }
+      }
+    },
+
+    /**
+     * Lightweight output verification — deterministic checks, no LLM needed.
+     * Run after model execution to validate format, detect refusals, measure coherence.
+     */
+    verify: async (request: ModelVerifyRequest): Promise<ModelVerifyResponse> => {
+      try {
+        const res = await this.fetch('POST', '/api/verify/model', request)
+        if (!res.ok) {
+          return { verified: false, quality_score: 0, model_slug: request.model_slug, checks: {}, recommendation: 'retry_suggested', credits_earned: 0 }
+        }
+        return await res.json()
+      } catch {
+        return { verified: false, quality_score: 0, model_slug: request.model_slug, checks: {}, recommendation: 'retry_suggested', credits_earned: 0 }
+      }
+    },
   }
 
   /**
