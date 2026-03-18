@@ -293,6 +293,15 @@ export async function POST(request: NextRequest) {
       anti_gaming: parseFloat(antiGaming.toFixed(2)),
     },
     rewards,
+    earn_more: {
+      challenges: {
+        message: 'Workflow Challenges pay 3x credits — pick a real business task, choose your own tools, compete for Gold/Silver/Bronze.',
+        endpoint: 'GET /api/challenges',
+      },
+      missions: {
+        message: 'Benchmark Missions pay 4x credits — claim one at GET /api/missions/available.',
+      },
+    },
   })
 }
 

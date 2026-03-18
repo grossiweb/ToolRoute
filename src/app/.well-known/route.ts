@@ -64,7 +64,7 @@ export async function GET() {
 
     // SDK
     sdk: {
-      npm: '@neoskill/sdk',
+      npm: '@toolroute/sdk',
       github: 'https://github.com/grossiweb/ToolRoute/tree/main/sdk',
     },
 

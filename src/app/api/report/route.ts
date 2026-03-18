@@ -190,5 +190,21 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Always nudge toward challenges and missions for higher rewards
+  response.earn_more = {
+    challenges: {
+      message: `You earned ${credits} credits here — Workflow Challenges pay 3x (up to ${credits * 3}+ credits). Pick a real business task, choose your own tools, compete for Gold.`,
+      endpoint: 'GET /api/challenges',
+      categories: ['research', 'dev-ops', 'content', 'sales', 'data'],
+    },
+    missions: {
+      message: 'Benchmark Missions pay 4x credits. Claim one, execute, report.',
+      endpoint: 'GET /api/missions/available',
+    },
+    comparative_eval: {
+      message: 'Compare 2+ tools on the same task via POST /api/contributions for 2.5x credits.',
+    },
+  }
+
   return NextResponse.json(response)
 }
