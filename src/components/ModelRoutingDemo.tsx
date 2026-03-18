@@ -1,6 +1,6 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useEffect, useRef } from 'react'
 
 const EXAMPLE_TASKS = [
   'write a python function to parse CSV',
@@ -11,14 +11,18 @@ const EXAMPLE_TASKS = [
   'analyze quarterly revenue trends and forecast',
 ]
 
+const DEFAULT_TASK = 'write a python function to parse CSV'
+
 export function ModelRoutingDemo() {
-  const [task, setTask] = useState('')
+  const [task, setTask] = useState(DEFAULT_TASK)
   const [result, setResult] = useState<any>(null)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
+  const autoFired = useRef(false)
 
-  async function handleRoute() {
-    if (!task.trim()) return
+  async function handleRoute(taskOverride?: string) {
+    const t = taskOverride || task
+    if (!t.trim()) return
     setLoading(true)
     setError('')
     setResult(null)
@@ -27,7 +31,7 @@ export function ModelRoutingDemo() {
       const res = await fetch('/api/route/model', {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task }),
+        body: JSON.stringify({ task: t }),
       })
       const data = await res.json()
       if (!res.ok) {
@@ -41,6 +45,14 @@ export function ModelRoutingDemo() {
       setLoading(false)
     }
   }
+
+  // Auto-fire on first render with default task
+  useEffect(() => {
+    if (!autoFired.current) {
+      autoFired.current = true
+      handleRoute(DEFAULT_TASK)
+    }
+  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
     <div className="mb-8 border-2 border-purple-200 rounded-xl p-5 bg-purple-50/30">
@@ -74,7 +86,7 @@ export function ModelRoutingDemo() {
         {EXAMPLE_TASKS.map((example) => (
           <button
             key={example}
-            onClick={() => { setTask(example); setResult(null) }}
+            onClick={() => { setTask(example); handleRoute(example) }}
             className="text-[10px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
           >
             {example}

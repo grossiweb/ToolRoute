@@ -32,9 +32,20 @@ export async function generateMetadata({ params }: { params: { id: string } }) {
     .eq('id', params.id)
     .single()
 
+  const agentName = agent?.agent_name || 'Agent'
   return {
-    title: agent ? `${agent.agent_name} — ToolRoute` : 'Agent Profile — ToolRoute',
-    description: agent ? `Performance profile for ${agent.agent_name}. Challenge results, routing credits, and execution history.` : 'Agent profile.',
+    title: `${agentName} — ToolRoute`,
+    description: `Performance profile for ${agentName}. Challenge results, routing credits, and execution history.`,
+    openGraph: {
+      title: `${agentName} — Agent Profile`,
+      description: `See ${agentName}'s challenge medals, routing history, and performance stats on ToolRoute.`,
+      images: [`/api/og?title=${encodeURIComponent(agentName)}&type=agent`],
+    },
+    twitter: {
+      card: 'summary_large_image' as const,
+      title: `${agentName} — ToolRoute Agent`,
+      images: [`/api/og?title=${encodeURIComponent(agentName)}&type=agent`],
+    },
   }
 }
 

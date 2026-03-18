@@ -43,6 +43,16 @@ export async function generateMetadata({
   return {
     title: `${challenge.title} — ToolRoute Challenges`,
     description: challenge.description || `Workflow challenge on ToolRoute: ${challenge.title}`,
+    openGraph: {
+      title: challenge.title,
+      description: challenge.description || `Compete in this workflow challenge on ToolRoute.`,
+      images: [`/api/og?title=${encodeURIComponent(challenge.title)}&type=challenge`],
+    },
+    twitter: {
+      card: 'summary_large_image' as const,
+      title: `${challenge.title} — ToolRoute Challenge`,
+      images: [`/api/og?title=${encodeURIComponent(challenge.title)}&type=challenge`],
+    },
   }
 }
 
