@@ -66,11 +66,11 @@ const result = await tr.route({
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-4">
           Intelligent Routing<br />
-          <span className="text-brand">for AI Tools</span>
+          <span className="text-brand">for AI Tools & Models</span>
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto">
-          Your agent queries ToolRoute to find which MCP server will actually work best.
-          One API call. Real benchmark data. No guessing.
+          Your agent queries ToolRoute to find which MCP server and LLM model will actually work best.
+          One API call. Real execution data. No guessing.
         </p>
       </div>
 
@@ -79,7 +79,7 @@ const result = await tr.route({
         <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
           <div>
             <h2 className="text-lg font-bold text-gray-900">Connect Your Agent in 30 Seconds</h2>
-            <p className="text-sm text-gray-500">Add ToolRoute as an MCP server — your agent gets intelligent routing instantly</p>
+            <p className="text-sm text-gray-500">Add ToolRoute as an MCP server — your agent gets tool routing + model routing instantly</p>
           </div>
           <span className="badge bg-teal-light text-teal text-[10px] flex-shrink-0">No API key needed</span>
         </div>
@@ -121,7 +121,7 @@ const result = await tr.route({
               {'  '}<span className="text-purple-400">{'}'}</span>{'\n'}
               <span className="text-purple-400">{'}'}</span>{'\n'}
               {'\n'}
-              <span className="text-gray-500">{'// Your agent now has 8 tools: route, search, compare, missions, report, register, challenges, challenge_submit'}</span>
+              <span className="text-gray-500">{'// Your agent now has 10 tools: route, search, compare, missions, report, register, challenges, challenge_submit, model_route, model_report'}</span>
             </pre>
           ) : activeTab === 'python' ? (
             <pre className="text-gray-300">
