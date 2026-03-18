@@ -156,9 +156,9 @@ UPDATE workflow_challenges SET submission_count = 1 WHERE slug = 'meeting-prep-b
 -- ════════════════════════════════════════════════════════════════
 
 INSERT INTO model_routing_decisions (
-  task_hash, task_snippet, signals, resolved_tier,
-  selected_model_id, confidence, routing_latency_ms,
-  candidates_evaluated, agent_identity_id
+  task_hash, task_snippet, signals_json, resolved_tier,
+  recommended_model_id, recommended_alias, fallback_chain,
+  confidence, latency_ms, agent_identity_id
 )
 SELECT
   md5(task_snippet),
@@ -166,27 +166,28 @@ SELECT
   signals::jsonb,
   tier,
   (SELECT id FROM model_registry WHERE slug = model_slug LIMIT 1),
+  'toolroute/' || tier,
+  '[]'::jsonb,
   confidence,
   latency,
-  candidates,
   agent_id
 FROM (VALUES
-  ('write a python function to parse CSV', '{"tools_needed":false,"structured_output_needed":true,"code_present":true,"complex_reasoning":false}', 'fast_code', 'claude-3-5-sonnet', 0.80, 18, 5, 'b0000000-0000-0000-0000-000000000003'::uuid),
-  ('analyze quarterly revenue trends and forecast', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":true}', 'reasoning_pro', 'claude-3-5-sonnet', 0.70, 22, 5, 'b0000000-0000-0000-0000-000000000001'::uuid),
-  ('format API response as JSON schema', '{"tools_needed":false,"structured_output_needed":true,"code_present":false,"complex_reasoning":false}', 'cheap_structured', 'gpt-4o-mini', 0.70, 15, 3, 'b0000000-0000-0000-0000-000000000007'::uuid),
-  ('call the Stripe API and process webhooks', '{"tools_needed":true,"structured_output_needed":true,"code_present":true,"complex_reasoning":false}', 'tool_agent', 'claude-3-5-sonnet', 0.85, 25, 4, 'b0000000-0000-0000-0000-000000000003'::uuid),
-  ('summarize this meeting transcript', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":false}', 'cheap_chat', 'gpt-4o-mini', 0.55, 12, 3, 'b0000000-0000-0000-0000-000000000005'::uuid),
-  ('design a microservices architecture for an e-commerce platform', '{"tools_needed":true,"structured_output_needed":false,"code_present":true,"complex_reasoning":true}', 'best_available', 'claude-opus-4', 0.92, 30, 3, 'b0000000-0000-0000-0000-000000000001'::uuid),
-  ('extract entities from legal contract', '{"tools_needed":false,"structured_output_needed":true,"code_present":false,"complex_reasoning":true}', 'reasoning_pro', 'gpt-4o', 0.75, 20, 5, 'e0416284-a3f3-42c9-8765-2f44db84e86e'::uuid),
-  ('debug this React component rendering issue', '{"tools_needed":false,"structured_output_needed":false,"code_present":true,"complex_reasoning":false}', 'fast_code', 'deepseek-v3', 0.72, 19, 5, 'b0000000-0000-0000-0000-000000000007'::uuid),
-  ('translate product descriptions to Spanish', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":false}', 'cheap_chat', 'gemini-2.0-flash-lite', 0.55, 14, 3, 'b0000000-0000-0000-0000-000000000008'::uuid),
-  ('generate SQL queries for analytics dashboard', '{"tools_needed":false,"structured_output_needed":true,"code_present":true,"complex_reasoning":false}', 'fast_code', 'codestral', 0.78, 17, 5, 'b0000000-0000-0000-0000-000000000002'::uuid),
-  ('orchestrate a multi-tool research workflow', '{"tools_needed":true,"structured_output_needed":false,"code_present":false,"complex_reasoning":true}', 'best_available', 'gpt-4.5', 0.90, 28, 3, 'b0000000-0000-0000-0000-000000000003'::uuid),
-  ('classify customer support tickets by priority', '{"tools_needed":false,"structured_output_needed":true,"code_present":false,"complex_reasoning":false}', 'cheap_structured', 'gemini-2.0-flash', 0.68, 16, 3, 'b0000000-0000-0000-0000-000000000005'::uuid),
-  ('implement a Redis caching layer in Node.js', '{"tools_needed":false,"structured_output_needed":false,"code_present":true,"complex_reasoning":false}', 'fast_code', 'claude-3-5-sonnet', 0.80, 21, 5, 'b0000000-0000-0000-0000-000000000007'::uuid),
-  ('plan a data migration strategy from MongoDB to Postgres', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":true}', 'reasoning_pro', 'deepseek-r1', 0.73, 23, 5, 'b0000000-0000-0000-0000-000000000002'::uuid),
-  ('write unit tests for authentication middleware', '{"tools_needed":false,"structured_output_needed":false,"code_present":true,"complex_reasoning":false}', 'fast_code', 'gpt-4o', 0.76, 19, 5, 'b0000000-0000-0000-0000-000000000001'::uuid)
-) AS t(task_snippet, signals, tier, model_slug, confidence, latency, candidates, agent_id);
+  ('write a python function to parse CSV', '{"tools_needed":false,"structured_output_needed":true,"code_present":true,"complex_reasoning":false}', 'fast_code', 'claude-3-5-sonnet', 0.80, 18, 'b0000000-0000-0000-0000-000000000003'::uuid),
+  ('analyze quarterly revenue trends and forecast', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":true}', 'reasoning_pro', 'claude-3-5-sonnet', 0.70, 22, 'b0000000-0000-0000-0000-000000000001'::uuid),
+  ('format API response as JSON schema', '{"tools_needed":false,"structured_output_needed":true,"code_present":false,"complex_reasoning":false}', 'cheap_structured', 'gpt-4o-mini', 0.70, 15, 'b0000000-0000-0000-0000-000000000007'::uuid),
+  ('call the Stripe API and process webhooks', '{"tools_needed":true,"structured_output_needed":true,"code_present":true,"complex_reasoning":false}', 'tool_agent', 'claude-3-5-sonnet', 0.85, 25, 'b0000000-0000-0000-0000-000000000003'::uuid),
+  ('summarize this meeting transcript', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":false}', 'cheap_chat', 'gpt-4o-mini', 0.55, 12, 'b0000000-0000-0000-0000-000000000005'::uuid),
+  ('design a microservices architecture for an e-commerce platform', '{"tools_needed":true,"structured_output_needed":false,"code_present":true,"complex_reasoning":true}', 'best_available', 'claude-opus-4', 0.92, 30, 'b0000000-0000-0000-0000-000000000001'::uuid),
+  ('extract entities from legal contract', '{"tools_needed":false,"structured_output_needed":true,"code_present":false,"complex_reasoning":true}', 'reasoning_pro', 'gpt-4o', 0.75, 20, 'e0416284-a3f3-42c9-8765-2f44db84e86e'::uuid),
+  ('debug this React component rendering issue', '{"tools_needed":false,"structured_output_needed":false,"code_present":true,"complex_reasoning":false}', 'fast_code', 'deepseek-v3', 0.72, 19, 'b0000000-0000-0000-0000-000000000007'::uuid),
+  ('translate product descriptions to Spanish', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":false}', 'cheap_chat', 'gemini-2.0-flash-lite', 0.55, 14, 'b0000000-0000-0000-0000-000000000008'::uuid),
+  ('generate SQL queries for analytics dashboard', '{"tools_needed":false,"structured_output_needed":true,"code_present":true,"complex_reasoning":false}', 'fast_code', 'codestral', 0.78, 17, 'b0000000-0000-0000-0000-000000000002'::uuid),
+  ('orchestrate a multi-tool research workflow', '{"tools_needed":true,"structured_output_needed":false,"code_present":false,"complex_reasoning":true}', 'best_available', 'gpt-4.5', 0.90, 28, 'b0000000-0000-0000-0000-000000000003'::uuid),
+  ('classify customer support tickets by priority', '{"tools_needed":false,"structured_output_needed":true,"code_present":false,"complex_reasoning":false}', 'cheap_structured', 'gemini-2.0-flash', 0.68, 16, 'b0000000-0000-0000-0000-000000000005'::uuid),
+  ('implement a Redis caching layer in Node.js', '{"tools_needed":false,"structured_output_needed":false,"code_present":true,"complex_reasoning":false}', 'fast_code', 'claude-3-5-sonnet', 0.80, 21, 'b0000000-0000-0000-0000-000000000007'::uuid),
+  ('plan a data migration strategy from MongoDB to Postgres', '{"tools_needed":false,"structured_output_needed":false,"code_present":false,"complex_reasoning":true}', 'reasoning_pro', 'deepseek-r1', 0.73, 23, 'b0000000-0000-0000-0000-000000000002'::uuid),
+  ('write unit tests for authentication middleware', '{"tools_needed":false,"structured_output_needed":false,"code_present":true,"complex_reasoning":false}', 'fast_code', 'gpt-4o', 0.76, 19, 'b0000000-0000-0000-0000-000000000001'::uuid)
+) AS t(task_snippet, signals, tier, model_slug, confidence, latency, agent_id);
 
 
 -- ════════════════════════════════════════════════════════════════
