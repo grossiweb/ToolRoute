@@ -55,8 +55,40 @@ export async function POST(request: NextRequest) {
   const mission = (claim as any).benchmark_missions
   const agent = (claim as any).agent_identities
 
+  // Resolve skill_slug → skill_id for each result (accepts either)
+  const resolvedResults = []
+  for (const r of results) {
+    let skillId = r.skill_id
+
+    // If skill_slug provided but no skill_id, resolve it
+    if (!skillId && r.skill_slug) {
+      const { data: skill } = await supabase
+        .from('skills')
+        .select('id')
+        .eq('slug', r.skill_slug)
+        .single()
+
+      if (!skill) {
+        return NextResponse.json(
+          { error: `Skill "${r.skill_slug}" not found in catalog. Check the slug and try again.` },
+          { status: 400 }
+        )
+      }
+      skillId = skill.id
+    }
+
+    if (!skillId) {
+      return NextResponse.json(
+        { error: 'Each result must include either skill_id (UUID) or skill_slug (string).' },
+        { status: 400 }
+      )
+    }
+
+    resolvedResults.push({ ...r, skill_id: skillId })
+  }
+
   // Process each result into outcome_records
-  const outcomeInserts = results.map((r: any) => ({
+  const outcomeInserts = resolvedResults.map((r: any) => ({
     skill_id: r.skill_id,
     benchmark_profile_id: null, // will be resolved from event
     workflow_slug: r.workflow_slug || null,
@@ -93,6 +125,7 @@ export async function POST(request: NextRequest) {
 
   const routingCredits = Math.round(10 * baseMultiplier * missionMultiplier * trustMod)
   const reputationPoints = Math.round(5 * baseMultiplier * missionMultiplier * trustMod)
+  const economicCredits = Math.round(routingCredits * 0.01 * 100) / 100 // $0.01 per routing credit
 
   // Update claim to completed
   await supabase
@@ -129,6 +162,7 @@ export async function POST(request: NextRequest) {
         agent_identity_id: agent.id,
         routing_credits: routingCredits,
         reputation_points: reputationPoints,
+        economic_credits_usd: economicCredits,
         reason: `Mission completed: ${mission.title}`,
       })
   }
@@ -140,6 +174,7 @@ export async function POST(request: NextRequest) {
     rewards: {
       routing_credits: routingCredits,
       reputation_points: reputationPoints,
+      economic_credits_usd: economicCredits,
       multipliers_applied: {
         base: baseMultiplier,
         mission: missionMultiplier,
@@ -149,5 +184,6 @@ export async function POST(request: NextRequest) {
     message: isComparative
       ? 'Comparative evaluation recorded — 2.5x bonus applied!'
       : 'Telemetry recorded. Run comparative evals to earn 2.5x rewards.',
+    tip: 'Try Workflow Challenges for 3x credits: GET /api/challenges',
   })
 }

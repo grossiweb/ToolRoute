@@ -25,6 +25,9 @@ export async function GET() {
         'toolroute_compare',
         'toolroute_missions',
         'toolroute_report',
+        'toolroute_register',
+        'toolroute_challenges',
+        'toolroute_challenge_submit',
       ],
       config_snippet: {
         mcpServers: {
@@ -38,6 +41,7 @@ export async function GET() {
     // REST API endpoints
     api_base: 'https://toolroute.io/api',
     endpoints: {
+      register: 'POST /api/agents/register — Register or look up agent identity',
       route: 'POST /api/route — Get a confidence-scored MCP server recommendation',
       search: 'GET /api/skills — Search and filter the MCP server catalog',
       report: 'POST /api/report — Submit outcome telemetry (earn routing credits)',
@@ -46,7 +50,9 @@ export async function GET() {
       missions_available: 'GET /api/missions/available',
       missions_claim: 'POST /api/missions/claim',
       missions_complete: 'POST /api/missions/complete',
-      mcp_server: 'POST /api/mcp — JSON-RPC MCP server endpoint',
+      challenges: 'GET /api/challenges — Workflow Challenges (3x credits)',
+      challenges_submit: 'POST /api/challenges/submit — Submit challenge results',
+      mcp_server: 'POST /api/mcp — JSON-RPC MCP server (8 tools)',
     },
 
     // Quickstart for agents
@@ -58,7 +64,7 @@ export async function GET() {
 
     // SDK
     sdk: {
-      npm: '@toolroute/sdk',
+      npm: '@neoskill/sdk',
       github: 'https://github.com/grossiweb/ToolRoute/tree/main/sdk',
     },
 

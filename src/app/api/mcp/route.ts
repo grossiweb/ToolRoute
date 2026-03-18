@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'
+import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
 
 /**
  * ToolRoute MCP Server — JSON-RPC over HTTP
@@ -8,12 +9,15 @@ import { semanticMatchWorkflow } from '@/lib/embeddings'
  * This endpoint makes ToolRoute itself queryable as an MCP server.
  * Agents can call ToolRoute tools using the standard MCP protocol.
  *
- * Tools exposed:
+ * Tools exposed (8):
  *   - toolroute_route: Get a skill recommendation for a task
  *   - toolroute_search: Search the skill catalog
  *   - toolroute_compare: Compare skills side by side
  *   - toolroute_missions: List available benchmark missions
  *   - toolroute_report: Submit execution telemetry
+ *   - toolroute_register: Register an agent identity
+ *   - toolroute_challenges: List workflow challenges
+ *   - toolroute_challenge_submit: Submit challenge results
  */
 
 const TOOLS = [
@@ -169,7 +173,7 @@ export async function POST(request: NextRequest) {
         capabilities: { tools: {} },
         serverInfo: {
           name: 'toolroute',
-          version: '1.1.0',
+          version: '1.2.0',
           description: 'ToolRoute — intelligent routing layer for MCP servers. Call toolroute_register first, then toolroute_route for task recommendations, then toolroute_report after execution to earn credits.',
         },
       })
@@ -199,8 +203,10 @@ async function handleToolCall(id: any, params: any) {
 
   switch (name) {
     case 'toolroute_route': {
-      const { task, workflow_slug, priority = 'best_value', trust_floor = 0 } = args || {}
-      let routeQuery = supabase
+      const { task, workflow_slug, priority = 'best_value', trust_floor = 0, agent_identity_id } = args || {}
+
+      // Fetch skills with scores
+      const { data: skills, error: skillsError } = await supabase
         .from('skills')
         .select(`
           id, slug, canonical_name, short_description,
@@ -210,7 +216,9 @@ async function handleToolCall(id: any, params: any) {
         .not('skill_scores', 'is', null)
         .limit(50)
 
-      const { data: skills } = await routeQuery
+      if (skillsError) {
+        return toolResult(id, `Error: Database query failed — ${skillsError.message}`)
+      }
 
       if (!skills || skills.length === 0) {
         return toolResult(id, 'No scored skills found yet. Data accumulating.')
@@ -218,47 +226,85 @@ async function handleToolCall(id: any, params: any) {
 
       let candidates = skills.filter((s: any) => (s.skill_scores?.trust_score ?? 0) >= trust_floor)
 
-      // Filter by workflow junction tables if task provided
-      if (task) {
-        // Try semantic matching, fall back to keyword
+      // Resolve workflow from task — same logic as REST endpoint
+      let resolvedWorkflow = workflow_slug || ''
+      let confidence = workflow_slug ? 0.95 : 0.5
+      let matchMethod: 'explicit' | 'semantic' | 'keyword' = workflow_slug ? 'explicit' : 'keyword'
+
+      if (!workflow_slug && task) {
         const semanticResult = await semanticMatchWorkflow(task)
-        const resolvedWorkflow = semanticResult.method === 'semantic' && semanticResult.similarity > 0.3
-          ? semanticResult.workflow
-          : matchWorkflow(task)
-        if (resolvedWorkflow) {
-          const { data: wfSkills } = await supabase
-            .from('skill_workflows')
-            .select('skill_id, workflows!inner(slug)')
-            .eq('workflows.slug', resolvedWorkflow)
-          if (wfSkills && wfSkills.length > 0) {
-            const matchedIds = new Set(wfSkills.map((ws: any) => ws.skill_id))
-            const wfFiltered = candidates.filter((s: any) => matchedIds.has(s.id))
-            if (wfFiltered.length > 0) candidates = wfFiltered
+        if (semanticResult.method === 'semantic' && semanticResult.similarity > 0.3) {
+          resolvedWorkflow = semanticResult.workflow
+          confidence = Math.min(0.95, 0.65 + semanticResult.similarity * 0.3)
+          matchMethod = 'semantic'
+        } else {
+          resolvedWorkflow = matchWorkflowFromTask(task)
+          confidence = calcTaskConfidence(task, resolvedWorkflow)
+          matchMethod = 'keyword'
+        }
+      }
+
+      // Filter by workflow junction table
+      if (resolvedWorkflow) {
+        const { data: wfSkills } = await supabase
+          .from('skill_workflows')
+          .select('skill_id, workflows!inner(slug)')
+          .eq('workflows.slug', resolvedWorkflow)
+        if (wfSkills && wfSkills.length > 0) {
+          const matchedIds = new Set(wfSkills.map((ws: any) => ws.skill_id))
+          const wfFiltered = candidates.filter((s: any) => matchedIds.has(s.id))
+          if (wfFiltered.length > 0) {
+            // Junction narrowed results — boost confidence
+            confidence = Math.min(0.97, confidence + 0.05)
+            candidates = wfFiltered
           }
         }
       }
 
+      // Sort by priority mode — full 6-mode parity with REST endpoint
       const sorted = [...candidates].sort((a: any, b: any) => {
-        const key = priority === 'best_quality' ? 'output_score' : 'value_score'
-        return ((b.skill_scores as any)?.[key] || 0) - ((a.skill_scores as any)?.[key] || 0)
+        const sa = a.skill_scores
+        const sb = b.skill_scores
+        if (!sa || !sb) return 0
+        switch (priority) {
+          case 'best_quality': return (sb.output_score || 0) - (sa.output_score || 0)
+          case 'best_efficiency': return (sb.efficiency_score || 0) - (sa.efficiency_score || 0)
+          case 'lowest_cost': return (sb.cost_score || 0) - (sa.cost_score || 0)
+          case 'highest_trust': return (sb.trust_score || 0) - (sa.trust_score || 0)
+          case 'most_reliable': return (sb.reliability_score || 0) - (sa.reliability_score || 0)
+          default: return (sb.value_score || sb.overall_score || 0) - (sa.value_score || sa.overall_score || 0)
+        }
       })
 
       const top = sorted[0] as any
       if (!top) return toolResult(id, 'No skills match your constraints.')
 
+      // Outcome-backed confidence boost
       const { count: outcomeCount } = await supabase
         .from('outcome_records')
         .select('id', { count: 'exact', head: true })
         .eq('skill_id', top.id)
 
+      const dataBackedCount = outcomeCount ?? 0
+      if (dataBackedCount > 0) {
+        const outcomeBoost = Math.min(0.08, Math.log10(dataBackedCount + 1) * 0.03)
+        confidence = Math.min(0.99, confidence + outcomeBoost)
+      }
+
       return toolResult(id, JSON.stringify({
         recommended_skill: top.slug,
         name: top.canonical_name,
-        confidence: Math.min(0.95, 0.75 + Math.min(0.15, Math.log10((outcomeCount || 0) + 1) * 0.05)),
-        value_score: top.skill_scores?.value_score,
-        outcome_count: outcomeCount || 0,
+        confidence: Math.round(confidence * 100) / 100,
+        scores: top.skill_scores,
+        outcome_count: dataBackedCount,
         alternatives: sorted.slice(1, 4).map((s: any) => s.slug),
         fallback: sorted.length > 1 ? sorted[1].slug : null,
+        routing_metadata: {
+          resolved_workflow: resolvedWorkflow,
+          priority_mode: priority,
+          match_method: matchMethod,
+          candidates_evaluated: candidates.length,
+        },
       }, null, 2))
     }
 
@@ -271,6 +317,30 @@ async function handleToolCall(id: any, params: any) {
         .limit(Math.min(limit, 20))
 
       if (q) dbQuery = dbQuery.ilike('canonical_name', `%${q}%`)
+
+      // Apply workflow filter via junction table
+      if (workflow) {
+        const { data: wfSkills } = await supabase
+          .from('skill_workflows')
+          .select('skill_id, workflows!inner(slug)')
+          .eq('workflows.slug', workflow)
+        if (wfSkills && wfSkills.length > 0) {
+          const ids = wfSkills.map((ws: any) => ws.skill_id)
+          dbQuery = dbQuery.in('id', ids)
+        }
+      }
+
+      // Apply vertical filter via junction table
+      if (vertical) {
+        const { data: vSkills } = await supabase
+          .from('skill_verticals')
+          .select('skill_id, verticals!inner(slug)')
+          .eq('verticals.slug', vertical)
+        if (vSkills && vSkills.length > 0) {
+          const ids = vSkills.map((vs: any) => vs.skill_id)
+          dbQuery = dbQuery.in('id', ids)
+        }
+      }
 
       const { data } = await dbQuery
       return toolResult(id, JSON.stringify(data || [], null, 2))
@@ -294,12 +364,32 @@ async function handleToolCall(id: any, params: any) {
       const { event } = args || {}
       let dbQuery = supabase
         .from('benchmark_missions')
-        .select('id, title, description, task_prompt, reward_multiplier, max_claims, claimed_count, status')
+        .select('id, title, description, task_prompt, reward_multiplier, max_claims, claimed_count, status, olympic_events ( slug, name )')
         .eq('status', 'available')
         .limit(10)
 
+      // Apply event filter when provided
+      if (event) {
+        dbQuery = dbQuery.eq('olympic_events.slug', event)
+      }
+
       const { data } = await dbQuery
-      return toolResult(id, JSON.stringify(data || [], null, 2))
+
+      // If event filter was applied, filter out nulls (Supabase returns rows where join doesn't match)
+      const missions = event
+        ? (data || []).filter((m: any) => m.olympic_events != null)
+        : data || []
+
+      return toolResult(id, JSON.stringify({
+        missions,
+        how_to_complete: {
+          step_1: 'Call toolroute_register to get agent_identity_id',
+          step_2: 'POST /api/missions/claim with { mission_id, agent_identity_id }',
+          step_3: 'Execute the mission task_prompt using MCP servers',
+          step_4: 'POST /api/missions/complete with { claim_id, results: [{ skill_slug, outcome_status, latency_ms, ... }] }',
+        },
+        reward: '4x credit multiplier on mission completion',
+      }, null, 2))
     }
 
     case 'toolroute_report': {
@@ -432,7 +522,7 @@ async function handleToolCall(id: any, params: any) {
       if (!st) return toolResult(id, 'Error: steps_taken is required.')
 
       // Forward to the challenges submit endpoint
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io'
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
       const res = await fetch(`${baseUrl}/api/challenges/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -463,32 +553,4 @@ function toolResult(id: any, text: string) {
   return jsonRpcResult(id, {
     content: [{ type: 'text', text }],
   })
-}
-
-// Lightweight keyword → workflow matcher for MCP routing
-const TASK_KEYWORDS: Record<string, string[]> = {
-  'research-competitive-intelligence': ['research', 'scrape', 'crawl', 'extract', 'competitor', 'pricing', 'web search'],
-  'developer-workflow-code-management': ['code', 'repository', 'pull request', 'github', 'refactor', 'debug'],
-  'qa-testing-automation': ['browser', 'navigate', 'click', 'test', 'automate', 'playwright', 'e2e'],
-  'data-analysis-reporting': ['database', 'sql', 'query', 'analytics', 'report', 'data analysis'],
-  'sales-research-outreach': ['prospect', 'lead', 'crm', 'salesforce', 'outreach', 'sales'],
-  'content-creation-publishing': ['content', 'blog', 'article', 'publish', 'seo', 'write'],
-  'customer-support-automation': ['support', 'ticket', 'triage', 'jira', 'helpdesk'],
-  'knowledge-management': ['notion', 'confluence', 'wiki', 'knowledge base', 'documentation'],
-  'design-to-code-workflow': ['figma', 'design', 'ui', 'component', 'layout'],
-  'it-devops-platform-operations': ['aws', 'cloud', 'infrastructure', 'devops', 'kubernetes', 'docker'],
-}
-
-function matchWorkflow(task: string): string | null {
-  const lower = task.toLowerCase()
-  let best: string | null = null
-  let bestScore = 0
-  for (const [wf, kws] of Object.entries(TASK_KEYWORDS)) {
-    let score = 0
-    for (const kw of kws) {
-      if (lower.includes(kw)) score += kw.length
-    }
-    if (score > bestScore) { bestScore = score; best = wf }
-  }
-  return best
 }

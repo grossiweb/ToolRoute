@@ -1,50 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'
-
-// Task keywords → workflow slug mapping for NL task matching
-const TASK_WORKFLOW_MAP: Record<string, string[]> = {
-  'research-competitive-intelligence': [
-    'research', 'scrape', 'crawl', 'extract', 'competitor', 'pricing',
-    'web search', 'find information', 'look up', 'gather data', 'source finding',
-  ],
-  'developer-workflow-code-management': [
-    'code', 'repository', 'repo', 'pull request', 'pr', 'commit', 'branch',
-    'github', 'codebase', 'refactor', 'debug', 'deploy', 'ci/cd',
-  ],
-  'qa-testing-automation': [
-    'browser', 'navigate', 'click', 'fill form', 'screenshot', 'test',
-    'automate', 'playwright', 'selenium', 'e2e', 'end-to-end',
-  ],
-  'data-analysis-reporting': [
-    'database', 'sql', 'query', 'bigquery', 'postgres', 'analytics',
-    'report', 'data analysis', 'dashboard', 'chart', 'aggregate',
-  ],
-  'sales-research-outreach': [
-    'prospect', 'lead', 'crm', 'salesforce', 'hubspot', 'enrich',
-    'outreach', 'pipeline', 'sales', 'contact', 'company data',
-  ],
-  'content-creation-publishing': [
-    'content', 'blog', 'article', 'publish', 'cms', 'seo',
-    'write', 'draft', 'editorial', 'social media',
-  ],
-  'customer-support-automation': [
-    'support', 'ticket', 'triage', 'issue', 'jira', 'helpdesk',
-    'customer', 'escalation', 'incident',
-  ],
-  'knowledge-management': [
-    'notion', 'confluence', 'wiki', 'knowledge base', 'documentation',
-    'docs', 'notes', 'workspace',
-  ],
-  'design-to-code-workflow': [
-    'figma', 'design', 'ui', 'component', 'layout', 'mockup',
-    'wireframe', 'prototype',
-  ],
-  'it-devops-platform-operations': [
-    'aws', 'cloud', 'infrastructure', 'devops', 'deploy', 'monitor',
-    'kubernetes', 'docker', 'terraform',
-  ],
-}
+import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -124,7 +81,7 @@ export async function GET() {
       'POST /api/report': 'Report ANY skill execution — earns credits (GET for full docs)',
       'GET /api/report': 'Documentation for reporting — what to report, examples, credit rewards',
       'POST /api/contributions': 'Advanced telemetry — A/B tests, fallback chains, benchmark packages',
-      'POST /api/mcp': 'JSON-RPC MCP endpoint (6 tools)',
+      'POST /api/mcp': 'JSON-RPC MCP endpoint (8 tools)',
       'GET /api/skills': 'Search the MCP server catalog',
       'GET /api/missions/available': 'List available benchmark missions (10 events)',
       'POST /api/missions/claim': 'Claim a benchmark mission',
@@ -217,7 +174,7 @@ export async function POST(request: NextRequest) {
       confidence = Math.min(0.95, 0.65 + semanticResult.similarity * 0.3)
       matchMethod = 'semantic'
     } else {
-      // Fall back to keyword matching
+      // Fall back to keyword matching (shared lib)
       resolvedWorkflow = matchWorkflowFromTask(task)
       confidence = calcTaskConfidence(task, resolvedWorkflow)
       matchMethod = 'keyword'
@@ -237,7 +194,14 @@ export async function POST(request: NextRequest) {
     .not('skill_scores', 'is', null)
     .limit(50)
 
-  const { data: skills } = await query
+  const { data: skills, error: skillsError } = await query
+
+  if (skillsError) {
+    return NextResponse.json({
+      error: 'Database query failed',
+      detail: skillsError.message,
+    }, { status: 500 })
+  }
 
   if (!skills || skills.length === 0) {
     return NextResponse.json({
@@ -396,44 +360,6 @@ export async function POST(request: NextRequest) {
       },
     }),
   })
-}
-
-function matchWorkflowFromTask(task: string): string {
-  if (!task) return 'research-competitive-intelligence'
-  const lower = task.toLowerCase()
-
-  let bestMatch = 'research-competitive-intelligence'
-  let bestScore = 0
-
-  for (const [workflow, keywords] of Object.entries(TASK_WORKFLOW_MAP)) {
-    let score = 0
-    for (const kw of keywords) {
-      if (lower.includes(kw)) {
-        score += kw.length // longer keyword matches are more specific
-      }
-    }
-    if (score > bestScore) {
-      bestScore = score
-      bestMatch = workflow
-    }
-  }
-
-  return bestMatch
-}
-
-function calcTaskConfidence(task: string, resolvedWorkflow: string): number {
-  if (!task) return 0.5
-  const lower = task.toLowerCase()
-  const keywords = TASK_WORKFLOW_MAP[resolvedWorkflow] || []
-
-  let matchedKeywords = 0
-  for (const kw of keywords) {
-    if (lower.includes(kw)) matchedKeywords++
-  }
-
-  // Base confidence from keyword matches, capped at 0.92
-  const keywordConfidence = Math.min(0.92, 0.5 + (matchedKeywords * 0.1))
-  return Math.round(keywordConfidence * 100) / 100
 }
 
 function buildReasoning(skill: any, priority: string, task: string | undefined, workflow: string): string {
