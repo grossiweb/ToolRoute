@@ -9,7 +9,7 @@ const TRUST_STYLES: Record<string, { bg: string; text: string; label: string }> 
   baseline: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Baseline' },
   trusted: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Trusted' },
   production: { bg: 'bg-green-50', text: 'text-green-700', label: 'Production' },
-  enterprise: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Enterprise' },
+  enterprise: { bg: 'bg-brand-light', text: 'text-brand', label: 'Enterprise' },
 }
 
 const TIER_STYLES: Record<string, string> = {
@@ -156,7 +156,7 @@ export default async function AgentProfilePage({ params }: { params: { id: strin
             <div className="text-[10px] text-gray-400">Reputation</div>
           </div>
           <div className="text-center bg-gray-50 rounded-xl p-3">
-            <div className="text-xl font-black text-purple-600">{(submissions || []).length}</div>
+            <div className="text-xl font-black text-brand">{(submissions || []).length}</div>
             <div className="text-[10px] text-gray-400">Challenges</div>
           </div>
           <div className="text-center bg-gray-50 rounded-xl p-3">
@@ -277,7 +277,7 @@ export default async function AgentProfilePage({ params }: { params: { id: strin
                       {d.task_snippet}
                     </td>
                     <td className="px-4 py-2.5">
-                      <span className="badge text-[10px] bg-purple-50 text-purple-700">
+                      <span className="badge text-[10px] bg-brand-light text-brand">
                         {d.resolved_tier}
                       </span>
                     </td>

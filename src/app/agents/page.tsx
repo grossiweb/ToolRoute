@@ -12,7 +12,7 @@ const TRUST_TIER_STYLES: Record<string, { bg: string; text: string; label: strin
   baseline: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Baseline' },
   verified: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Verified' },
   production: { bg: 'bg-green-50', text: 'text-green-700', label: 'Production' },
-  premium: { bg: 'bg-purple-50', text: 'text-purple-700', label: 'Premium' },
+  premium: { bg: 'bg-brand-light', text: 'text-brand', label: 'Premium' },
 }
 
 const TIER_BADGE_STYLES: Record<string, string> = {
@@ -192,7 +192,7 @@ export default async function AgentsPage() {
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold mb-4">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4">
           AGENT RANKINGS
         </div>
         <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
@@ -219,7 +219,7 @@ export default async function AgentsPage() {
           <div className="text-gray-400">Avg Efficiency</div>
         </div>
         <div className="text-center">
-          <div className="text-2xl font-bold text-purple-600">{mostPopularTool ? mostPopularTool[0] : '--'}</div>
+          <div className="text-2xl font-bold text-brand">{mostPopularTool ? mostPopularTool[0] : '--'}</div>
           <div className="text-gray-400">Top Tool</div>
         </div>
       </div>

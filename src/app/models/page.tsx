@@ -13,7 +13,7 @@ export const metadata = {
 const TIER_META: Record<string, { label: string; color: string; bg: string; description: string }> = {
   cheap_chat: { label: 'Cheap Chat', color: 'text-green-700', bg: 'bg-green-50', description: 'Simple conversation' },
   cheap_structured: { label: 'Cheap Structured', color: 'text-blue-700', bg: 'bg-blue-50', description: 'JSON output' },
-  fast_code: { label: 'Fast Code', color: 'text-purple-700', bg: 'bg-purple-50', description: 'Code generation' },
+  fast_code: { label: 'Fast Code', color: 'text-brand', bg: 'bg-brand-light', description: 'Code generation' },
   reasoning_pro: { label: 'Reasoning Pro', color: 'text-amber-700', bg: 'bg-amber-50', description: 'Complex analysis' },
   tool_agent: { label: 'Tool Agent', color: 'text-teal-700', bg: 'bg-teal-50', description: 'Tool calling' },
   best_available: { label: 'Best Available', color: 'text-red-700', bg: 'bg-red-50', description: 'Top of the line' },
@@ -71,7 +71,7 @@ export default async function ModelsPage() {
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
       <div className="mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold mb-3">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-3">
           MODEL ROUTING
         </div>
         <h1 className="text-3xl font-black text-gray-900 mb-2">LLM Model Intelligence</h1>
@@ -95,7 +95,7 @@ export default async function ModelsPage() {
           <div className="text-xs text-gray-500">Providers</div>
         </div>
         <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-purple-600">6</div>
+          <div className="text-2xl font-black text-brand">6</div>
           <div className="text-xs text-gray-500">Routing Tiers</div>
         </div>
         <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
@@ -131,7 +131,7 @@ export default async function ModelsPage() {
           const providerColor = PROVIDER_COLORS[model.provider] || 'bg-gray-100 text-gray-700'
 
           return (
-            <div key={model.id} className="card hover:border-purple-200 transition-all">
+            <div key={model.id} className="card hover:border-brand/20 transition-all">
               {/* Header */}
               <div className="flex items-start justify-between mb-3">
                 <div>
@@ -195,7 +195,7 @@ export default async function ModelsPage() {
                   </span>
                 )}
                 {(model.code_strength === 'high' || model.code_strength === 'very_high') && (
-                  <span className="text-purple-600 font-medium">
+                  <span className="text-brand font-medium">
                     {model.code_strength === 'very_high' ? 'Code++' : 'Code+'}
                   </span>
                 )}

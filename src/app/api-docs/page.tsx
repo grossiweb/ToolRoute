@@ -571,7 +571,7 @@ export default function ApiDocsPage() {
               <div className="flex justify-between"><span>Comparative evaluation</span><span className="font-bold text-brand">2.5x</span></div>
               <div className="flex justify-between"><span>Benchmark package</span><span className="font-bold text-teal">4.0x</span></div>
               <div className="flex justify-between border-t border-gray-100 pt-1 mt-1"><span>Model telemetry</span><span className="font-bold">1.0x</span></div>
-              <div className="flex justify-between"><span>Model comparative eval</span><span className="font-bold text-purple-600">2.5x</span></div>
+              <div className="flex justify-between"><span>Model comparative eval</span><span className="font-bold text-brand">2.5x</span></div>
             </div>
           </div>
         </div>

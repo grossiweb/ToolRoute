@@ -63,7 +63,7 @@ export function SkillCard({ skill, badges }: SkillCardProps) {
             {badges?.map(badge => (
               <span key={badge} className={`badge text-[10px] ${
                 badge === 'Top Rated' ? 'bg-teal-50 text-teal-700' :
-                badge === 'Best Output' ? 'bg-purple-50 text-purple-700' :
+                badge === 'Best Output' ? 'bg-brand-light text-brand' :
                 badge === 'Most Reliable' ? 'bg-blue-50 text-blue-700' :
                 badge === 'Best Budget' ? 'bg-green-50 text-green-700' :
                 badge === 'Popular' ? 'bg-amber-50 text-amber-700' :

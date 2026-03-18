@@ -56,7 +56,7 @@ const TRUST_TIER_STYLES: Record<string, string> = {
   baseline: 'bg-blue-50 text-blue-700',
   trusted: 'bg-green-50 text-green-700',
   production: 'bg-teal-50 text-teal-700',
-  enterprise: 'bg-purple-50 text-purple-700',
+  enterprise: 'bg-brand-light text-brand',
 }
 
 function formatDate(iso: string) {

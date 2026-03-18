@@ -24,14 +24,14 @@ const PROVIDER_COLORS: Record<string, string> = {
   openai: 'bg-emerald-50 text-emerald-700',
   google: 'bg-blue-50 text-blue-700',
   mistral: 'bg-orange-50 text-orange-700',
-  deepseek: 'bg-purple-50 text-purple-700',
+  deepseek: 'bg-brand-light text-brand',
   meta: 'bg-indigo-50 text-indigo-700',
 }
 
 const TIER_COLORS: Record<string, string> = {
   cheap_chat: 'bg-green-50 text-green-700',
   cheap_structured: 'bg-blue-50 text-blue-700',
-  fast_code: 'bg-purple-50 text-purple-700',
+  fast_code: 'bg-brand-light text-brand',
   reasoning_pro: 'bg-amber-50 text-amber-700',
   tool_agent: 'bg-teal-50 text-teal-700',
   best_available: 'bg-red-50 text-red-700',
