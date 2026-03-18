@@ -36,7 +36,7 @@ export async function GET(
 
   const leaderboard = (submissions || []).map((s: any, i: number) => {
     const tools = (s.tools_used || []).map((t: any) => t.skill_slug).filter(Boolean)
-    const uniqueTools = [...new Set(tools)]
+    const uniqueTools = Array.from(new Set(tools))
 
     return {
       rank: i + 1,
@@ -61,7 +61,7 @@ export async function GET(
   const toolCounts: Record<string, number> = {}
   for (const s of submissions || []) {
     const tools = (s.tools_used || []).map((t: any) => t.skill_slug).filter(Boolean)
-    for (const tool of new Set(tools)) {
+    for (const tool of Array.from(new Set(tools))) {
       toolCounts[tool as string] = (toolCounts[tool as string] || 0) + 1
     }
   }
