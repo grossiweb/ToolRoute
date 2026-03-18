@@ -9,7 +9,7 @@ import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
  * This endpoint makes ToolRoute itself queryable as an MCP server.
  * Agents can call ToolRoute tools using the standard MCP protocol.
  *
- * Tools exposed (8):
+ * Tools exposed (10):
  *   - toolroute_route: Get a skill recommendation for a task
  *   - toolroute_search: Search the skill catalog
  *   - toolroute_compare: Compare skills side by side
@@ -18,6 +18,8 @@ import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
  *   - toolroute_register: Register an agent identity
  *   - toolroute_challenges: List workflow challenges
  *   - toolroute_challenge_submit: Submit challenge results
+ *   - toolroute_model_route: Get an LLM model recommendation
+ *   - toolroute_model_report: Report LLM model execution outcome
  */
 
 const TOOLS = [
@@ -148,6 +150,43 @@ const TOOLS = [
         quality_score: { type: 'number', description: 'Self-assessed quality 0-10' },
       },
       required: ['challenge_slug', 'agent_identity_id', 'tools_used', 'steps_taken'],
+    },
+  },
+  {
+    name: 'toolroute_model_route',
+    description: 'Get an LLM model recommendation for a task. Returns a ToolRoute alias (e.g. toolroute/fast_code), the provider model ID, fallback chain, escalation path, and cost estimate. 6 tiers: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available. The agent calls the LLM itself — ToolRoute is the decision layer, not a proxy.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        task: { type: 'string', description: 'Natural language task description — what you need the LLM for' },
+        max_cost_per_mtok: { type: 'number', description: 'Max input cost per million tokens (USD)' },
+        max_latency_ms: { type: 'number', description: 'Max acceptable latency in ms' },
+        preferred_provider: { type: 'string', description: 'Preferred provider: openai, anthropic, google, mistral, deepseek, meta' },
+        exclude_providers: { type: 'array', items: { type: 'string' }, description: 'Providers to exclude' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+      },
+      required: ['task'],
+    },
+  },
+  {
+    name: 'toolroute_model_report',
+    description: 'Report LLM model execution outcome. Earns routing credits and improves model recommendations for all agents. Include decision_id from toolroute_model_route for 1.5x bonus credits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        decision_id: { type: 'string', description: 'The decision_id from toolroute_model_route response (earns 1.5x bonus)' },
+        model_slug: { type: 'string', description: 'The model slug (e.g. "gpt-4o-mini", "claude-3-5-sonnet")' },
+        outcome_status: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'] },
+        latency_ms: { type: 'number', description: 'Total LLM call latency in ms' },
+        input_tokens: { type: 'number', description: 'Input tokens consumed' },
+        output_tokens: { type: 'number', description: 'Output tokens generated' },
+        estimated_cost_usd: { type: 'number', description: 'Estimated cost in USD' },
+        output_quality_rating: { type: 'number', description: 'Output quality 0-10' },
+        structured_output_valid: { type: 'boolean', description: 'Did the model produce valid structured output?' },
+        tool_calls_succeeded: { type: 'boolean', description: 'Did tool calls succeed?' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+      },
+      required: ['model_slug', 'outcome_status'],
     },
   },
 ]
@@ -530,6 +569,44 @@ async function handleToolCall(id: any, params: any) {
           challenge_slug, agent_identity_id: aid, tools_used: tu, steps_taken: st,
           total_latency_ms: tlm, total_cost_usd: tcu, deliverable_summary: ds,
           completeness_score: cs, quality_score: qs,
+        }),
+      })
+      const result = await res.json()
+      return toolResult(id, JSON.stringify(result, null, 2))
+    }
+
+    case 'toolroute_model_route': {
+      const { task: modelTask, max_cost_per_mtok, max_latency_ms, preferred_provider, exclude_providers, agent_identity_id: modelAid } = params || {}
+      if (!modelTask) return toolResult(id, 'Error: task is required. Describe what you need the LLM for.')
+
+      const baseUrl = request.nextUrl.origin
+      const res = await fetch(`${baseUrl}/api/route/model`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          task: modelTask,
+          constraints: { max_cost_per_mtok, max_latency_ms, preferred_provider, exclude_providers },
+          agent_identity_id: modelAid || null,
+        }),
+      })
+      const result = await res.json()
+      return toolResult(id, JSON.stringify(result, null, 2))
+    }
+
+    case 'toolroute_model_report': {
+      const { decision_id: did, model_slug: ms, outcome_status: os, latency_ms: lm, input_tokens: it, output_tokens: ot, estimated_cost_usd: ecu, output_quality_rating: oqr, structured_output_valid: sov, tool_calls_succeeded: tcs, agent_identity_id: mraid } = params || {}
+      if (!ms || !os) return toolResult(id, 'Error: model_slug and outcome_status are required.')
+
+      const baseUrl = request.nextUrl.origin
+      const res = await fetch(`${baseUrl}/api/report/model`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          decision_id: did || null, model_slug: ms, outcome_status: os,
+          latency_ms: lm, input_tokens: it, output_tokens: ot,
+          estimated_cost_usd: ecu, output_quality_rating: oqr,
+          structured_output_valid: sov, tool_calls_succeeded: tcs,
+          agent_identity_id: mraid || null,
         }),
       })
       const result = await res.json()

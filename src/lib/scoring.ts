@@ -223,6 +223,13 @@ export function getChallengeTier(overallScore: number): 'gold' | 'silver' | 'bro
   return null
 }
 
+// ─── Model Routing Contribution Multipliers ──────────────────
+
+export const MODEL_CONTRIBUTION_MULTIPLIERS = {
+  model_telemetry: 1.0,
+  model_comparative_eval: 2.5,
+} as const
+
 export function getChallengeCredits(
   baseReward: number,
   overallScore: number,

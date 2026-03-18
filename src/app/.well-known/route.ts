@@ -6,8 +6,8 @@ export async function GET() {
   return NextResponse.json({
     // Standard service metadata
     name: 'ToolRoute',
-    description: 'Intelligent routing for AI tools. Agents query ToolRoute to find which MCP server works best for any task.',
-    version: '1.2.0',
+    description: 'Intelligent routing for AI tools and LLM models. Agents query ToolRoute to find which MCP server and model works best for any task.',
+    version: '1.3.0',
 
     // MCP Server info — agents can add this as a tool source
     mcp: {
@@ -28,6 +28,8 @@ export async function GET() {
         'toolroute_register',
         'toolroute_challenges',
         'toolroute_challenge_submit',
+        'toolroute_model_route',
+        'toolroute_model_report',
       ],
       config_snippet: {
         mcpServers: {
@@ -52,7 +54,9 @@ export async function GET() {
       missions_complete: 'POST /api/missions/complete',
       challenges: 'GET /api/challenges — Workflow Challenges (3x credits)',
       challenges_submit: 'POST /api/challenges/submit — Submit challenge results',
-      mcp_server: 'POST /api/mcp — JSON-RPC MCP server (8 tools)',
+      model_route: 'POST /api/route/model — Get LLM model recommendation (6 tiers, 20+ models)',
+      model_report: 'POST /api/report/model — Report model execution outcome (earn credits)',
+      mcp_server: 'POST /api/mcp — JSON-RPC MCP server (10 tools)',
     },
 
     // Quickstart for agents

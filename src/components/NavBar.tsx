@@ -21,10 +21,10 @@ export function NavBar() {
         {/* Desktop nav — focused set */}
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
           <Link href="/servers" className="hover:text-brand transition-colors">Servers</Link>
+          <Link href="/models" className="hover:text-purple-600 transition-colors">Models</Link>
           <Link href="/challenges" className="hover:text-amber-600 transition-colors">Challenges</Link>
           <Link href="/agents" className="hover:text-teal transition-colors">Agents</Link>
           <Link href="/leaderboards" className="hover:text-brand transition-colors">Leaderboards</Link>
-          <Link href="/olympics" className="hover:text-brand transition-colors">Benchmarks</Link>
         </div>
 
         {/* CTA */}
@@ -57,10 +57,10 @@ export function NavBar() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-3 text-sm font-medium">
           <Link href="/servers" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Servers</Link>
+          <Link href="/models" className="text-gray-700 hover:text-purple-600" onClick={() => setMenuOpen(false)}>Models</Link>
           <Link href="/challenges" className="text-gray-700 hover:text-amber-600" onClick={() => setMenuOpen(false)}>Challenges</Link>
           <Link href="/agents" className="text-gray-700 hover:text-teal" onClick={() => setMenuOpen(false)}>Agents</Link>
           <Link href="/leaderboards" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
-          <Link href="/olympics" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Benchmarks</Link>
           <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
             <Link href="/compare" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Compare</Link>
             <Link href="/stacks" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Stacks</Link>

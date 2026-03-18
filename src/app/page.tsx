@@ -77,8 +77,8 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand font-bold text-lg">R</div>
             <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors">Route</h3>
           </div>
-          <p className="text-sm text-gray-500">Find the best MCP server for any task. Confidence-scored recommendations with fallback chains.</p>
-          <div className="mt-3 text-xs font-semibold text-brand">Browse 350+ servers &rarr;</div>
+          <p className="text-sm text-gray-500">Find the best MCP server or LLM model for any task. Confidence-scored recommendations with fallback + escalation chains.</p>
+          <div className="mt-3 text-xs font-semibold text-brand">Browse servers &amp; models &rarr;</div>
         </Link>
 
         <Link href="/challenges" className="card group hover:border-amber-300/50 transition-all duration-200 relative overflow-hidden">
