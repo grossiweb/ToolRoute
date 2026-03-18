@@ -55,7 +55,7 @@ export function ModelRoutingDemo() {
   }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   return (
-    <div className="mb-8 border-2 border-purple-200 rounded-xl p-5 bg-purple-50/30">
+    <div className="mb-8 border-2 border-brand/20 rounded-xl p-5 bg-brand-light/30">
       <h3 className="font-bold text-gray-900 mb-1">Try Model Routing</h3>
       <p className="text-sm text-gray-500 mb-4">
         Describe a task and see which model ToolRoute recommends — live.
@@ -69,12 +69,12 @@ export function ModelRoutingDemo() {
           onChange={(e) => setTask(e.target.value)}
           onKeyDown={(e) => e.key === 'Enter' && handleRoute()}
           placeholder="e.g. write a python function to parse CSV"
-          className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-purple-300 focus:border-purple-400 text-sm"
+          className="flex-1 px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm"
         />
         <button
           onClick={() => handleRoute()}
           disabled={loading || !task.trim()}
-          className="px-5 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+          className="px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
         >
           {loading ? 'Routing...' : 'Route'}
         </button>
@@ -87,7 +87,7 @@ export function ModelRoutingDemo() {
           <button
             key={example}
             onClick={() => { setTask(example); handleRoute(example) }}
-            className="text-[10px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-purple-300 hover:text-purple-700 transition-colors"
+            className="text-[10px] px-2.5 py-1 rounded-full bg-white border border-gray-200 text-gray-600 hover:border-brand/30 hover:text-brand transition-colors"
           >
             {example}
           </button>
@@ -107,7 +107,7 @@ export function ModelRoutingDemo() {
           {/* Header */}
           <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
             <div className="flex items-center gap-2">
-              <span className="text-xs font-semibold text-purple-600 bg-purple-50 px-2 py-0.5 rounded-full">
+              <span className="text-xs font-semibold text-brand bg-brand-light px-2 py-0.5 rounded-full">
                 {result.tier_label || result.tier}
               </span>
               <span className="text-xs text-gray-400">
@@ -122,7 +122,7 @@ export function ModelRoutingDemo() {
           {/* Main result */}
           <div className="px-4 py-4">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-sm">
+              <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand font-bold text-sm">
                 {result.model_details?.provider?.charAt(0).toUpperCase()}
               </div>
               <div>
@@ -130,7 +130,7 @@ export function ModelRoutingDemo() {
                 <div className="text-xs text-gray-400">{result.model_details?.provider} &middot; {result.recommended_model}</div>
               </div>
               <div className="ml-auto text-right">
-                <div className="text-lg font-black text-purple-600">{(result.confidence * 100).toFixed(0)}%</div>
+                <div className="text-lg font-black text-brand">{(result.confidence * 100).toFixed(0)}%</div>
                 <div className="text-[10px] text-gray-400">confidence</div>
               </div>
             </div>
@@ -142,7 +142,7 @@ export function ModelRoutingDemo() {
                   <span
                     key={key}
                     className={`text-[10px] px-2 py-0.5 rounded-full font-medium ${
-                      val ? 'bg-purple-50 text-purple-700' : 'bg-gray-50 text-gray-400'
+                      val ? 'bg-brand-light text-brand' : 'bg-gray-50 text-gray-400'
                     }`}
                   >
                     {val ? '✓' : '✗'} {key.replace(/_/g, ' ')}

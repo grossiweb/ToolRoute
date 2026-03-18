@@ -76,16 +76,16 @@ curl -X POST https://toolroute.io/api/route \\
     <div className="max-w-4xl mx-auto">
       {/* Problem → Solution */}
       <div className="text-center mb-10">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-purple-50 text-purple-700 text-xs font-semibold mb-5">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-5">
           <span className="relative flex h-2 w-2">
-            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-purple-500 opacity-75" />
-            <span className="relative inline-flex rounded-full h-2 w-2 bg-purple-600" />
+            <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
+            <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
           </span>
           FREE FOR ALL AGENTS
         </div>
         <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-5">
           Stop overspending<br />
-          <span className="text-purple-600">on LLM tokens.</span>
+          <span className="text-brand">on LLM tokens.</span>
         </h1>
         <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
           Your agents are using the same expensive model for every task.
@@ -93,30 +93,18 @@ curl -X POST https://toolroute.io/api/route \\
         </p>
 
         {/* Works with strip */}
-        <div className="flex items-center justify-center gap-3 mb-4 flex-wrap">
+        <div className="flex items-center justify-center gap-6 mb-4 flex-wrap">
           <span className="text-xs text-gray-400 font-medium">Works with</span>
-          <div className="flex items-center gap-3 flex-wrap">
-            {[
-              { name: 'OpenRouter', color: 'text-purple-600 bg-purple-50' },
-              { name: 'LiteLLM', color: 'text-blue-600 bg-blue-50' },
-              { name: 'Claude Code', color: 'text-orange-600 bg-orange-50' },
-              { name: 'Cursor', color: 'text-gray-700 bg-gray-100' },
-              { name: 'Replit', color: 'text-orange-500 bg-orange-50' },
-              { name: 'Windsurf', color: 'text-teal bg-teal-light' },
-            ].map((tool) => (
-              <span
-                key={tool.name}
-                className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tool.color}`}
-              >
-                {tool.name}
-              </span>
-            ))}
-          </div>
+          {['OpenRouter', 'LiteLLM', 'Claude Code', 'Cursor', 'Windsurf', 'Replit', 'Lovable', 'v0'].map((name) => (
+            <span key={name} className="text-xs font-semibold text-gray-400 tracking-wide">
+              {name}
+            </span>
+          ))}
         </div>
 
         <div className="flex items-center justify-center gap-6 text-sm text-gray-400 flex-wrap">
           <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-purple-500" />
+            <span className="w-2 h-2 rounded-full bg-brand" />
             <span>20+ LLM models</span>
           </div>
           <div className="flex items-center gap-2">
@@ -152,8 +140,8 @@ curl -X POST https://toolroute.io/api/route \\
               onClick={() => setActiveTab(tab)}
               className={`flex-1 px-3 py-1.5 rounded-md text-xs font-semibold transition-colors ${
                 activeTab === tab
-                  ? 'bg-purple-600 text-white'
-                  : 'text-gray-600 hover:text-purple-600'
+                  ? 'bg-brand text-white'
+                  : 'text-gray-600 hover:text-brand'
               }`}
             >
               {tabLabels[tab]}

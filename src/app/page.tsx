@@ -24,7 +24,7 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto mb-16">
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
           <div className="border border-gray-200 rounded-xl p-5 bg-white">
-            <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-sm mb-3">$</div>
+            <div className="w-9 h-9 rounded-lg bg-brand-light flex items-center justify-center text-brand font-bold text-sm mb-3">$</div>
             <h3 className="font-bold text-gray-900 mb-2">Stop overspending</h3>
             <p className="text-sm text-gray-500">
               A simple extraction doesn't need GPT-4o. ToolRoute matches each task to the cheapest model and best tool that actually delivers.
@@ -51,15 +51,15 @@ export default function HomePage() {
       <div className="max-w-4xl mx-auto mb-16">
         <h2 className="text-2xl font-black text-gray-900 mb-6 text-center">What ToolRoute does</h2>
         <div className="grid grid-cols-1 md:grid-cols-3 gap-5">
-          <Link href="/models" className="group border border-gray-200 rounded-xl p-5 bg-white hover:border-purple-300 transition-all">
+          <Link href="/models" className="group border border-gray-200 rounded-xl p-5 bg-white hover:border-brand/30 transition-all">
             <div className="flex items-center gap-3 mb-3">
-              <div className="w-9 h-9 rounded-lg bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-sm">M</div>
-              <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Model Routing</h3>
+              <div className="w-9 h-9 rounded-lg bg-brand-light flex items-center justify-center text-brand font-bold text-sm">M</div>
+              <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors">Model Routing</h3>
             </div>
             <p className="text-sm text-gray-500 mb-3">
               "Which LLM for this task?" 6 tiers, 20+ models, cost estimates, fallback chains, escalation paths.
             </p>
-            <div className="text-xs font-semibold text-purple-600">Browse models &rarr;</div>
+            <div className="text-xs font-semibold text-brand">Browse models &rarr;</div>
           </Link>
 
           <Link href="/servers" className="group border border-gray-200 rounded-xl p-5 bg-white hover:border-brand/30 transition-all">
@@ -103,7 +103,7 @@ export default function HomePage() {
             { step: '4', title: 'Report', desc: 'Submit outcomes. Earn credits. Make routing smarter for all agents.' },
           ].map(item => (
             <div key={item.step} className="text-center">
-              <div className="w-9 h-9 rounded-full bg-purple-600 text-white font-bold text-sm flex items-center justify-center mx-auto mb-3">
+              <div className="w-9 h-9 rounded-full bg-brand text-white font-bold text-sm flex items-center justify-center mx-auto mb-3">
                 {item.step}
               </div>
               <h3 className="font-bold text-gray-900 mb-1 text-sm">{item.title}</h3>
@@ -120,10 +120,10 @@ export default function HomePage() {
           Add ToolRoute as an MCP server. Your agent gets model routing, tool routing, challenges, and credit rewards. No API key needed.
         </p>
         <div className="flex items-center justify-center gap-3">
-          <Link href="/api-docs" className="px-6 py-2.5 rounded-lg bg-purple-600 text-white text-sm font-semibold hover:bg-purple-700 transition-colors">
+          <Link href="/api-docs" className="px-6 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors">
             API Docs
           </Link>
-          <Link href="/models" className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-700 text-sm font-semibold hover:border-purple-300 hover:text-purple-600 transition-colors">
+          <Link href="/models" className="px-6 py-2.5 rounded-lg border border-gray-200 text-gray-700 text-sm font-semibold hover:border-brand/30 hover:text-brand transition-colors">
             Browse Models
           </Link>
         </div>
