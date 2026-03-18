@@ -74,26 +74,29 @@ curl -X POST https://toolroute.io/api/route \\
 
   return (
     <div className="max-w-4xl mx-auto">
-      {/* Problem → Solution */}
-      <div className="text-center mb-10">
+      {/* Headline — the problem */}
+      <div className="text-center mb-8">
         <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-5">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
           </span>
-          FREE FOR ALL AGENTS
+          DECISION ENGINE FOR AI AGENTS
         </div>
-        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-5">
-          Stop overspending<br />
-          <span className="text-brand">on LLM tokens.</span>
+        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-4">
+          Your agent is using<br />
+          <span className="text-brand">the wrong model.</span>
         </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-8">
-          Your agents are using the same expensive model for every task.
-          ToolRoute picks the right model and the right tool for each step — cutting costs while improving results. Works with OpenRouter, LiteLLM, and any MCP client.
+        <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-2">
+          ToolRoute picks the cheapest model that actually works — automatically.
+          If it fails, we escalate to a better one. Built for agents, not humans.
+        </p>
+        <p className="text-sm text-teal font-semibold mb-6">
+          100% free. No API key needed.
         </p>
 
         {/* Works with strip */}
-        <div className="flex items-center justify-center gap-6 mb-4 flex-wrap">
+        <div className="flex items-center justify-center gap-6 mb-3 flex-wrap">
           <span className="text-xs text-gray-400 font-medium">Works with</span>
           {['OpenRouter', 'LiteLLM', 'Claude Code', 'Cursor', 'Windsurf', 'Replit', 'Lovable', 'v0'].map((name) => (
             <span key={name} className="text-xs font-semibold text-gray-400 tracking-wide">
@@ -101,28 +104,9 @@ curl -X POST https://toolroute.io/api/route \\
             </span>
           ))}
         </div>
-
-        <div className="flex items-center justify-center gap-6 text-sm text-gray-400 flex-wrap">
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-brand" />
-            <span>20+ LLM models</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-brand" />
-            <span>50+ MCP servers</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-teal" />
-            <span>100% free</span>
-          </div>
-          <div className="flex items-center gap-2">
-            <span className="w-2 h-2 rounded-full bg-amber-500" />
-            <span>No API key needed</span>
-          </div>
-        </div>
       </div>
 
-      {/* Connect Your Agent */}
+      {/* Connect Your Agent — code snippets */}
       <div className="border border-gray-200 rounded-xl p-6 bg-white mb-6">
         <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
           <div>
