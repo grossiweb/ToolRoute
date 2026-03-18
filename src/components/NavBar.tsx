@@ -26,6 +26,7 @@ export function NavBar() {
           <Link href="/compare" className="hover:text-brand transition-colors">Compare</Link>
           <Link href="/stacks" className="hover:text-brand transition-colors">Stacks</Link>
           <Link href="/olympics" className="hover:text-brand transition-colors">Benchmarks</Link>
+          <Link href="/challenges" className="hover:text-brand transition-colors">Challenges</Link>
           <Link href="/dashboard" className="hover:text-brand transition-colors">Dashboard</Link>
         </div>
 
@@ -64,6 +65,7 @@ export function NavBar() {
           <Link href="/compare" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Compare</Link>
           <Link href="/stacks" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Stacks</Link>
           <Link href="/olympics" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Benchmarks</Link>
+          <Link href="/challenges" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Challenges</Link>
           <Link href="/dashboard" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Dashboard</Link>
           <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a server →</Link>
         </div>
