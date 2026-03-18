@@ -1,5 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { ModelRoutingDemo } from '@/components/ModelRoutingDemo'
 
 export const revalidate = 300
 
@@ -112,23 +114,10 @@ export default async function ModelsPage() {
         </div>
       </div>
 
-      {/* API CTA */}
-      <div className="mb-8 border-2 border-purple-200 rounded-xl p-5 bg-purple-50/30">
-        <div className="flex flex-wrap items-center justify-between gap-3">
-          <div>
-            <h3 className="font-bold text-gray-900">Route via API</h3>
-            <p className="text-sm text-gray-500">POST /api/route/model with your task description. Zero cost, {'<'}50ms latency.</p>
-          </div>
-          <div className="flex gap-2">
-            <Link href="/api-docs" className="btn-primary text-sm">API Docs</Link>
-          </div>
-        </div>
-        <div className="mt-3 bg-gray-900 rounded-lg p-3 font-mono text-xs text-gray-300 overflow-x-auto">
-          {'curl -X POST https://toolroute.io/api/route/model \\'}<br/>
-          {'  -H "Content-Type: application/json" \\'}<br/>
-          {'  -d \'{"task": "write a python function to parse CSV"}\''}
-        </div>
-      </div>
+      {/* Interactive Demo */}
+      <Suspense>
+        <ModelRoutingDemo />
+      </Suspense>
 
       {/* Model Grid */}
       <h2 className="text-lg font-bold text-gray-900 mb-4">All Models</h2>
