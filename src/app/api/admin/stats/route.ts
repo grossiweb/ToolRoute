@@ -1,11 +1,11 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-// GET /api/admin/stats — Platform telemetry dashboard
+// GET /api/admin/stats — Platform telemetry dashboard (with debug info)
 export async function GET() {
   const supabase = createServerSupabaseClient()
 
-  // Run all queries in parallel
+  // Run all queries in parallel — capture errors too
   const [
     agentsResult,
     outcomeResult,
@@ -15,24 +15,33 @@ export async function GET() {
     missionClaimsResult,
     agentRunsResult,
     skillsResult,
+    contributorsResult,
+    telemetryRateResult,
   ] = await Promise.all([
-    // Agent identities
     supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at'),
-    // Outcome records
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
-    // Contribution events
-    supabase.from('contribution_events').select('id, contribution_type, contribution_score, created_at'),
-    // Reward ledgers
-    supabase.from('reward_ledgers').select('id, routing_credits, reputation_points, economic_credits_usd, agent_identity_id, created_at'),
-    // Benchmark missions
+    supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at'),
+    supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at'),
     supabase.from('benchmark_missions').select('id, title, status, max_claims, claimed_count'),
-    // Mission claims
     supabase.from('benchmark_mission_claims').select('id, mission_id, status, created_at'),
-    // Agent runs
     supabase.from('agent_runs').select('id, agent_identity_id, skill_id, outcome, latency_ms, created_at'),
-    // Active skills
     supabase.from('skills').select('id, slug, canonical_name').eq('status', 'active'),
+    supabase.from('contributors').select('id, contributor_type, display_name, created_at'),
+    supabase.from('telemetry_rate_tracking').select('*'),
   ])
+
+  // Collect any query errors for debugging
+  const queryErrors: Record<string, string> = {}
+  if (agentsResult.error) queryErrors.agent_identities = agentsResult.error.message
+  if (outcomeResult.error) queryErrors.outcome_records = outcomeResult.error.message
+  if (contributionsResult.error) queryErrors.contribution_events = contributionsResult.error.message
+  if (rewardsResult.error) queryErrors.reward_ledgers = rewardsResult.error.message
+  if (missionsResult.error) queryErrors.benchmark_missions = missionsResult.error.message
+  if (missionClaimsResult.error) queryErrors.benchmark_mission_claims = missionClaimsResult.error.message
+  if (agentRunsResult.error) queryErrors.agent_runs = agentRunsResult.error.message
+  if (skillsResult.error) queryErrors.skills = skillsResult.error.message
+  if (contributorsResult.error) queryErrors.contributors = contributorsResult.error.message
+  if (telemetryRateResult.error) queryErrors.telemetry_rate_tracking = telemetryRateResult.error.message
 
   const agents = agentsResult.data || []
   const outcomes = outcomeResult.data || []
@@ -42,6 +51,8 @@ export async function GET() {
   const missionClaims = missionClaimsResult.data || []
   const agentRuns = agentRunsResult.data || []
   const skills = skillsResult.data || []
+  const contributors = contributorsResult.data || []
+  const telemetryRate = telemetryRateResult.data || []
 
   // Compute summaries
   const totalCredits = rewards.reduce((sum: number, r: any) => sum + (r.routing_credits || 0), 0)
@@ -59,8 +70,10 @@ export async function GET() {
 
   return NextResponse.json({
     generated_at: new Date().toISOString(),
+    query_errors: Object.keys(queryErrors).length > 0 ? queryErrors : null,
     summary: {
       registered_agents: agents.length,
+      total_contributors: contributors.length,
       total_outcome_records: outcomes.length,
       total_contributions: contributions.length,
       total_reward_entries: rewards.length,
@@ -78,10 +91,12 @@ export async function GET() {
       active: a.is_active,
       registered: a.created_at,
     })),
+    contributors: contributors.slice(-20).reverse(),
     outcome_breakdown: outcomeCounts,
     contribution_breakdown: contributionTypes,
     recent_outcomes: outcomes.slice(-10).reverse(),
     recent_contributions: contributions.slice(-10).reverse(),
+    recent_rewards: rewards.slice(-10).reverse(),
     missions: missions.map((m: any) => ({
       id: m.id,
       title: m.title,
@@ -90,5 +105,6 @@ export async function GET() {
     })),
     mission_claims: missionClaims,
     agent_runs: agentRuns.slice(-10).reverse(),
+    telemetry_rate: telemetryRate,
   })
 }
