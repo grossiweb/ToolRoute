@@ -359,7 +359,14 @@ export async function POST(request: NextRequest) {
       one_liner: `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
     },
     agent: agentContext,
-    register_url: !agent_identity_id ? '/api/agents/register' : undefined,
+    ...(agent_identity_id ? {} : {
+      register_hint: {
+        message: 'Register your agent to earn 2x credits on every report and unlock mission claiming.',
+        action: 'POST /api/agents/register',
+        body: { agent_name: 'your-agent-name' },
+        then: 'Include the returned agent_identity_id in this request and in POST /api/report',
+      },
+    }),
   })
 }
 
@@ -496,12 +503,15 @@ async function trackRecommendation(supabase: any) {
   const periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000)
 
+  // Use maybeSingle + order + limit to avoid error when multiple rows exist for same period
   const { data: existing } = await supabase
     .from('telemetry_rate_tracking')
     .select('id, total_recommendations')
     .gte('period_start', periodStart.toISOString())
     .lt('period_end', periodEnd.toISOString())
-    .single()
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
   if (existing) {
     await supabase.from('telemetry_rate_tracking')

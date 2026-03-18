@@ -267,7 +267,7 @@ async function handleToolCall(id: any, params: any) {
     }
 
     case 'toolroute_report': {
-      const { skill_slug, outcome, latency_ms, cost_usd, quality_rating } = args || {}
+      const { skill_slug, outcome, latency_ms, cost_usd, quality_rating, agent_identity_id } = args || {}
 
       const { data: skill } = await supabase
         .from('skills')
@@ -287,12 +287,22 @@ async function handleToolCall(id: any, params: any) {
         proof_type: 'self_reported',
       })
 
-      return toolResult(id, JSON.stringify({
+      const result: any = {
         recorded: true,
         skill: skill_slug,
         outcome,
         message: 'Outcome recorded. Scores update every 6 hours. Thank you for improving routing for all agents.',
-      }, null, 2))
+      }
+
+      // Nudge unregistered agents to register for 2x credits
+      if (!agent_identity_id) {
+        result.register_for_2x_credits = {
+          message: 'Register your agent to earn 2x credits on every report.',
+          action: 'Call toolroute_register with your agent_name first, then include agent_identity_id in toolroute_report.',
+        }
+      }
+
+      return toolResult(id, JSON.stringify(result, null, 2))
     }
 
     case 'toolroute_register': {

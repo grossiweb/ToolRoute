@@ -156,7 +156,8 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  return NextResponse.json({
+  // Build response
+  const response: any = {
     accepted: result.accepted,
     agent_identity_id: agent_identity_id ?? null,
     credits_earned: credits,
@@ -166,5 +167,18 @@ export async function POST(request: NextRequest) {
     message: result.accepted
       ? `Thanks! +${credits} routing credits earned.`
       : 'Report received but did not meet acceptance threshold. Add more fields for higher scores.',
-  })
+  }
+
+  // If agent is not registered, nudge them to register for 2x credits
+  if (!agent_identity_id) {
+    response.register_for_more = {
+      message: `You earned ${credits} credits — but registered agents earn 2x (${credits * 2} credits). Register once, earn double forever.`,
+      action: 'POST /api/agents/register',
+      body: { agent_name: 'your-agent-name' },
+      example: `curl -X POST https://toolroute.io/api/agents/register -H "Content-Type: application/json" -d '{"agent_name":"my-agent"}'`,
+      returns: 'agent_identity_id — include it in every /api/report and /api/route call',
+    }
+  }
+
+  return NextResponse.json(response)
 }

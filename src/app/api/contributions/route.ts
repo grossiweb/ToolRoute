@@ -361,12 +361,15 @@ async function trackTelemetryRate(supabase: any, eventType: 'recommendation' | '
   const periodStart = new Date(now.getFullYear(), now.getMonth(), now.getDate())
   const periodEnd = new Date(periodStart.getTime() + 24 * 60 * 60 * 1000)
 
+  // Use maybeSingle + order to get the first matching row (avoids error when multiple exist)
   const { data: existing } = await supabase
     .from('telemetry_rate_tracking')
     .select('id, total_recommendations, total_reported_runs')
     .gte('period_start', periodStart.toISOString())
     .lt('period_end', periodEnd.toISOString())
-    .single()
+    .order('created_at', { ascending: true })
+    .limit(1)
+    .maybeSingle()
 
   if (existing) {
     const recs = existing.total_recommendations + (eventType === 'recommendation' ? 1 : 0)
