@@ -432,8 +432,8 @@ async function handleToolCall(id: any, params: any) {
       if (!st) return toolResult(id, 'Error: steps_taken is required.')
 
       // Forward to the challenges submit endpoint
-      const origin = request.nextUrl.origin
-      const res = await fetch(`${origin}/api/challenges/submit`, {
+      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io'
+      const res = await fetch(`${baseUrl}/api/challenges/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
