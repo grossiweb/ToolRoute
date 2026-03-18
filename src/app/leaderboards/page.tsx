@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata = {
   title: 'Leaderboards — ToolRoute',

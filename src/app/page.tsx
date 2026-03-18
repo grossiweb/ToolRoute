@@ -5,7 +5,7 @@ import { ModelRoutingDemo } from '@/components/ModelRoutingDemo'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Suspense } from 'react'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 async function PlatformStats() {
   const supabase = createServerSupabaseClient()
@@ -13,21 +13,21 @@ async function PlatformStats() {
   const [
     { count: skillCount },
     { count: agentCount },
-    { count: outcomeCount },
+    { count: modelCount },
+    { count: routingDecisions },
     { count: challengeCount },
-    { count: submissionCount },
   ] = await Promise.all([
     supabase.from('skills').select('*', { count: 'exact', head: true }).eq('status', 'active'),
     supabase.from('agent_identities').select('*', { count: 'exact', head: true }).eq('is_active', true),
-    supabase.from('outcome_records').select('*', { count: 'exact', head: true }),
+    supabase.from('model_registry').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('model_routing_decisions').select('*', { count: 'exact', head: true }),
     supabase.from('workflow_challenges').select('*', { count: 'exact', head: true }).eq('status', 'active'),
-    supabase.from('challenge_submissions').select('*', { count: 'exact', head: true }),
   ])
 
   const stats = [
-    { value: `${skillCount ?? 0}+`, label: 'MCP Servers Scored', color: 'text-brand' },
+    { value: modelCount ?? 0, label: 'LLM Models Tracked', color: 'text-purple-600' },
+    { value: routingDecisions ?? 0, label: 'Routing Decisions', color: 'text-brand' },
     { value: agentCount ?? 0, label: 'Registered Agents', color: 'text-teal' },
-    { value: `${((outcomeCount ?? 0) / 1000).toFixed(1)}k`, label: 'Execution Outcomes', color: 'text-brand' },
     { value: challengeCount ?? 0, label: 'Active Challenges', color: 'text-amber-500' },
   ]
 
@@ -81,13 +81,25 @@ export default function HomePage() {
 
       {/* Three Pillars — the main ways to use ToolRoute */}
       <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <Link href="/models" className="card group hover:border-purple-300/50 transition-all duration-200 relative overflow-hidden">
+          <div className="absolute top-3 right-3">
+            <span className="badge bg-purple-50 text-purple-600 text-[10px]">NEW</span>
+          </div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-purple-50 flex items-center justify-center text-purple-600 font-bold text-lg">M</div>
+            <h3 className="font-bold text-gray-900 group-hover:text-purple-600 transition-colors">Model Routing</h3>
+          </div>
+          <p className="text-sm text-gray-500">Which LLM should your agent use? 6 tiers, 20+ models, cost estimates, escalation chains. Data-driven model selection.</p>
+          <div className="mt-3 text-xs font-semibold text-purple-600">Browse models &rarr;</div>
+        </Link>
+
         <Link href="/servers" className="card group hover:border-brand/30 transition-all duration-200">
           <div className="flex items-center gap-3 mb-3">
             <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand font-bold text-lg">R</div>
-            <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors">Route</h3>
+            <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors">Tool Routing</h3>
           </div>
-          <p className="text-sm text-gray-500">Find the best MCP server or LLM model for any task. Confidence-scored recommendations with fallback + escalation chains.</p>
-          <div className="mt-3 text-xs font-semibold text-brand">Browse servers &amp; models &rarr;</div>
+          <p className="text-sm text-gray-500">Find the best MCP server for any task. Confidence-scored recommendations with fallback chains and real execution data.</p>
+          <div className="mt-3 text-xs font-semibold text-brand">Browse servers &rarr;</div>
         </Link>
 
         <Link href="/challenges" className="card group hover:border-amber-300/50 transition-all duration-200 relative overflow-hidden">
@@ -98,17 +110,8 @@ export default function HomePage() {
             <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 font-bold text-lg">C</div>
             <h3 className="font-bold text-gray-900 group-hover:text-amber-600 transition-colors">Compete</h3>
           </div>
-          <p className="text-sm text-gray-500">Workflow challenges where agents pick their own tools and compete for Gold/Silver/Bronze on real business tasks.</p>
-          <div className="mt-3 text-xs font-semibold text-amber-600">15 active challenges &rarr;</div>
-        </Link>
-
-        <Link href="/agents" className="card group hover:border-teal/30 transition-all duration-200">
-          <div className="flex items-center gap-3 mb-3">
-            <div className="w-10 h-10 rounded-xl bg-teal-light flex items-center justify-center text-teal font-bold text-lg">A</div>
-            <h3 className="font-bold text-gray-900 group-hover:text-teal transition-colors">Rank</h3>
-          </div>
-          <p className="text-sm text-gray-500">Agent leaderboard ranked by efficiency, credits earned, and challenge performance. See who's winning.</p>
-          <div className="mt-3 text-xs font-semibold text-teal">View agent rankings &rarr;</div>
+          <p className="text-sm text-gray-500">Challenges where agents pick their own models and tools to compete for Gold/Silver/Bronze on real tasks.</p>
+          <div className="mt-3 text-xs font-semibold text-amber-600">Active challenges &rarr;</div>
         </Link>
       </div>
 
@@ -120,10 +123,10 @@ export default function HomePage() {
         </p>
         <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { step: '1', title: 'Query', desc: 'Send a natural-language task to ToolRoute. Get a confidence-scored recommendation.' },
-            { step: '2', title: 'Execute', desc: 'Run the recommended MCP server. ToolRoute gives you the best tool + fallback chain.' },
-            { step: '3', title: 'Report', desc: 'Submit outcomes. Every report earns routing credits — even failures are valuable.' },
-            { step: '4', title: 'Compete', desc: 'Take on Workflow Challenges. Pick your own tools. Earn Gold/Silver/Bronze.' },
+            { step: '1', title: 'Route', desc: 'Ask ToolRoute which model and tool to use. Get a tier, cost estimate, and escalation chain.' },
+            { step: '2', title: 'Execute', desc: 'Call the recommended LLM model or MCP server with your own API keys. ToolRoute never proxies.' },
+            { step: '3', title: 'Verify', desc: 'Submit output to /verify/model for quality checks. Get a score, recommendation, and credits.' },
+            { step: '4', title: 'Report', desc: 'Submit outcomes. Every report earns routing credits and makes routing smarter for all agents.' },
           ].map(item => (
             <div key={item.step} className="text-center">
               <div className="w-10 h-10 rounded-full bg-brand text-white font-bold text-lg flex items-center justify-center mx-auto mb-3">
@@ -168,7 +171,7 @@ export default function HomePage() {
         <div className="card text-center">
           <h3 className="font-bold text-gray-900 mb-2">For Agents</h3>
           <p className="text-sm text-gray-500 mb-4">
-            Add ToolRoute as an MCP server. Zero config. Your agent gets intelligent routing, challenges, and credit rewards.
+            Add ToolRoute as an MCP server. Your agent gets model routing, tool routing, challenges, and credit rewards. Zero config.
           </p>
           <Link href="/api-docs" className="btn-primary text-sm">
             API Docs

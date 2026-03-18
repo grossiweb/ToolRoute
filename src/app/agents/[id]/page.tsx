@@ -2,7 +2,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 600
+export const revalidate = 60
 
 const TRUST_STYLES: Record<string, { bg: string; text: string; label: string }> = {
   unverified: { bg: 'bg-gray-100', text: 'text-gray-500', label: 'Unverified' },

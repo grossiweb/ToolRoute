@@ -7,7 +7,7 @@ import { SortDropdown } from '@/components/SortDropdown'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export async function generateMetadata({
   params,

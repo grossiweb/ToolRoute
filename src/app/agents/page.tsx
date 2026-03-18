@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata = {
   title: 'Agent Rankings — ToolRoute',
@@ -111,11 +111,12 @@ export default async function AgentsPage() {
           existing.bestTier = tierLower
         }
       }
-      // Collect tools
+      // Collect tools — tools_used may contain objects like { skill_slug, purpose, ... } or plain strings
       if (s.tools_used && Array.isArray(s.tools_used)) {
         for (const tool of s.tools_used) {
-          existing.toolsUsed.push(tool)
-          allToolsUsed[tool] = (allToolsUsed[tool] || 0) + 1
+          const toolName = typeof tool === 'string' ? tool : (tool?.skill_slug || tool?.name || 'unknown')
+          existing.toolsUsed.push(toolName)
+          allToolsUsed[toolName] = (allToolsUsed[toolName] || 0) + 1
         }
       }
       submissionMap.set(s.agent_identity_id, existing)

@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { notFound } from 'next/navigation'
 import { Metadata } from 'next'
 
-export const revalidate = 3600
+export const revalidate = 120
 
 const DIFFICULTY_STYLES: Record<string, string> = {
   beginner: 'bg-green-50 text-green-700',

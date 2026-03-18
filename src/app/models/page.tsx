@@ -3,7 +3,7 @@ import Link from 'next/link'
 import { Suspense } from 'react'
 import { ModelRoutingDemo } from '@/components/ModelRoutingDemo'
 
-export const revalidate = 300
+export const revalidate = 60
 
 export const metadata = {
   title: 'LLM Model Routing — ToolRoute',

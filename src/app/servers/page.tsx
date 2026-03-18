@@ -11,7 +11,7 @@ function normalizeScore(score: number | null | undefined): number | null {
   return score > 10 ? score / 10 : score
 }
 
-export const revalidate = 3600
+export const revalidate = 120
 
 export const metadata: Metadata = {
   title: 'MCP Servers — ToolRoute',

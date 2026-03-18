@@ -4,7 +4,7 @@ import { Suspense } from 'react'
 import { Sidebar } from '@/components/Sidebar'
 import Link from 'next/link'
 
-export const revalidate = 3600
+export const revalidate = 120
 
 export const metadata = {
   title: 'MCP Server Stacks — ToolRoute',

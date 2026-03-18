@@ -3,7 +3,7 @@ import { formatScore, getScoreColor } from '@/lib/scoring'
 import Link from 'next/link'
 import { notFound } from 'next/navigation'
 
-export const revalidate = 600
+export const revalidate = 60
 
 export async function generateMetadata({ params }: { params: { slug: string } }) {
   const supabase = createServerSupabaseClient()

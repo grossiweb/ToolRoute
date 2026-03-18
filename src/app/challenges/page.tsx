@@ -1,7 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
 
-export const revalidate = 3600
+export const revalidate = 60
 
 export const metadata = {
   title: 'Workflow Challenges — ToolRoute',
