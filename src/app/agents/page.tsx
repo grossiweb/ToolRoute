@@ -121,7 +121,7 @@ export default async function AgentsPage() {
       submissionMap.set(s.agent_identity_id, existing)
     }
     // Compute average scores
-    for (const [id, data] of submissionMap) {
+    for (const [id, data] of Array.from(submissionMap)) {
       const totalScore = data.scores.reduce(
         (sum, s) => sum + (s.completeness + s.quality + s.efficiency) / 3,
         0
@@ -148,7 +148,7 @@ export default async function AgentsPage() {
       existing.totalLatency += Number(r.latency_ms || 0)
       tempMap.set(r.agent_identity_id, existing)
     }
-    for (const [id, data] of tempMap) {
+    for (const [id, data] of Array.from(tempMap)) {
       runMap.set(id, {
         count: data.count,
         avgLatency: data.count > 0 ? data.totalLatency / data.count : 0,
