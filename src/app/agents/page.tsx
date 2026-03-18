@@ -253,7 +253,9 @@ export default async function AgentsPage() {
                       {getMedalEmoji(rank)}
                     </td>
                     <td className="px-4 py-3">
-                      <div className="font-semibold text-gray-900">{agent.agent_name}</div>
+                      <Link href={`/agents/${agent.id}`} className="font-semibold text-gray-900 hover:text-brand transition-colors">
+                        {agent.agent_name}
+                      </Link>
                       {agent.agent_kind && (
                         <div className="text-[10px] text-gray-400 capitalize">{agent.agent_kind}</div>
                       )}
