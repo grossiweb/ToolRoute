@@ -6,20 +6,21 @@ import { NavBar } from '@/components/NavBar'
 const inter = Inter({ subsets: ['latin'] })
 
 export const metadata: Metadata = {
-  title: 'ToolRoute — Agent Skill Intelligence Platform',
-  description: 'Find, combine, and deploy the right MCP skills for your AI agents. Outcome-scored, community-verified, agent-first.',
+  title: 'ToolRoute — Intelligent Routing for AI Agents',
+  description: 'Route to the best MCP server or LLM model for any task. Outcome-scored recommendations, workflow challenges, and agent leaderboards.',
+  metadataBase: new URL('https://toolroute.io'),
   openGraph: {
-    title: 'ToolRoute',
-    description: 'Intelligent routing for AI tools. Find the best MCP server for any agent task.',
+    title: 'ToolRoute — Route smarter, not harder',
+    description: 'MCP server routing + LLM model selection for AI agents. 350+ servers scored, 6 model tiers, 15 workflow challenges. Try it live.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
-    images: ['/api/og?title=ToolRoute&type=server'],
+    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — Intelligent Routing for AI Agents' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ToolRoute — Intelligent Routing for AI Tools',
-    description: 'Find the best MCP server for any agent task with real benchmark data.',
+    title: 'ToolRoute — Route smarter, not harder',
+    description: 'MCP server routing + LLM model selection for AI agents. 350+ servers, 20+ models, live routing demo. Try it now.',
     images: ['/api/og?title=ToolRoute&type=server'],
   },
 }

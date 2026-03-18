@@ -14,6 +14,10 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     { url: `${baseUrl}/leaderboards`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
     { url: `${baseUrl}/olympics`, lastModified: new Date(), changeFrequency: 'weekly', priority: 0.6 },
     { url: `${baseUrl}/submit`, lastModified: new Date(), changeFrequency: 'monthly', priority: 0.5 },
+    { url: `${baseUrl}/challenges`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${baseUrl}/agents`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.7 },
+    { url: `${baseUrl}/models`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.8 },
+    { url: `${baseUrl}/servers`, lastModified: new Date(), changeFrequency: 'daily', priority: 0.9 },
   ]
 
   // Dynamic MCP server pages
@@ -61,5 +65,31 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
     priority: 0.5,
   }))
 
-  return [...staticPages, ...skillPages, ...comboPages, ...leaderboardPages, ...reportPages]
+  // Agent profile pages
+  const { data: agents } = await supabase
+    .from('agent_identities')
+    .select('id')
+    .eq('is_active', true)
+
+  const agentPages: MetadataRoute.Sitemap = (agents || []).map((a) => ({
+    url: `${baseUrl}/agents/${a.id}`,
+    lastModified: new Date(),
+    changeFrequency: 'daily' as const,
+    priority: 0.5,
+  }))
+
+  // Challenge pages
+  const { data: challenges } = await supabase
+    .from('workflow_challenges')
+    .select('slug')
+    .eq('status', 'active')
+
+  const challengePages: MetadataRoute.Sitemap = (challenges || []).map((c) => ({
+    url: `${baseUrl}/challenges/${c.slug}`,
+    lastModified: new Date(),
+    changeFrequency: 'weekly' as const,
+    priority: 0.6,
+  }))
+
+  return [...staticPages, ...skillPages, ...comboPages, ...leaderboardPages, ...reportPages, ...agentPages, ...challengePages]
 }
