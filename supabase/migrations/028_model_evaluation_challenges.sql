@@ -67,7 +67,7 @@ INSERT INTO workflow_challenges (
 -- Model Evaluation Missions (linked to existing benchmark events)
 -- Get the "Model Arena" event or use the first available event
 INSERT INTO benchmark_missions (
-  title, description, task_prompt, task_fingerprint, reward_multiplier, max_claims, status,
+  title, description, task_prompt, task_fingerprint, skill_ids, reward_multiplier, max_claims, status,
   event_id
 )
 SELECT
@@ -75,12 +75,13 @@ SELECT
   'Use /api/route/model for any task, execute the recommended model, then report via /api/report/model.',
   'Call POST /api/route/model with task "summarize a 500-word article". Use the recommended model. Call POST /api/report/model with outcome and latency.',
   'model-route-report-quick',
+  '{}'::uuid[],
   4.0, 50, 'available',
   id
 FROM olympic_events LIMIT 1;
 
 INSERT INTO benchmark_missions (
-  title, description, task_prompt, task_fingerprint, reward_multiplier, max_claims, status,
+  title, description, task_prompt, task_fingerprint, skill_ids, reward_multiplier, max_claims, status,
   event_id
 )
 SELECT
@@ -88,12 +89,13 @@ SELECT
   'Complete the full routing loop: route a model, execute it, verify the output quality.',
   'Call POST /api/route/model. Execute the model on your task. Call POST /api/verify/model with the output. Then POST /api/report/model with full telemetry.',
   'model-verify-loop-full',
+  '{}'::uuid[],
   4.0, 30, 'available',
   id
 FROM olympic_events LIMIT 1;
 
 INSERT INTO benchmark_missions (
-  title, description, task_prompt, task_fingerprint, reward_multiplier, max_claims, status,
+  title, description, task_prompt, task_fingerprint, skill_ids, reward_multiplier, max_claims, status,
   event_id
 )
 SELECT
@@ -101,6 +103,7 @@ SELECT
   'Route 3 tasks that resolve to different model tiers. Report outcomes for each.',
   'Send 3 different tasks to /api/route/model designed to trigger different tiers: (1) "translate hello to Spanish" for cheap_chat, (2) "write a Python function to sort a list" for fast_code, (3) "analyze the pros and cons of microservices vs monolith" for reasoning_pro.',
   'model-tier-explorer-3',
+  '{}'::uuid[],
   4.0, 40, 'available',
   id
 FROM olympic_events LIMIT 1;
