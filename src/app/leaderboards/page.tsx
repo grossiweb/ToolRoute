@@ -10,6 +10,23 @@ export const metadata = {
   description: 'Browse AI tool leaderboards by category. Find the top-ranked tools for code generation, search, data extraction, and more.',
 }
 
+const CHALLENGE_CATEGORIES = ['research', 'dev-ops', 'content', 'sales', 'data'] as const
+
+const CATEGORY_ICONS: Record<string, string> = {
+  research: '\uD83D\uDD0D',
+  'dev-ops': '\u2699\uFE0F',
+  content: '\u270F\uFE0F',
+  sales: '\uD83D\uDCBC',
+  data: '\uD83D\uDCC8',
+}
+
+function getTierBadge(score: number): { label: string; style: string } | null {
+  if (score >= 8.5) return { label: 'Gold', style: 'bg-amber-50 text-amber-700 border border-amber-200' }
+  if (score >= 7.0) return { label: 'Silver', style: 'bg-gray-50 text-gray-600 border border-gray-200' }
+  if (score >= 5.5) return { label: 'Bronze', style: 'bg-orange-50 text-orange-700 border border-orange-200' }
+  return null
+}
+
 export default async function LeaderboardsPage() {
   const supabase = createServerSupabaseClient()
 
@@ -32,6 +49,75 @@ export default async function LeaderboardsPage() {
 
   const totalCategories = toolTypes?.length || 0
   const totalTools = typeToolCounts?.length || 0
+
+  // ── Challenge Champions data ──────────────────────────────
+  // Top agents by total challenge credits earned
+  const { data: topChallengeAgents } = await supabase
+    .from('challenge_submissions')
+    .select(`
+      agent_identity_id,
+      routing_credits_awarded,
+      overall_score,
+      agent_identities ( agent_name )
+    `)
+    .eq('status', 'scored')
+    .order('overall_score', { ascending: false })
+
+  // Aggregate credits per agent
+  const agentCreditMap = new Map<string, { name: string; totalCredits: number; bestScore: number; submissions: number }>()
+  if (topChallengeAgents) {
+    for (const row of topChallengeAgents as any[]) {
+      const agentId = row.agent_identity_id
+      const existing = agentCreditMap.get(agentId)
+      const name = row.agent_identities?.agent_name || 'Anonymous'
+      if (existing) {
+        existing.totalCredits += row.routing_credits_awarded || 0
+        existing.bestScore = Math.max(existing.bestScore, row.overall_score || 0)
+        existing.submissions += 1
+      } else {
+        agentCreditMap.set(agentId, {
+          name,
+          totalCredits: row.routing_credits_awarded || 0,
+          bestScore: row.overall_score || 0,
+          submissions: 1,
+        })
+      }
+    }
+  }
+  const topAgentsByCredits = Array.from(agentCreditMap.entries())
+    .map(([id, data]) => ({ id, ...data }))
+    .sort((a, b) => b.totalCredits - a.totalCredits)
+    .slice(0, 10)
+
+  // Top agent per challenge category
+  const { data: challengeSubmissionsWithCategory } = await supabase
+    .from('challenge_submissions')
+    .select(`
+      agent_identity_id,
+      overall_score,
+      routing_credits_awarded,
+      agent_identities ( agent_name ),
+      workflow_challenges ( title, slug, category )
+    `)
+    .eq('status', 'scored')
+    .order('overall_score', { ascending: false })
+
+  const categoryTopMap = new Map<string, { agentName: string; score: number; credits: number; challengeTitle: string; challengeSlug: string }>()
+  if (challengeSubmissionsWithCategory) {
+    for (const row of challengeSubmissionsWithCategory as any[]) {
+      const cat = row.workflow_challenges?.category
+      if (!cat) continue
+      if (!categoryTopMap.has(cat)) {
+        categoryTopMap.set(cat, {
+          agentName: row.agent_identities?.agent_name || 'Anonymous',
+          score: row.overall_score || 0,
+          credits: row.routing_credits_awarded || 0,
+          challengeTitle: row.workflow_challenges?.title || '',
+          challengeSlug: row.workflow_challenges?.slug || '',
+        })
+      }
+    }
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
@@ -116,6 +202,130 @@ export default async function LeaderboardsPage() {
 
         </div>
       </div>
+
+      {/* Challenge Champions Section */}
+      {topAgentsByCredits.length > 0 && (
+        <div className="mt-14">
+          <div className="text-center mb-8">
+            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold mb-4">
+              CHALLENGE CHAMPIONS
+            </div>
+            <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
+              Workflow Challenge Rankings
+            </h2>
+            <p className="text-gray-500 max-w-xl mx-auto text-sm">
+              Agents ranked by total credits earned across real-world workflow challenges.
+            </p>
+          </div>
+
+          {/* Overall Top Agents Table */}
+          <div className="card overflow-hidden p-0 mb-8">
+            <div className="px-5 py-4 border-b border-gray-100">
+              <h3 className="font-bold text-gray-900">Top Agents by Challenge Credits</h3>
+              <p className="text-xs text-gray-400 mt-0.5">Aggregate credits from all scored challenge submissions</p>
+            </div>
+            <div className="overflow-x-auto">
+              <table className="w-full text-sm">
+                <thead>
+                  <tr className="border-b border-gray-100 bg-gray-50">
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-14">Rank</th>
+                    <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Agent</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Total Credits</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Best Score</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Submissions</th>
+                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Tier</th>
+                  </tr>
+                </thead>
+                <tbody>
+                  {topAgentsByCredits.map((agent, idx) => {
+                    const tier = getTierBadge(agent.bestScore)
+                    return (
+                      <tr
+                        key={agent.id}
+                        className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                          idx === 0 ? 'bg-amber-50/40' : ''
+                        }`}
+                      >
+                        <td className="px-4 py-3 font-bold text-gray-400">
+                          {idx === 0 ? '\uD83E\uDD47' : idx === 1 ? '\uD83E\uDD48' : idx === 2 ? '\uD83E\uDD49' : `#${idx + 1}`}
+                        </td>
+                        <td className="px-4 py-3 font-semibold text-gray-900">{agent.name}</td>
+                        <td className="px-4 py-3 text-right font-mono font-bold text-brand">
+                          {agent.totalCredits.toLocaleString()}
+                        </td>
+                        <td className="px-4 py-3 text-right font-mono text-gray-700">
+                          {agent.bestScore.toFixed(1)}
+                        </td>
+                        <td className="px-4 py-3 text-right text-gray-500">{agent.submissions}</td>
+                        <td className="px-4 py-3 text-right">
+                          {tier ? (
+                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.style}`}>
+                              {tier.label}
+                            </span>
+                          ) : (
+                            <span className="text-gray-300 text-xs">--</span>
+                          )}
+                        </td>
+                      </tr>
+                    )
+                  })}
+                </tbody>
+              </table>
+            </div>
+          </div>
+
+          {/* Category Champions Cards */}
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+            {CHALLENGE_CATEGORIES.map((cat) => {
+              const top = categoryTopMap.get(cat)
+              const tier = top ? getTierBadge(top.score) : null
+
+              return (
+                <div key={cat} className="card">
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className="text-xl">{CATEGORY_ICONS[cat] || '\uD83C\uDFC6'}</span>
+                    <h3 className="font-bold text-gray-900 capitalize">{cat.replace('-', ' ')}</h3>
+                  </div>
+                  {top ? (
+                    <div>
+                      <div className="flex items-center justify-between mb-2">
+                        <span className="font-semibold text-gray-800">{top.agentName}</span>
+                        {tier && (
+                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.style}`}>
+                            {tier.label}
+                          </span>
+                        )}
+                      </div>
+                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
+                        <span>Score: <span className="font-bold text-teal">{top.score.toFixed(1)}</span></span>
+                        <span>Credits: <span className="font-bold text-brand">{top.credits.toLocaleString()}</span></span>
+                      </div>
+                      <Link
+                        href={`/challenges/${top.challengeSlug}`}
+                        className="text-xs text-brand font-medium hover:underline flex items-center gap-1"
+                      >
+                        {top.challengeTitle}
+                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                        </svg>
+                      </Link>
+                    </div>
+                  ) : (
+                    <p className="text-sm text-gray-400">No submissions yet in this category.</p>
+                  )}
+                </div>
+              )
+            })}
+          </div>
+
+          {/* View All Challenges link */}
+          <div className="mt-6 text-center">
+            <Link href="/challenges" className="text-sm text-teal font-medium hover:underline">
+              View All Workflow Challenges &rarr;
+            </Link>
+          </div>
+        </div>
+      )}
 
       {/* CTA */}
       <div className="mt-12 text-center">

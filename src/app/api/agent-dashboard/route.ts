@@ -51,10 +51,23 @@ export async function GET(request: NextRequest) {
     .order('created_at', { ascending: false })
     .limit(20)
 
+  // 5. Challenge submissions
+  const { data: challengeSubmissions } = await supabase
+    .from('challenge_submissions')
+    .select(`
+      id, status, overall_score, completeness_score, quality_score, efficiency_score,
+      tier, routing_credits_awarded, reputation_points_awarded, submitted_at, scored_at,
+      workflow_challenges ( title, slug, category )
+    `)
+    .eq('agent_identity_id', agentId)
+    .order('submitted_at', { ascending: false })
+    .limit(20)
+
   return NextResponse.json({
     agent,
     balance: balance || { total_routing_credits: 0, total_reputation_points: 0 },
     contributions: contributions || [],
     rewards: rewards || [],
+    challengeSubmissions: challengeSubmissions || [],
   })
 }

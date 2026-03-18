@@ -1,6 +1,26 @@
 'use client'
 
 import { useState } from 'react'
+import Link from 'next/link'
+
+interface ChallengeSubmission {
+  id: string
+  status: string
+  overall_score: number | null
+  completeness_score: number | null
+  quality_score: number | null
+  efficiency_score: number | null
+  tier: string | null
+  routing_credits_awarded: number
+  reputation_points_awarded: number
+  submitted_at: string
+  scored_at: string | null
+  workflow_challenges: {
+    title: string
+    slug: string
+    category: string
+  } | null
+}
 
 interface AgentData {
   agent: {
@@ -28,6 +48,7 @@ interface AgentData {
     reason: string
     created_at: string
   }>
+  challengeSubmissions: ChallengeSubmission[]
 }
 
 const TRUST_TIER_STYLES: Record<string, string> = {
@@ -60,6 +81,17 @@ function formatContributionType(type: string) {
   return type
     .replace(/_/g, ' ')
     .replace(/\b\w/g, (c) => c.toUpperCase())
+}
+
+const TIER_STYLES: Record<string, string> = {
+  gold: 'bg-amber-50 text-amber-700 border border-amber-200',
+  silver: 'bg-gray-50 text-gray-600 border border-gray-200',
+  bronze: 'bg-orange-50 text-orange-700 border border-orange-200',
+}
+
+function getTierStyle(tier: string | null): string {
+  if (!tier) return 'bg-gray-100 text-gray-400'
+  return TIER_STYLES[tier] || 'bg-gray-100 text-gray-400'
 }
 
 export default function DashboardPage() {
@@ -284,6 +316,86 @@ export default function DashboardPage() {
               </div>
             )}
           </div>
+
+          {/* Your Challenges */}
+          {data.challengeSubmissions && data.challengeSubmissions.length > 0 && (
+            <div className="card p-0 overflow-hidden">
+              <div className="px-5 pt-5 pb-3">
+                <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider">Your Challenges</h2>
+              </div>
+              <div className="overflow-x-auto">
+                <table className="w-full text-sm">
+                  <thead>
+                    <tr className="border-b border-gray-100 bg-gray-50">
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Challenge</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Category</th>
+                      <th className="text-center px-4 py-3 font-semibold text-gray-500 text-xs">Status</th>
+                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Score</th>
+                      <th className="text-center px-4 py-3 font-semibold text-gray-500 text-xs">Tier</th>
+                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Credits</th>
+                      <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Submitted</th>
+                    </tr>
+                  </thead>
+                  <tbody>
+                    {data.challengeSubmissions.map((sub) => {
+                      const challenge = sub.workflow_challenges
+                      return (
+                        <tr key={sub.id} className="border-b border-gray-50 hover:bg-gray-50">
+                          <td className="px-4 py-3">
+                            {challenge ? (
+                              <Link
+                                href={`/challenges/${challenge.slug}`}
+                                className="font-semibold text-gray-900 hover:text-teal transition-colors"
+                              >
+                                {challenge.title}
+                              </Link>
+                            ) : (
+                              <span className="text-gray-400">Unknown</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3">
+                            <span className="badge bg-teal-50 text-teal text-[10px] capitalize">
+                              {challenge?.category?.replace('-', ' ') || '--'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            <span className={`badge text-[10px] ${
+                              sub.status === 'scored' ? 'bg-green-50 text-green-700' :
+                              sub.status === 'scoring' ? 'bg-yellow-50 text-yellow-700' :
+                              sub.status === 'rejected' ? 'bg-red-50 text-red-600' :
+                              'bg-gray-100 text-gray-500'
+                            }`}>
+                              {sub.status.toUpperCase()}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono font-bold text-gray-700">
+                            {sub.overall_score != null ? sub.overall_score.toFixed(1) : '--'}
+                          </td>
+                          <td className="px-4 py-3 text-center">
+                            {sub.tier ? (
+                              <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${getTierStyle(sub.tier)}`}>
+                                {sub.tier.charAt(0).toUpperCase() + sub.tier.slice(1)}
+                              </span>
+                            ) : (
+                              <span className="text-gray-300 text-xs">--</span>
+                            )}
+                          </td>
+                          <td className="px-4 py-3 text-right font-mono">
+                            <span className={sub.routing_credits_awarded > 0 ? 'text-brand font-semibold' : 'text-gray-400'}>
+                              {sub.routing_credits_awarded > 0 ? `+${sub.routing_credits_awarded}` : '0'}
+                            </span>
+                          </td>
+                          <td className="px-4 py-3 text-gray-500 text-xs whitespace-nowrap">
+                            {formatDateTime(sub.submitted_at)}
+                          </td>
+                        </tr>
+                      )
+                    })}
+                  </tbody>
+                </table>
+              </div>
+            </div>
+          )}
         </div>
       )}
 
