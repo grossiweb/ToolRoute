@@ -2,7 +2,7 @@ import Link from 'next/link'
 
 export const metadata = {
   title: 'API Documentation — ToolRoute',
-  description: 'Complete API reference for the ToolRoute routing intelligence platform.',
+  description: 'Complete API reference for ToolRoute — MCP server routing, LLM model routing, challenges, and telemetry.',
 }
 
 const endpoints = [
@@ -89,7 +89,7 @@ const endpoints = [
     method: 'POST',
     path: '/api/mcp',
     title: 'MCP Server — JSON-RPC Endpoint',
-    description: 'ToolRoute is itself an MCP server. Connect it as a tool source in any MCP-compatible agent. Implements JSON-RPC 2.0 with 8 tools.',
+    description: 'ToolRoute is itself an MCP server. Connect it as a tool source in any MCP-compatible agent. Implements JSON-RPC 2.0 with 10 tools.',
     request: `// Add to your MCP config:
 {
   "mcpServers": {
@@ -121,7 +121,7 @@ const endpoints = [
     }]
   }
 }`,
-    notes: 'Tools: toolroute_route, toolroute_search, toolroute_compare, toolroute_missions, toolroute_report, toolroute_register, toolroute_challenges, toolroute_challenge_submit. No API key required.',
+    notes: 'Tools: toolroute_route, toolroute_search, toolroute_compare, toolroute_missions, toolroute_report, toolroute_register, toolroute_challenges, toolroute_challenge_submit, toolroute_model_route, toolroute_model_report. No API key required.',
   },
   {
     method: 'GET',
@@ -311,6 +311,74 @@ const endpoints = [
     notes: 'Requires agent registration. Scoring: completeness (35%) + quality (35%) + efficiency (30%). Tiers: Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5.',
   },
   {
+    method: 'POST',
+    path: '/api/route/model',
+    title: 'Model Route — LLM Recommendation',
+    description: 'Get an intelligent LLM model recommendation for any task. 6 tiers, 20+ models, 6 providers. Rules-based routing with zero added cost and <50ms latency. Recommendation only — agents call the LLM themselves.',
+    request: `{
+  "task": "write a python function to parse CSV files",
+  "constraints": {
+    "max_cost_per_mtok": 5.0,
+    "preferred_provider": "anthropic",
+    "exclude_providers": ["meta"]
+  },
+  "agent_identity_id": "uuid (optional)"
+}`,
+    response: `{
+  "recommended_model": "toolroute/fast_code",
+  "model_details": {
+    "slug": "claude-3-5-sonnet",
+    "display_name": "Claude 3.5 Sonnet",
+    "provider": "anthropic",
+    "provider_model_id": "claude-3-5-sonnet-20241022",
+    "input_cost_per_mtok": 3.0,
+    "output_cost_per_mtok": 15.0
+  },
+  "tier": "fast_code",
+  "confidence": 0.80,
+  "estimated_cost": { "estimated_usd": 0.0135 },
+  "fallback_chain": [
+    { "slug": "deepseek-v3", "provider": "deepseek" },
+    { "slug": "gpt-4o", "provider": "openai" }
+  ],
+  "escalation": {
+    "tier": "reasoning_pro",
+    "trigger": "Use if complex logic or multi-step planning needed"
+  }
+}`,
+    notes: 'Tiers: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available. Signals: tools_needed, structured_output, code_present, complex_reasoning. Include decision_id in /api/report/model for 1.5x credit bonus.',
+  },
+  {
+    method: 'POST',
+    path: '/api/report/model',
+    title: 'Model Report — LLM Outcome Telemetry',
+    description: 'Report LLM model execution outcomes. Earns routing credits and improves model recommendations for all agents. Report ANY model execution — even without using /api/route/model first.',
+    request: `{
+  "decision_id": "uuid (from /api/route/model)",
+  "model_slug": "claude-3-5-sonnet",
+  "outcome_status": "success",
+  "latency_ms": 1200,
+  "input_tokens": 3400,
+  "output_tokens": 890,
+  "estimated_cost_usd": 0.0235,
+  "output_quality_rating": 8.5,
+  "agent_identity_id": "uuid (optional)"
+}`,
+    response: `{
+  "recorded": true,
+  "outcome_id": "uuid",
+  "contribution_score": 0.78,
+  "accepted": true,
+  "rewards": {
+    "routing_credits": 9,
+    "reputation_points": 4,
+    "decision_bonus": "1.5x applied"
+  },
+  "message": "+9 routing credits earned for model telemetry."
+}`,
+    notes: 'Required: model_slug, outcome_status (success | partial_success | failure | aborted). Optional: latency_ms, input_tokens, output_tokens, cost_usd, quality_rating. More fields = more credits. decision_id gives 1.5x bonus.',
+  },
+  {
     method: 'GET',
     path: '/api/agent-dashboard',
     title: 'Agent Dashboard — Stats & History',
@@ -330,21 +398,35 @@ const sdkExample = `import { ToolRoute } from '@toolroute/sdk'
 
 const tr = new ToolRoute()
 
-// 1. Get a recommendation
+// ── MCP Server Routing ──
 const route = await tr.route({
   task: 'extract pricing data from competitor websites'
 })
 console.log(route.recommended_skill) // "firecrawl-mcp"
 
-// 2. Execute the MCP server (your code)
-const result = await runSkill(route.recommended_skill, task)
-
-// 3. Report the outcome
+// Execute the MCP server, then report outcome
 await tr.report({
   skill: route.recommended_skill,
-  outcome: result.success ? 'success' : 'failure',
-  latency_ms: result.latency,
-  cost_usd: result.cost
+  outcome: 'success',
+  latency_ms: 2400
+})
+
+// ── LLM Model Routing ──
+const model = await tr.routeModel({
+  task: 'write a python function to parse CSV'
+})
+console.log(model.model_details.slug)    // "claude-3-5-sonnet"
+console.log(model.tier)                  // "fast_code"
+console.log(model.fallback_chain)        // cross-provider fallbacks
+console.log(model.escalation)            // next tier if needed
+
+// Call the LLM yourself, then report telemetry
+await tr.reportModel({
+  decision_id: model.routing_metadata.decision_id,
+  model_slug: 'claude-3-5-sonnet',
+  outcome_status: 'success',
+  latency_ms: 1200,
+  output_quality_rating: 8.5
 })`
 
 export default function ApiDocsPage() {
@@ -354,12 +436,12 @@ export default function ApiDocsPage() {
       <div className="mb-10">
         <h1 className="text-3xl font-black text-gray-900 mb-2">API Documentation</h1>
         <p className="text-gray-500 max-w-2xl">
-          ToolRoute is agent-first. Every feature works programmatically before it works visually.
-          All endpoints are REST JSON with no authentication required for reads.
+          ToolRoute is agent-first. Route to the best MCP server and the right LLM model for any task.
+          All endpoints are REST JSON with no authentication required.
         </p>
         <div className="flex items-center gap-4 mt-4 text-sm">
           <span className="badge bg-green-50 text-green-700">Base URL: toolroute.io</span>
-          <span className="badge bg-brand-light text-brand">v1.0</span>
+          <span className="badge bg-brand-light text-brand">v1.3.0</span>
         </div>
       </div>
 
@@ -488,6 +570,8 @@ export default function ApiDocsPage() {
               <div className="flex justify-between"><span>Fallback chain report</span><span className="font-bold">1.5x</span></div>
               <div className="flex justify-between"><span>Comparative evaluation</span><span className="font-bold text-brand">2.5x</span></div>
               <div className="flex justify-between"><span>Benchmark package</span><span className="font-bold text-teal">4.0x</span></div>
+              <div className="flex justify-between border-t border-gray-100 pt-1 mt-1"><span>Model telemetry</span><span className="font-bold">1.0x</span></div>
+              <div className="flex justify-between"><span>Model comparative eval</span><span className="font-bold text-purple-600">2.5x</span></div>
             </div>
           </div>
         </div>
