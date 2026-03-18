@@ -181,19 +181,19 @@ const result = await tr.route({
         </button>
       </form>
 
-      {/* Stats */}
+      {/* Capability highlights */}
       <div className="grid grid-cols-3 gap-4 mb-6">
         <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-brand">100+</div>
-          <div className="text-xs text-gray-500">MCP Servers Scored</div>
+          <div className="text-2xl font-black text-brand">10</div>
+          <div className="text-xs text-gray-500">MCP Tools Built In</div>
         </div>
         <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-teal">18</div>
-          <div className="text-xs text-gray-500">Tool Categories</div>
+          <div className="text-2xl font-black text-purple-600">6</div>
+          <div className="text-xs text-gray-500">LLM Model Tiers</div>
         </div>
         <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-gray-900">5</div>
-          <div className="text-xs text-gray-500">Score Dimensions</div>
+          <div className="text-2xl font-black text-teal">$0</div>
+          <div className="text-xs text-gray-500">Cost to Route</div>
         </div>
       </div>
     </div>
