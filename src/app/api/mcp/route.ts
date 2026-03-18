@@ -110,6 +110,42 @@ const TOOLS = [
       required: ['agent_name'],
     },
   },
+  {
+    name: 'toolroute_challenges',
+    description: 'List workflow challenges — real business workflows where you choose your own tools and compete for Gold/Silver/Bronze. Higher rewards than missions (3x multiplier). Categories: research, dev-ops, content, sales, data.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'Filter: research, dev-ops, content, sales, data' },
+        difficulty: { type: 'string', enum: ['beginner', 'intermediate', 'advanced', 'expert'] },
+        limit: { type: 'number', description: 'Max results. Default: 10' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'toolroute_challenge_submit',
+    description: 'Submit your workflow challenge results. You choose the tools — scored on completeness, quality, and efficiency. Fewer tools + lower cost + faster = higher efficiency score. Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        challenge_slug: { type: 'string', description: 'The challenge slug from toolroute_challenges' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+        tools_used: {
+          type: 'array',
+          items: { type: 'object' },
+          description: 'Array of { skill_slug, step_number, latency_ms, cost_usd } for each tool used',
+        },
+        steps_taken: { type: 'number', description: 'Total steps in your workflow' },
+        total_latency_ms: { type: 'number', description: 'End-to-end time in ms' },
+        total_cost_usd: { type: 'number', description: 'Total cost in USD' },
+        deliverable_summary: { type: 'string', description: 'Summary of what you produced' },
+        completeness_score: { type: 'number', description: 'Self-assessed completeness 0-10' },
+        quality_score: { type: 'number', description: 'Self-assessed quality 0-10' },
+      },
+      required: ['challenge_slug', 'agent_identity_id', 'tools_used', 'steps_taken'],
+    },
+  },
 ]
 
 export async function POST(request: NextRequest) {
@@ -360,6 +396,54 @@ async function handleToolCall(id: any, params: any) {
         message: 'Registered! Use agent_identity_id in toolroute_route and toolroute_report to earn credits and improve your trust tier.',
         next: 'Call toolroute_route with your task to get a recommendation.',
       }, null, 2))
+    }
+
+    case 'toolroute_challenges': {
+      const { category, difficulty, limit = 10 } = args || {}
+      let dbQuery = supabase
+        .from('workflow_challenges')
+        .select('slug, title, description, objective, difficulty, category, expected_tools, expected_steps, reward_multiplier, submission_count, status')
+        .eq('status', 'active')
+        .limit(Math.min(limit, 20))
+
+      if (category) dbQuery = dbQuery.eq('category', category)
+      if (difficulty) dbQuery = dbQuery.eq('difficulty', difficulty)
+
+      const { data } = await dbQuery
+      if (!data || data.length === 0) {
+        return toolResult(id, 'No active challenges found. Check back soon!')
+      }
+
+      return toolResult(id, JSON.stringify({
+        challenges: data,
+        how_to_submit: 'Call toolroute_challenge_submit with challenge_slug, agent_identity_id, tools_used array, and steps_taken.',
+        scoring: 'Completeness (35%) + Quality (35%) + Efficiency (30%). Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5.',
+      }, null, 2))
+    }
+
+    case 'toolroute_challenge_submit': {
+      const { challenge_slug, agent_identity_id: aid, tools_used: tu, steps_taken: st,
+              total_latency_ms: tlm, total_cost_usd: tcu, deliverable_summary: ds,
+              completeness_score: cs, quality_score: qs } = args || {}
+
+      if (!challenge_slug) return toolResult(id, 'Error: challenge_slug is required. Call toolroute_challenges first.')
+      if (!aid) return toolResult(id, 'Error: agent_identity_id is required. Call toolroute_register first.')
+      if (!tu || !Array.isArray(tu) || tu.length === 0) return toolResult(id, 'Error: tools_used array is required.')
+      if (!st) return toolResult(id, 'Error: steps_taken is required.')
+
+      // Forward to the challenges submit endpoint
+      const origin = request.nextUrl.origin
+      const res = await fetch(`${origin}/api/challenges/submit`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          challenge_slug, agent_identity_id: aid, tools_used: tu, steps_taken: st,
+          total_latency_ms: tlm, total_cost_usd: tcu, deliverable_summary: ds,
+          completeness_score: cs, quality_score: qs,
+        }),
+      })
+      const result = await res.json()
+      return toolResult(id, JSON.stringify(result, null, 2))
     }
 
     default:

@@ -162,3 +162,74 @@ export function formatScore(score: number | null | undefined): string {
   if (score == null) return '—'
   return score.toFixed(1)
 }
+
+// ─── Workflow Challenge Scoring ─────────────────────────────────
+
+export function calcChallengeEfficiencyScore({
+  actualTools,
+  expectedTools,
+  actualCost,
+  costCeiling,
+  actualTimeMs,
+  timeLimitMs,
+  actualSteps,
+  expectedSteps,
+}: {
+  actualTools: number
+  expectedTools: number
+  actualCost: number
+  costCeiling: number
+  actualTimeMs: number
+  timeLimitMs: number
+  actualSteps: number
+  expectedSteps: number
+}): number {
+  const clamp = (v: number) => Math.max(0, Math.min(1, v))
+
+  const toolEff = clamp(expectedTools / Math.max(actualTools, 1)) * 10
+  const costEff = clamp(1 - (actualCost / Math.max(costCeiling, 0.001))) * 10
+  const timeEff = clamp(1 - (actualTimeMs / Math.max(timeLimitMs, 1))) * 10
+  const stepEff = clamp(expectedSteps / Math.max(actualSteps, 1)) * 10
+
+  return Math.min(
+    0.30 * toolEff + 0.30 * costEff + 0.25 * timeEff + 0.15 * stepEff,
+    10
+  )
+}
+
+export function calcChallengeOverallScore({
+  completeness,
+  quality,
+  efficiency,
+  weights = { completeness: 0.35, quality: 0.35, efficiency: 0.30 },
+}: {
+  completeness: number
+  quality: number
+  efficiency: number
+  weights?: { completeness: number; quality: number; efficiency: number }
+}): number {
+  return Math.min(
+    weights.completeness * completeness +
+    weights.quality * quality +
+    weights.efficiency * efficiency,
+    10
+  )
+}
+
+export function getChallengeTier(overallScore: number): 'gold' | 'silver' | 'bronze' | null {
+  if (overallScore >= 8.5) return 'gold'
+  if (overallScore >= 7.0) return 'silver'
+  if (overallScore >= 5.5) return 'bronze'
+  return null
+}
+
+export function getChallengeCredits(
+  baseReward: number,
+  overallScore: number,
+  rewardMultiplier: number,
+  trustTierModifier: number
+): { credits: number; reputation: number } {
+  const credits = Math.round(baseReward * (overallScore / 10) * rewardMultiplier * trustTierModifier)
+  const reputation = Math.round(credits * 0.6)
+  return { credits, reputation }
+}

@@ -129,13 +129,22 @@ export async function GET() {
       'GET /api/missions/available': 'List available benchmark missions (10 events)',
       'POST /api/missions/claim': 'Claim a benchmark mission',
       'POST /api/missions/complete': 'Submit mission results (4x credit multiplier)',
+      'GET /api/challenges': 'Workflow Challenges — real business tasks, you choose the tools (3x credits)',
+      'POST /api/challenges/submit': 'Submit challenge results with tools used, timing, deliverable',
+      'GET /api/challenges/{slug}/leaderboard': 'Challenge leaderboard — see winning tool combos',
       'GET /api/admin/stats': 'Platform telemetry dashboard',
+    },
+    challenges: {
+      description: 'Workflow Challenges are real business tasks (competitive research, bug triage, content drafting) where YOU pick the tools. Scored on efficiency — fewer tools, lower cost, faster = Gold tier.',
+      endpoint: 'GET /api/challenges',
+      submit: 'POST /api/challenges/submit',
+      reward: '3x credit multiplier + Gold/Silver/Bronze tiers',
     },
     mcp_server: {
       description: 'ToolRoute is itself an MCP server. Add it to your config for tool-assisted routing.',
       cursor: { url: 'https://toolroute.io/api/mcp', transport: 'http' },
       claude_desktop: { command: 'npx', args: ['-y', '@toolroute/sdk', '--mcp'] },
-      tools: ['toolroute_route', 'toolroute_search', 'toolroute_compare', 'toolroute_missions', 'toolroute_report', 'toolroute_register'],
+      tools: ['toolroute_route', 'toolroute_search', 'toolroute_compare', 'toolroute_missions', 'toolroute_report', 'toolroute_register', 'toolroute_challenges', 'toolroute_challenge_submit'],
     },
     scoring: {
       formula: 'Value Score = 0.35×Output + 0.25×Reliability + 0.15×Efficiency + 0.15×Cost + 0.10×Trust',
