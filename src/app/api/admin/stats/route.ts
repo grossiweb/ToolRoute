@@ -17,6 +17,10 @@ export async function GET() {
     skillsResult,
     contributorsResult,
     telemetryRateResult,
+    modelDecisionsResult,
+    modelOutcomesResult,
+    challengesResult,
+    challengeSubmissionsResult,
   ] = await Promise.all([
     supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at'),
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
@@ -28,6 +32,10 @@ export async function GET() {
     supabase.from('skills').select('id, slug, canonical_name').eq('status', 'active'),
     supabase.from('contributors').select('id, contributor_type, display_name, created_at'),
     supabase.from('telemetry_rate_tracking').select('*'),
+    supabase.from('model_routing_decisions').select('id, task_snippet, resolved_tier, recommended_alias, confidence, agent_identity_id, created_at').order('created_at', { ascending: false }).limit(20),
+    supabase.from('model_outcome_records').select('id, model_id, outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, created_at').order('created_at', { ascending: false }).limit(20),
+    supabase.from('workflow_challenges').select('id, title, slug, category, submission_count, status'),
+    supabase.from('challenge_submissions').select('id, challenge_id, agent_identity_id, tier, overall_score, scored_at, agent_identities(agent_name), workflow_challenges(title, slug)').order('scored_at', { ascending: false }).limit(20),
   ])
 
   // Collect any query errors for debugging
@@ -42,6 +50,10 @@ export async function GET() {
   if (skillsResult.error) queryErrors.skills = skillsResult.error.message
   if (contributorsResult.error) queryErrors.contributors = contributorsResult.error.message
   if (telemetryRateResult.error) queryErrors.telemetry_rate_tracking = telemetryRateResult.error.message
+  if (modelDecisionsResult.error) queryErrors.model_routing_decisions = modelDecisionsResult.error.message
+  if (modelOutcomesResult.error) queryErrors.model_outcome_records = modelOutcomesResult.error.message
+  if (challengesResult.error) queryErrors.workflow_challenges = challengesResult.error.message
+  if (challengeSubmissionsResult.error) queryErrors.challenge_submissions = challengeSubmissionsResult.error.message
 
   const agents = agentsResult.data || []
   const outcomes = outcomeResult.data || []
@@ -53,6 +65,10 @@ export async function GET() {
   const skills = skillsResult.data || []
   const contributors = contributorsResult.data || []
   const telemetryRate = telemetryRateResult.data || []
+  const modelDecisions = modelDecisionsResult.data || []
+  const modelOutcomes = modelOutcomesResult.data || []
+  const challenges = challengesResult.data || []
+  const challengeSubmissions = challengeSubmissionsResult.data || []
 
   // Compute summaries
   const totalCredits = rewards.reduce((sum: number, r: any) => sum + (r.routing_credits || 0), 0)
@@ -82,6 +98,10 @@ export async function GET() {
       total_mission_claims: missionClaims.length,
       total_agent_runs: agentRuns.length,
       active_skills_in_catalog: skills.length,
+      model_routing_decisions: modelDecisions.length,
+      model_outcome_reports: modelOutcomes.length,
+      workflow_challenges: challenges.length,
+      challenge_submissions: challengeSubmissions.length,
     },
     agents: agents.map((a: any) => ({
       id: a.id,
@@ -106,5 +126,40 @@ export async function GET() {
     mission_claims: missionClaims,
     agent_runs: agentRuns.slice(-10).reverse(),
     telemetry_rate: telemetryRate,
+
+    // Model routing
+    model_routing: {
+      total_decisions: modelDecisions.length,
+      total_outcomes: modelOutcomes.length,
+      tier_distribution: modelDecisions.reduce((acc: any, d: any) => {
+        acc[d.resolved_tier] = (acc[d.resolved_tier] || 0) + 1
+        return acc
+      }, {} as Record<string, number>),
+      recent_decisions: modelDecisions.slice(0, 10),
+      recent_outcomes: modelOutcomes.slice(0, 10),
+    },
+
+    // Challenges
+    challenges: {
+      total: challenges.length,
+      by_category: challenges.reduce((acc: any, c: any) => {
+        acc[c.category] = (acc[c.category] || 0) + 1
+        return acc
+      }, {} as Record<string, number>),
+      total_submissions: challengeSubmissions.length,
+      tier_breakdown: challengeSubmissions.reduce((acc: any, s: any) => {
+        const t = (s.tier || 'unscored').toLowerCase()
+        acc[t] = (acc[t] || 0) + 1
+        return acc
+      }, {} as Record<string, number>),
+      recent_submissions: challengeSubmissions.slice(0, 10).map((s: any) => ({
+        id: s.id,
+        challenge: (s.workflow_challenges as any)?.title || 'Unknown',
+        agent: (s.agent_identities as any)?.agent_name || 'Unknown',
+        tier: s.tier,
+        score: s.overall_score,
+        scored_at: s.scored_at,
+      })),
+    },
   })
 }
