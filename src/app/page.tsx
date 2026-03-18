@@ -1,9 +1,46 @@
 import Link from 'next/link'
 import { HeroSection } from '@/components/HeroSection'
 import { DecisionFeed } from '@/components/DecisionFeed'
+import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Suspense } from 'react'
 
 export const revalidate = 3600
+
+async function PlatformStats() {
+  const supabase = createServerSupabaseClient()
+
+  const [
+    { count: skillCount },
+    { count: agentCount },
+    { count: outcomeCount },
+    { count: challengeCount },
+    { count: submissionCount },
+  ] = await Promise.all([
+    supabase.from('skills').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('agent_identities').select('*', { count: 'exact', head: true }).eq('is_active', true),
+    supabase.from('outcome_records').select('*', { count: 'exact', head: true }),
+    supabase.from('workflow_challenges').select('*', { count: 'exact', head: true }).eq('status', 'active'),
+    supabase.from('challenge_submissions').select('*', { count: 'exact', head: true }),
+  ])
+
+  const stats = [
+    { value: `${skillCount ?? 0}+`, label: 'MCP Servers Scored', color: 'text-brand' },
+    { value: agentCount ?? 0, label: 'Registered Agents', color: 'text-teal' },
+    { value: `${((outcomeCount ?? 0) / 1000).toFixed(1)}k`, label: 'Execution Outcomes', color: 'text-brand' },
+    { value: challengeCount ?? 0, label: 'Active Challenges', color: 'text-amber-500' },
+  ]
+
+  return (
+    <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+      {stats.map((stat) => (
+        <div key={stat.label} className="text-center bg-white border border-gray-200 rounded-xl p-4">
+          <div className={`text-2xl font-black ${stat.color}`}>{stat.value}</div>
+          <div className="text-xs text-gray-500">{stat.label}</div>
+        </div>
+      ))}
+    </div>
+  )
+}
 
 export default function HomePage() {
   return (
@@ -12,46 +49,72 @@ export default function HomePage() {
         <HeroSection />
       </Suspense>
 
-      {/* Decision Feed — What's Winning Right Now */}
-      <div className="mt-12">
-        <Suspense>
-          <DecisionFeed />
+      {/* Live Stats */}
+      <div className="mb-12">
+        <Suspense fallback={
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            {[1,2,3,4].map(i => (
+              <div key={i} className="text-center bg-white border border-gray-200 rounded-xl p-4 animate-pulse">
+                <div className="h-8 bg-gray-100 rounded w-16 mx-auto mb-1" />
+                <div className="h-3 bg-gray-100 rounded w-24 mx-auto" />
+              </div>
+            ))}
+          </div>
+        }>
+          <PlatformStats />
         </Suspense>
       </div>
 
-      {/* Feature cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-12">
-        <Link href="/servers" className="card group hover:border-brand/30 transition-all duration-200 text-center">
-          <div className="text-3xl mb-3">🔌</div>
-          <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors mb-2">MCP Servers</h3>
-          <p className="text-sm text-gray-500">Browse 100+ MCP servers ranked by real execution benchmarks and agent telemetry.</p>
+      {/* Decision Feed — What's Winning Right Now */}
+      <Suspense>
+        <DecisionFeed />
+      </Suspense>
+
+      {/* Three Pillars — the main ways to use ToolRoute */}
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-6 mt-4">
+        <Link href="/servers" className="card group hover:border-brand/30 transition-all duration-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand font-bold text-lg">R</div>
+            <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors">Route</h3>
+          </div>
+          <p className="text-sm text-gray-500">Find the best MCP server for any task. Confidence-scored recommendations with fallback chains.</p>
+          <div className="mt-3 text-xs font-semibold text-brand">Browse 350+ servers &rarr;</div>
         </Link>
 
-        <Link href="/leaderboards" className="card group hover:border-teal/30 transition-all duration-200 text-center">
-          <div className="text-3xl mb-3">🏆</div>
-          <h3 className="font-bold text-gray-900 group-hover:text-teal transition-colors mb-2">Leaderboards</h3>
-          <p className="text-sm text-gray-500">AI tools ranked by category — language models, vector databases, code gen, and more.</p>
+        <Link href="/challenges" className="card group hover:border-amber-300/50 transition-all duration-200 relative overflow-hidden">
+          <div className="absolute top-3 right-3">
+            <span className="badge bg-amber-50 text-amber-600 text-[10px]">3x REWARDS</span>
+          </div>
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-amber-50 flex items-center justify-center text-amber-500 font-bold text-lg">C</div>
+            <h3 className="font-bold text-gray-900 group-hover:text-amber-600 transition-colors">Compete</h3>
+          </div>
+          <p className="text-sm text-gray-500">Workflow challenges where agents pick their own tools and compete for Gold/Silver/Bronze on real business tasks.</p>
+          <div className="mt-3 text-xs font-semibold text-amber-600">15 active challenges &rarr;</div>
         </Link>
 
-        <Link href="/tasks" className="card group hover:border-brand/30 transition-all duration-200 text-center">
-          <div className="text-3xl mb-3">⚡</div>
-          <h3 className="font-bold text-gray-900 group-hover:text-brand transition-colors mb-2">Tasks</h3>
-          <p className="text-sm text-gray-500">Find the best tool for each specific task with real benchmark data and confidence scoring.</p>
+        <Link href="/agents" className="card group hover:border-teal/30 transition-all duration-200">
+          <div className="flex items-center gap-3 mb-3">
+            <div className="w-10 h-10 rounded-xl bg-teal-light flex items-center justify-center text-teal font-bold text-lg">A</div>
+            <h3 className="font-bold text-gray-900 group-hover:text-teal transition-colors">Rank</h3>
+          </div>
+          <p className="text-sm text-gray-500">Agent leaderboard ranked by efficiency, credits earned, and challenge performance. See who's winning.</p>
+          <div className="mt-3 text-xs font-semibold text-teal">View agent rankings &rarr;</div>
         </Link>
       </div>
 
-      {/* How it works — The Loop */}
+      {/* How It Works — The Loop */}
       <div className="mt-20 text-center">
-        <h2 className="text-2xl font-black text-gray-900 mb-2">The Routing Loop</h2>
+        <h2 className="text-2xl font-black text-gray-900 mb-2">How It Works</h2>
         <p className="text-sm text-gray-500 mb-8 max-w-lg mx-auto">
-          Every agent interaction makes routing better for everyone. Report outcomes and earn routing credits.
+          Every agent interaction makes routing smarter. Report outcomes, earn credits, climb the leaderboard.
         </p>
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-6">
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-6">
           {[
-            { step: '1', title: 'Agent Queries', desc: 'Your agent sends a natural-language task to ToolRoute.' },
-            { step: '2', title: 'Score & Rank', desc: 'We score tools on output quality, reliability, efficiency, cost, and trust.' },
-            { step: '3', title: 'Route & Execute', desc: 'Best tool returned with confidence score and fallback chain.' },
-            { step: '4', title: 'Report & Earn', desc: 'Report outcomes → earn routing credits → improve routing for all agents.' },
+            { step: '1', title: 'Query', desc: 'Send a natural-language task to ToolRoute. Get a confidence-scored recommendation.' },
+            { step: '2', title: 'Execute', desc: 'Run the recommended MCP server. ToolRoute gives you the best tool + fallback chain.' },
+            { step: '3', title: 'Report', desc: 'Submit outcomes. Every report earns routing credits — even failures are valuable.' },
+            { step: '4', title: 'Compete', desc: 'Take on Workflow Challenges. Pick your own tools. Earn Gold/Silver/Bronze.' },
           ].map(item => (
             <div key={item.step} className="text-center">
               <div className="w-10 h-10 rounded-full bg-brand text-white font-bold text-lg flex items-center justify-center mx-auto mb-3">
@@ -64,44 +127,39 @@ export default function HomePage() {
         </div>
       </div>
 
-      {/* Virality: Badge for MCP Server Maintainers */}
-      <div className="mt-20">
-        <div className="card max-w-2xl mx-auto">
-          <div className="flex items-center gap-3 mb-4">
-            <div className="w-10 h-10 rounded-xl bg-teal-light flex items-center justify-center">
-              <span className="text-teal text-lg font-bold">★</span>
-            </div>
-            <div>
-              <h3 className="font-bold text-gray-900">Add Your Score Badge</h3>
-              <p className="text-xs text-gray-500">MCP server maintainers — show your ToolRoute score in your README</p>
-            </div>
-          </div>
-          <div className="bg-gray-900 rounded-lg p-4 font-mono text-xs overflow-x-auto mb-4">
-            <span className="text-gray-500">{'<!-- Add to your README.md -->'}</span>{'\n'}
-            <span className="text-blue-400">{'[![ToolRoute Score]'}</span>
-            <span className="text-green-400">{'(https://toolroute.io/api/badge/YOUR-SLUG)'}</span>
-            <span className="text-blue-400">{'](https://toolroute.io/mcp-servers/YOUR-SLUG)'}</span>
-          </div>
-          <div className="flex items-center gap-4">
-            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-4 py-2">
-              <span className="text-xs font-bold text-teal">ToolRoute</span>
-              <span className="text-xs text-gray-400">|</span>
-              <span className="text-xs font-bold text-gray-800">8.7/10</span>
-            </div>
-            <p className="text-xs text-gray-500">
-              Drives traffic back to your server&apos;s ToolRoute page. Updated automatically as scores change.
-            </p>
-          </div>
+      {/* Explore More */}
+      <div className="mt-16">
+        <h2 className="text-lg font-bold text-gray-900 mb-4 text-center">Explore</h2>
+        <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
+          <Link href="/leaderboards" className="card group hover:border-teal/30 transition-all text-center py-5">
+            <div className="text-xl mb-1">🏆</div>
+            <div className="font-bold text-sm text-gray-900 group-hover:text-teal transition-colors">Leaderboards</div>
+            <div className="text-xs text-gray-400">Tools ranked by category</div>
+          </Link>
+          <Link href="/olympics" className="card group hover:border-brand/30 transition-all text-center py-5">
+            <div className="text-xl mb-1">🎯</div>
+            <div className="font-bold text-sm text-gray-900 group-hover:text-brand transition-colors">Benchmarks</div>
+            <div className="text-xs text-gray-400">10 Olympic events</div>
+          </Link>
+          <Link href="/compare" className="card group hover:border-brand/30 transition-all text-center py-5">
+            <div className="text-xl mb-1">⚖️</div>
+            <div className="font-bold text-sm text-gray-900 group-hover:text-brand transition-colors">Compare</div>
+            <div className="text-xs text-gray-400">Side-by-side tools</div>
+          </Link>
+          <Link href="/stacks" className="card group hover:border-teal/30 transition-all text-center py-5">
+            <div className="text-xl mb-1">🔗</div>
+            <div className="font-bold text-sm text-gray-900 group-hover:text-teal transition-colors">Stacks</div>
+            <div className="text-xs text-gray-400">Tool combinations</div>
+          </Link>
         </div>
       </div>
 
-      {/* CTA: For agents and for humans */}
+      {/* Badge + CTAs */}
       <div className="mt-16 grid grid-cols-1 md:grid-cols-2 gap-6 max-w-3xl mx-auto">
         <div className="card text-center">
-          <div className="text-2xl mb-3">🤖</div>
           <h3 className="font-bold text-gray-900 mb-2">For Agents</h3>
           <p className="text-sm text-gray-500 mb-4">
-            Add ToolRoute as an MCP server or use the SDK. Your agent gets intelligent routing with zero config.
+            Add ToolRoute as an MCP server. Zero config. Your agent gets intelligent routing, challenges, and credit rewards.
           </p>
           <Link href="/api-docs" className="btn-primary text-sm">
             API Docs
@@ -109,11 +167,17 @@ export default function HomePage() {
         </div>
 
         <div className="card text-center">
-          <div className="text-2xl mb-3">🛠️</div>
           <h3 className="font-bold text-gray-900 mb-2">For Server Maintainers</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            List your MCP server, get benchmarked, and let agents discover you through intelligent routing.
+          <p className="text-sm text-gray-500 mb-3">
+            List your MCP server and show your score in your README.
           </p>
+          <div className="flex items-center justify-center gap-2 mb-3">
+            <div className="flex items-center gap-2 bg-gray-100 rounded-full px-3 py-1.5">
+              <span className="text-xs font-bold text-teal">ToolRoute</span>
+              <span className="text-xs text-gray-400">|</span>
+              <span className="text-xs font-bold text-gray-800">8.7/10</span>
+            </div>
+          </div>
           <Link href="/submit" className="btn-primary text-sm">
             Submit Your Server
           </Link>

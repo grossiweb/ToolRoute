@@ -121,7 +121,7 @@ const result = await tr.route({
               {'  '}<span className="text-purple-400">{'}'}</span>{'\n'}
               <span className="text-purple-400">{'}'}</span>{'\n'}
               {'\n'}
-              <span className="text-gray-500">{'// Your agent now has 5 tools: route, search, compare, missions, report'}</span>
+              <span className="text-gray-500">{'// Your agent now has 8 tools: route, search, compare, missions, report, register, challenges, challenge_submit'}</span>
             </pre>
           ) : activeTab === 'python' ? (
             <pre className="text-gray-300">

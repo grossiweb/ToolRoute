@@ -18,23 +18,19 @@ export function NavBar() {
           </span>
         </div>
 
-        {/* Desktop nav */}
+        {/* Desktop nav — focused set */}
         <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
           <Link href="/servers" className="hover:text-brand transition-colors">Servers</Link>
+          <Link href="/challenges" className="hover:text-amber-600 transition-colors">Challenges</Link>
+          <Link href="/agents" className="hover:text-teal transition-colors">Agents</Link>
           <Link href="/leaderboards" className="hover:text-brand transition-colors">Leaderboards</Link>
-          <Link href="/tasks" className="hover:text-brand transition-colors">Tasks</Link>
-          <Link href="/compare" className="hover:text-brand transition-colors">Compare</Link>
-          <Link href="/stacks" className="hover:text-brand transition-colors">Stacks</Link>
           <Link href="/olympics" className="hover:text-brand transition-colors">Benchmarks</Link>
-          <Link href="/challenges" className="hover:text-brand transition-colors">Challenges</Link>
-          <Link href="/agents" className="hover:text-brand transition-colors">Agents</Link>
-          <Link href="/dashboard" className="hover:text-brand transition-colors">Dashboard</Link>
         </div>
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
           <Link href="/submit" className="btn-secondary">
-            Submit a server
+            Submit
           </Link>
           <Link href="/api-docs" className="btn-primary">
             API
@@ -61,15 +57,17 @@ export function NavBar() {
       {menuOpen && (
         <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-3 text-sm font-medium">
           <Link href="/servers" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Servers</Link>
+          <Link href="/challenges" className="text-gray-700 hover:text-amber-600" onClick={() => setMenuOpen(false)}>Challenges</Link>
+          <Link href="/agents" className="text-gray-700 hover:text-teal" onClick={() => setMenuOpen(false)}>Agents</Link>
           <Link href="/leaderboards" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
-          <Link href="/tasks" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Tasks</Link>
-          <Link href="/compare" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Compare</Link>
-          <Link href="/stacks" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Stacks</Link>
           <Link href="/olympics" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Benchmarks</Link>
-          <Link href="/challenges" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Challenges</Link>
-          <Link href="/agents" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Agents</Link>
-          <Link href="/dashboard" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-          <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a server →</Link>
+          <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
+            <Link href="/compare" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Compare</Link>
+            <Link href="/stacks" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Stacks</Link>
+            <Link href="/tasks" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Tasks</Link>
+            <Link href="/dashboard" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+          </div>
+          <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a server &rarr;</Link>
         </div>
       )}
     </nav>
