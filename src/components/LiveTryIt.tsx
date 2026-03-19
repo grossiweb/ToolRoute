@@ -15,7 +15,7 @@ export function LiveTryIt() {
           fontFamily: 'var(--mono)', fontSize: 11,
           color: 'var(--text-3)', padding: '10px 0 10px 12px', whiteSpace: 'nowrap',
         }}>
-          POST /api/route?task=
+          GET /api/route?task=
         </span>
         <input
           defaultValue="parse csv"
