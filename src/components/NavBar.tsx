@@ -1,81 +1,270 @@
 'use client'
 
 import Link from 'next/link'
-import { useState } from 'react'
-import { Logo } from '@/components/Logo'
+import { useState, useEffect } from 'react'
 
 export function NavBar() {
   const [menuOpen, setMenuOpen] = useState(false)
+  const [theme, setTheme] = useState('dark')
+
+  useEffect(() => {
+    const saved = localStorage.getItem('tr-theme') || 'dark'
+    setTheme(saved)
+    document.documentElement.setAttribute('data-theme', saved)
+  }, [])
+
+  function toggleTheme() {
+    const next = theme === 'dark' ? 'light' : 'dark'
+    setTheme(next)
+    document.documentElement.setAttribute('data-theme', next)
+    localStorage.setItem('tr-theme', next)
+  }
 
   return (
-    <nav className="sticky top-0 z-50 bg-white border-b border-gray-200">
-      <div className="max-w-6xl mx-auto px-4 h-14 flex items-center justify-between">
-        {/* Logo */}
-        <div className="flex items-center gap-2">
-          <Logo />
-          <span className="hidden sm:inline ml-1 text-xs font-semibold text-teal bg-teal-light px-2 py-0.5 rounded-full">
-            agent-first
+    <nav
+      id="main-nav"
+      style={{
+        position: 'fixed',
+        top: 0,
+        left: 0,
+        right: 0,
+        zIndex: 200,
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        padding: '0 40px',
+        height: 64,
+        borderBottom: '1px solid var(--border)',
+        background: theme === 'dark' ? 'rgba(10,10,11,.88)' : 'rgba(255,255,255,.92)',
+        backdropFilter: 'blur(20px)',
+        transition: 'background .25s',
+      }}
+    >
+      {/* Left: logo + badge + links */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 32 }}>
+        <Link href="/" style={{ display: 'flex', alignItems: 'center', gap: 10, textDecoration: 'none' }}>
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/toolroute-logo-dark.png"
+            alt="ToolRoute"
+            className="nav-logo-dark"
+            style={{ height: 24, width: 'auto', maxWidth: 160, objectFit: 'contain', display: 'none' }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            src="/toolroute-logo-light.png"
+            alt="ToolRoute"
+            className="nav-logo-light"
+            style={{ height: 24, width: 'auto', maxWidth: 160, objectFit: 'contain', display: 'none' }}
+          />
+          {/* Fallback text wordmark */}
+          <span style={{
+            fontFamily: 'var(--sans)',
+            fontSize: 18,
+            fontWeight: 800,
+            letterSpacing: -1,
+            color: 'var(--text)',
+            lineHeight: 1,
+          }}>
+            toolroute
+            <span style={{
+              width: 8,
+              height: 8,
+              borderRadius: '50%',
+              background: '#f59e0b',
+              display: 'inline-block',
+              marginLeft: 2,
+              position: 'relative',
+              top: -1,
+            }} />
           </span>
-        </div>
+        </Link>
 
-        {/* Desktop nav — focused set */}
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-gray-600">
-          <Link href="/models" className="hover:text-brand transition-colors">Models</Link>
-          <Link href="/servers" className="hover:text-brand transition-colors">Servers</Link>
-          <Link href="/challenges" className="hover:text-amber-600 transition-colors">Challenges</Link>
-          <Link href="/agents" className="hover:text-teal transition-colors">Agents</Link>
-          <Link href="/leaderboards" className="hover:text-brand transition-colors">Leaderboards</Link>
-        </div>
+        <span style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 10,
+          color: 'var(--amber)',
+          border: '1px solid rgba(245,158,11,.3)',
+          padding: '2px 8px',
+          borderRadius: 20,
+          letterSpacing: 0.5,
+        }}>
+          agent-first
+        </span>
 
-        {/* CTA */}
-        <div className="hidden md:flex items-center gap-3">
-          <Link href="/verify" className="text-sm font-medium text-teal hover:text-teal/80 transition-colors">
-            Verify
-          </Link>
-          <Link href="/submit" className="btn-secondary">
-            Submit
-          </Link>
-          <Link href="/api-docs" className="btn-primary">
-            API
-          </Link>
-        </div>
+        {/* Desktop links */}
+        <ul style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: 28,
+          listStyle: 'none',
+          margin: 0,
+          padding: 0,
+        }}
+        className="nav-links-desktop"
+        >
+          {[
+            { href: '/models', label: 'Models' },
+            { href: '/servers', label: 'Servers' },
+            { href: '/challenges', label: 'Challenges' },
+            { href: '/leaderboards', label: 'Leaderboards' },
+          ].map(link => (
+            <li key={link.href}>
+              <Link
+                href={link.href}
+                style={{
+                  textDecoration: 'none',
+                  color: 'var(--text-2)',
+                  fontSize: 14,
+                  fontWeight: 500,
+                  transition: 'color .2s',
+                }}
+                onMouseEnter={e => (e.currentTarget.style.color = 'var(--text)')}
+                onMouseLeave={e => (e.currentTarget.style.color = 'var(--text-2)')}
+              >
+                {link.label}
+              </Link>
+            </li>
+          ))}
+        </ul>
+      </div>
+
+      {/* Right: theme toggle + CTA */}
+      <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+        <button
+          onClick={toggleTheme}
+          style={{
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            border: '1px solid var(--border-bright)',
+            background: 'transparent',
+            cursor: 'pointer',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 15,
+            color: 'var(--text-2)',
+            transition: 'all .2s',
+          }}
+          aria-label="Toggle theme"
+        >
+          {theme === 'dark' ? '🌙' : '☀️'}
+        </button>
+
+        <Link
+          href="/submit"
+          className="nav-btn-desktop"
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--border-bright)',
+            color: 'var(--text-2)',
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontSize: 14,
+            fontFamily: 'var(--sans)',
+            fontWeight: 500,
+            textDecoration: 'none',
+            transition: 'all .2s',
+          }}
+        >
+          Submit
+        </Link>
+
+        <Link
+          href="/api-docs"
+          className="nav-btn-desktop"
+          style={{
+            background: 'var(--amber)',
+            color: '#000',
+            border: 'none',
+            padding: '8px 18px',
+            borderRadius: 8,
+            fontSize: 14,
+            fontFamily: 'var(--sans)',
+            fontWeight: 700,
+            textDecoration: 'none',
+            transition: 'all .2s',
+          }}
+        >
+          API
+        </Link>
 
         {/* Mobile menu toggle */}
         <button
-          className="md:hidden p-2 text-gray-500"
           onClick={() => setMenuOpen(!menuOpen)}
+          className="nav-mobile-toggle"
+          style={{
+            display: 'none',
+            width: 34,
+            height: 34,
+            borderRadius: 8,
+            border: '1px solid var(--border-bright)',
+            background: 'transparent',
+            cursor: 'pointer',
+            alignItems: 'center',
+            justifyContent: 'center',
+            fontSize: 18,
+            color: 'var(--text-2)',
+          }}
           aria-label="Toggle menu"
         >
-          <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            {menuOpen ? (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-            ) : (
-              <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M4 6h16M4 12h16M4 18h16" />
-            )}
-          </svg>
+          {menuOpen ? '✕' : '☰'}
         </button>
       </div>
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-0 text-sm font-medium">
-          <Link href="/models" className="text-gray-700 hover:text-brand py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Models</Link>
-          <Link href="/servers" className="text-gray-700 hover:text-brand py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Servers</Link>
-          <Link href="/challenges" className="text-gray-700 hover:text-amber-600 py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Challenges</Link>
-          <Link href="/agents" className="text-gray-700 hover:text-teal py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Agents</Link>
-          <Link href="/leaderboards" className="text-gray-700 hover:text-brand py-2.5" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
-          <div className="border-t border-gray-100 mt-1 pt-2 flex flex-wrap gap-x-4 gap-y-1.5">
-            <Link href="/compare" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Compare</Link>
-            <Link href="/combinations" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Stacks</Link>
-            <Link href="/tasks" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Tasks</Link>
-            <Link href="/dashboard" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Dashboard</Link>
-          </div>
-          <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-gray-100">
-            <Link href="/verify" className="text-teal font-semibold" onClick={() => setMenuOpen(false)}>Verify your agent &rarr;</Link>
-            <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a server &rarr;</Link>
-          </div>
+        <div
+          style={{
+            position: 'absolute',
+            top: 64,
+            left: 0,
+            right: 0,
+            background: 'var(--bg)',
+            borderBottom: '1px solid var(--border)',
+            padding: '16px 40px',
+            display: 'flex',
+            flexDirection: 'column',
+            gap: 0,
+          }}
+        >
+          {[
+            { href: '/models', label: 'Models' },
+            { href: '/servers', label: 'Servers' },
+            { href: '/challenges', label: 'Challenges' },
+            { href: '/leaderboards', label: 'Leaderboards' },
+            { href: '/agents', label: 'Agents' },
+            { href: '/verify', label: 'Verify' },
+            { href: '/api-docs', label: 'API Docs' },
+          ].map(link => (
+            <Link
+              key={link.href}
+              href={link.href}
+              onClick={() => setMenuOpen(false)}
+              style={{
+                textDecoration: 'none',
+                color: 'var(--text-2)',
+                fontSize: 14,
+                fontWeight: 500,
+                padding: '10px 0',
+                borderBottom: '1px solid var(--border)',
+              }}
+            >
+              {link.label}
+            </Link>
+          ))}
         </div>
       )}
+
+      <style>{`
+        @media (max-width: 768px) {
+          .nav-links-desktop { display: none !important; }
+          .nav-btn-desktop { display: none !important; }
+          .nav-mobile-toggle { display: flex !important; }
+          nav { padding: 0 20px !important; }
+        }
+      `}</style>
     </nav>
   )
 }

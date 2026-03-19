@@ -8,19 +8,21 @@ module.exports = {
   theme: {
     extend: {
       colors: {
+        // Legacy compat — maps old brand/teal to new amber/green
         brand: {
-          DEFAULT: '#6C47D8',
-          light: '#EEE9FF',
-          dark: '#3C3489',
+          DEFAULT: '#f59e0b',
+          light: 'rgba(245, 158, 11, 0.15)',
+          dark: '#d97706',
         },
         teal: {
-          DEFAULT: '#0F6E56',
-          light: '#E1F5EE',
+          DEFAULT: '#10b981',
+          light: 'rgba(16, 185, 129, 0.12)',
         },
       },
       fontFamily: {
-        sans: ['Inter', 'system-ui', 'sans-serif'],
-        mono: ['JetBrains Mono', 'monospace'],
+        serif: ['Instrument Serif', 'Georgia', 'serif'],
+        sans: ['Cabinet Grotesk', 'system-ui', 'sans-serif'],
+        mono: ['DM Mono', 'monospace'],
       },
     },
   },
