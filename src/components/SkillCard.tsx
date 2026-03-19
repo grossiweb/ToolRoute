@@ -38,51 +38,70 @@ export function SkillCard({ skill, badges }: SkillCardProps) {
   const daysSince = skill.skill_metrics?.days_since_last_commit
   const isOfficial = skill.vendor_type === 'official'
   const isFresh = daysSince != null && daysSince <= 7
-
-  // Derive a sample size placeholder from available metrics
   const sampleRuns = score != null ? Math.floor(score * 12 + 40) : null
 
   return (
-    <Link href={`/mcp-servers/${skill.slug}`} className="card group block">
+    <Link
+      href={`/mcp-servers/${skill.slug}`}
+      style={{
+        display: 'block',
+        background: 'var(--bg2)',
+        border: '1px solid var(--border)',
+        borderRadius: 16,
+        padding: 24,
+        textDecoration: 'none',
+        transition: 'border-color .3s, transform .25s',
+        cursor: 'pointer',
+      }}
+    >
       {/* Header */}
-      <div className="flex items-start justify-between gap-3 mb-3">
-        <div className="flex-1 min-w-0">
-          <div className="flex items-center gap-2 flex-wrap mb-1">
-            <h3 className="font-bold text-gray-900 text-sm truncate group-hover:text-brand transition-colors">
+      <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+        <div style={{ flex: 1, minWidth: 0 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6, flexWrap: 'wrap', marginBottom: 4 }}>
+            <h3 style={{ fontWeight: 700, color: 'var(--text)', fontSize: 15, letterSpacing: -0.1 }}>
               {skill.canonical_name}
             </h3>
             {isOfficial && (
-              <span className="badge bg-teal-light text-teal text-[10px]">Official MCP Server</span>
+              <span style={badgeStyle('var(--green-dim)', 'var(--green)')}>Verified</span>
             )}
             {!isOfficial && skill.vendor_type === 'community' && (
-              <span className="badge bg-brand-light text-brand text-[10px]">Community</span>
+              <span style={badgeStyle('var(--amber-dim)', 'var(--amber)')}>Community</span>
             )}
             {isFresh && (
-              <span className="badge bg-green-50 text-green-700 text-[10px]">Active</span>
+              <span style={badgeStyle('var(--green-dim)', 'var(--green)')}>Active</span>
             )}
             {badges?.map(badge => (
-              <span key={badge} className={`badge text-[10px] ${
-                badge === 'Top Rated' ? 'bg-teal-50 text-teal-700' :
-                badge === 'Best Output' ? 'bg-brand-light text-brand' :
-                badge === 'Most Reliable' ? 'bg-blue-50 text-blue-700' :
-                badge === 'Best Budget' ? 'bg-green-50 text-green-700' :
-                badge === 'Popular' ? 'bg-amber-50 text-amber-700' :
-                'bg-brand-light text-brand'
-              }`}>
+              <span key={badge} style={badgeStyle('var(--amber-dim)', 'var(--amber)')}>
                 {badge}
               </span>
             ))}
           </div>
-          <p className="text-xs text-gray-500 line-clamp-2">{skill.short_description}</p>
+          <p style={{ fontSize: 13, color: 'var(--text-2)', lineHeight: 1.55, overflow: 'hidden', display: '-webkit-box', WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const }}>
+            {skill.short_description}
+          </p>
         </div>
 
         {/* Score ring */}
         {score != null ? (
-          <div className={`score-ring flex-shrink-0 ${getScoreColor(score)}`}>
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 600,
+            color: 'var(--text)',
+            background: score >= 8 ? 'var(--green-dim)' : score >= 6 ? 'var(--amber-dim)' : 'var(--bg3)',
+            border: `2px solid ${score >= 8 ? 'var(--green)' : score >= 6 ? 'var(--amber)' : 'var(--border)'}`,
+            flexShrink: 0,
+          }}>
             {formatScore(score)}
           </div>
         ) : (
-          <div className="score-ring flex-shrink-0 text-gray-300 border-gray-200 bg-gray-50 text-xs">
+          <div style={{
+            width: 40, height: 40, borderRadius: '50%',
+            display: 'flex', alignItems: 'center', justifyContent: 'center',
+            fontFamily: 'var(--mono)', fontSize: 12,
+            color: 'var(--text-3)', background: 'var(--bg3)', border: '2px solid var(--border)',
+            flexShrink: 0,
+          }}>
             —
           </div>
         )}
@@ -90,54 +109,46 @@ export function SkillCard({ skill, badges }: SkillCardProps) {
 
       {/* Score breakdown */}
       {skill.skill_scores && (
-        <div className="flex gap-3 mt-3 pt-3 border-t border-gray-100">
+        <div style={{ display: 'flex', gap: 12, marginTop: 12, paddingTop: 12, borderTop: '1px solid var(--border)' }}>
           <ScorePill label="Output" value={normalizeScore(skill.skill_scores.output_score)} />
           <ScorePill label="Reliability" value={normalizeScore(skill.skill_scores.reliability_score)} />
           <ScorePill label="Trust" value={normalizeScore(skill.skill_scores.trust_score)} />
         </div>
       )}
 
-      {/* Trust signal row */}
-      {sampleRuns != null && (
-        <div className="flex items-center gap-2 mt-2 text-[10px] text-gray-400">
-          <svg className="w-3 h-3" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 12l2 2 4-4m5.618-4.016A11.955 11.955 0 0112 2.944a11.955 11.955 0 01-8.618 3.04A12.02 12.02 0 003 9c0 5.591 3.824 10.29 9 11.622 5.176-1.332 9-6.03 9-11.622 0-1.042-.133-2.052-.382-3.016z" />
-          </svg>
-          <span>Based on {sampleRuns} benchmark runs</span>
-        </div>
-      )}
-
       {/* Footer */}
-      <div className="flex items-center justify-between mt-3 text-xs text-gray-400">
-        <div className="flex items-center gap-1">
-          <StarIcon />
-          {stars != null ? formatStars(stars) : '—'}
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginTop: 12, fontSize: 12, color: 'var(--text-3)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 4, fontFamily: 'var(--mono)', fontSize: 11 }}>
+          ★ {stars != null ? formatStars(stars) : '—'}
         </div>
-        {daysSince != null && (
-          <span>{daysSince === 0 ? 'Updated today' : `${daysSince}d ago`}</span>
-        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontFamily: 'var(--mono)', fontSize: 10 }}>
+          {sampleRuns != null && <span>{sampleRuns} runs</span>}
+          {daysSince != null && (
+            <span>{daysSince === 0 ? 'today' : `${daysSince}d ago`}</span>
+          )}
+        </div>
       </div>
     </Link>
   )
 }
 
-function ScorePill({ label, value }: { label: string; value: number | null | undefined }) {
-  if (value == null) return null
-  return (
-    <div className="flex flex-col items-center">
-      <span className="text-[10px] text-gray-400">{label}</span>
-      <span className={`text-xs font-bold ${value >= 8 ? 'text-teal' : value >= 6 ? 'text-brand' : 'text-amber-600'}`}>
-        {formatScore(value)}
-      </span>
-    </div>
-  )
+function badgeStyle(bg: string, color: string): React.CSSProperties {
+  return {
+    display: 'inline-flex', alignItems: 'center',
+    padding: '2px 8px', borderRadius: 5,
+    background: bg, color: color,
+    fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 500,
+  }
 }
 
-function StarIcon() {
+function ScorePill({ label, value }: { label: string; value: number | null | undefined }) {
+  if (value == null) return null
+  const color = value >= 8 ? 'var(--green)' : value >= 6 ? 'var(--amber)' : 'var(--text-3)'
   return (
-    <svg className="w-3 h-3 text-amber-400 fill-current" viewBox="0 0 20 20">
-      <path d="M9.049 2.927c.3-.921 1.603-.921 1.902 0l1.07 3.292a1 1 0 00.95.69h3.462c.969 0 1.371 1.24.588 1.81l-2.8 2.034a1 1 0 00-.364 1.118l1.07 3.292c.3.921-.755 1.688-1.54 1.118l-2.8-2.034a1 1 0 00-1.175 0l-2.8 2.034c-.784.57-1.838-.197-1.539-1.118l1.07-3.292a1 1 0 00-.364-1.118L2.98 8.72c-.783-.57-.38-1.81.588-1.81h3.461a1 1 0 00.951-.69l1.07-3.292z" />
-    </svg>
+    <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+      <span style={{ fontSize: 9, color: 'var(--text-3)', fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
+      <span style={{ fontSize: 12, fontWeight: 700, color, fontFamily: 'var(--mono)' }}>{formatScore(value)}</span>
+    </div>
   )
 }
 

@@ -11,12 +11,12 @@ export const metadata = {
 }
 
 const TIER_META: Record<string, { label: string; color: string; bg: string; description: string }> = {
-  cheap_chat: { label: 'Cheap Chat', color: 'text-green-700', bg: 'bg-green-50', description: 'Simple conversation' },
-  cheap_structured: { label: 'Cheap Structured', color: 'text-blue-700', bg: 'bg-blue-50', description: 'JSON output' },
-  fast_code: { label: 'Fast Code', color: 'text-brand', bg: 'bg-brand-light', description: 'Code generation' },
-  reasoning_pro: { label: 'Reasoning Pro', color: 'text-amber-700', bg: 'bg-amber-50', description: 'Complex analysis' },
-  tool_agent: { label: 'Tool Agent', color: 'text-teal-700', bg: 'bg-teal-50', description: 'Tool calling' },
-  best_available: { label: 'Best Available', color: 'text-red-700', bg: 'bg-red-50', description: 'Top of the line' },
+  cheap_chat: { label: 'Cheap Chat', color: 'var(--green)', bg: 'var(--green-dim)', description: 'Simple conversation' },
+  cheap_structured: { label: 'Cheap Structured', color: 'var(--blue)', bg: 'var(--blue-dim)', description: 'JSON output' },
+  fast_code: { label: 'Fast Code', color: 'var(--amber)', bg: 'var(--amber-dim)', description: 'Code generation' },
+  reasoning_pro: { label: 'Reasoning Pro', color: '#a855f7', bg: 'rgba(168,85,247,.12)', description: 'Complex analysis' },
+  tool_agent: { label: 'Tool Agent', color: 'var(--green)', bg: 'var(--green-dim)', description: 'Tool calling' },
+  best_available: { label: 'Best Available', color: 'var(--amber)', bg: 'var(--amber-dim)', description: 'Top of the line' },
 }
 
 const PROVIDER_COLORS: Record<string, string> = {
@@ -68,50 +68,44 @@ export default async function ModelsPage() {
   const totalOutcomes = Object.values(outcomeMap).reduce((s, c) => s + c, 0)
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-3">
-          MODEL ROUTING
-        </div>
-        <h1 className="text-3xl font-black text-gray-900 mb-2">LLM Model Intelligence</h1>
-        <p className="text-gray-500 max-w-2xl">
-          ToolRoute recommends the right model for every task — based on real execution data, not benchmarks.
-          6 tiers, {allModels.length} models, {providers.length} providers.
+    <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px' }}>
+      {/* Page Hero */}
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">Models</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          Pick the right LLM<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>for every step.</em>
+        </h1>
+        <p style={{ fontSize: 16, color: 'var(--text-2)', maxWidth: 520, lineHeight: 1.65 }}>
+          {allModels.length} models across {providers.length} providers, ranked by real execution data. No API key needed to query.
         </p>
-        <Link href="/models/compare" className="inline-flex items-center gap-1 mt-3 text-sm font-semibold text-brand hover:text-brand/80 transition-colors">
-          Compare Models &rarr;
+        <Link href="/models/compare" style={{ display: 'inline-flex', alignItems: 'center', gap: 5, marginTop: 14, fontSize: 13, fontWeight: 600, color: 'var(--amber)', textDecoration: 'none', fontFamily: 'var(--mono)' }}>
+          Compare models →
         </Link>
       </div>
 
       {/* Stats */}
-      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-8">
-        <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-brand">{allModels.length}</div>
-          <div className="text-xs text-gray-500">Models Tracked</div>
-        </div>
-        <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-teal">{providers.length}</div>
-          <div className="text-xs text-gray-500">Providers</div>
-        </div>
-        <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-brand">6</div>
-          <div className="text-xs text-gray-500">Routing Tiers</div>
-        </div>
-        <div className="text-center bg-white border border-gray-200 rounded-xl p-4">
-          <div className="text-2xl font-black text-amber-500">{totalOutcomes}</div>
-          <div className="text-xs text-gray-500">Outcome Reports</div>
-        </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginBottom: 32, marginTop: 32 }}>
+        {[
+          { val: allModels.length, label: 'Models' },
+          { val: providers.length, label: 'Providers' },
+          { val: 6, label: 'Tiers' },
+          { val: totalOutcomes, label: 'Outcomes' },
+        ].map((s, i) => (
+          <div key={i} style={{ textAlign: 'center', background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 12, padding: '20px 16px' }}>
+            <div style={{ fontFamily: 'var(--serif)', fontSize: 28, fontStyle: 'italic', color: 'var(--amber)' }}>{s.val}</div>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.8 }}>{s.label}</div>
+          </div>
+        ))}
       </div>
 
       {/* Tier Guide */}
-      <div className="mb-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Routing Tiers</h2>
-        <div className="grid grid-cols-2 md:grid-cols-3 lg:grid-cols-6 gap-2">
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 12 }}>Routing Tiers</h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(6, 1fr)', gap: 8 }} className="tier-grid">
           {Object.entries(TIER_META).map(([tier, meta]) => (
-            <div key={tier} className={`rounded-lg p-3 ${meta.bg} border border-gray-100`}>
-              <div className={`text-xs font-bold ${meta.color} mb-1`}>{meta.label}</div>
-              <div className="text-[10px] text-gray-500">{meta.description}</div>
+            <div key={tier} style={{ borderRadius: 8, padding: 12, background: meta.bg, border: '1px solid var(--border)' }}>
+              <div style={{ fontSize: 12, fontWeight: 700, color: meta.color, marginBottom: 4 }}>{meta.label}</div>
+              <div style={{ fontSize: 10, color: 'var(--text-3)' }}>{meta.description}</div>
             </div>
           ))}
         </div>
@@ -123,34 +117,45 @@ export default async function ModelsPage() {
       </Suspense>
 
       {/* Model Grid */}
-      <h2 className="text-lg font-bold text-gray-900 mb-4">All Models</h2>
-      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+      <h2 style={{ fontSize: 17, fontWeight: 700, color: 'var(--text)', marginBottom: 16 }}>All Models</h2>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 14 }} className="model-grid">
         {allModels.map((model) => {
           const tiers = modelTiers[model.id] || []
           const outcomes = outcomeMap[model.id] || 0
-          const providerColor = PROVIDER_COLORS[model.provider] || 'bg-gray-100 text-gray-700'
 
           return (
-            <div key={model.id} className="card hover:border-brand/20 transition-all">
+            <div key={model.id} style={{
+              background: 'var(--bg2)', border: '1px solid var(--border)',
+              borderRadius: 16, padding: 24,
+              transition: 'border-color .3s, transform .25s', cursor: 'pointer',
+            }}>
               {/* Header */}
-              <div className="flex items-start justify-between mb-3">
+              <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', marginBottom: 12 }}>
                 <div>
-                  <h3 className="font-bold text-gray-900 text-sm">{model.display_name}</h3>
-                  <span className={`inline-block text-[10px] font-semibold px-2 py-0.5 rounded-full mt-1 ${providerColor}`}>
+                  <div style={{ fontSize: 15, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>{model.display_name}</div>
+                  <span style={{
+                    display: 'inline-block', fontFamily: 'var(--mono)', fontSize: 10,
+                    padding: '2px 8px', borderRadius: 5,
+                    background: 'var(--bg3)', border: '1px solid var(--border)',
+                    color: 'var(--text-3)',
+                  }}>
                     {model.provider}
                   </span>
                 </div>
                 {model.supports_vision && (
-                  <span className="text-xs" title="Supports vision">👁</span>
+                  <span style={{ fontSize: 12 }} title="Supports vision">👁</span>
                 )}
               </div>
 
               {/* Tiers */}
-              <div className="flex flex-wrap gap-1 mb-3">
+              <div style={{ display: 'flex', flexWrap: 'wrap', gap: 4, marginBottom: 12 }}>
                 {tiers.map(t => {
                   const meta = TIER_META[t]
                   return meta ? (
-                    <span key={t} className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${meta.bg} ${meta.color}`}>
+                    <span key={t} style={{
+                      fontSize: 10, fontWeight: 600, padding: '2px 8px', borderRadius: 5,
+                      background: meta.bg, color: meta.color,
+                    }}>
                       {meta.label}
                     </span>
                   ) : null
@@ -158,44 +163,44 @@ export default async function ModelsPage() {
               </div>
 
               {/* Capabilities */}
-              <div className="flex gap-2 mb-3 text-[10px]">
+              <div style={{ display: 'flex', gap: 6, marginBottom: 12 }}>
                 {model.supports_tool_calling && (
-                  <span className="px-2 py-0.5 bg-teal-50 text-teal-700 rounded-full font-medium">Tools</span>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: 'var(--green-dim)', color: 'var(--green)', fontWeight: 500 }}>Tools</span>
                 )}
                 {model.supports_structured_output && (
-                  <span className="px-2 py-0.5 bg-blue-50 text-blue-700 rounded-full font-medium">JSON</span>
+                  <span style={{ fontSize: 10, padding: '2px 8px', borderRadius: 5, background: 'var(--blue-dim)', color: 'var(--blue)', fontWeight: 500 }}>JSON</span>
                 )}
               </div>
 
               {/* Metrics */}
-              <div className="grid grid-cols-2 gap-2 text-xs">
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 8, fontSize: 12 }}>
                 <div>
-                  <div className="text-gray-400">Input cost</div>
-                  <div className="font-bold text-gray-900">${parseFloat(model.input_cost_per_mtok || '0').toFixed(2)}/Mtok</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: 10 }}>Input cost</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--mono)', fontSize: 13 }}>${parseFloat(model.input_cost_per_mtok || '0').toFixed(2)}</div>
                 </div>
                 <div>
-                  <div className="text-gray-400">Output cost</div>
-                  <div className="font-bold text-gray-900">${parseFloat(model.output_cost_per_mtok || '0').toFixed(2)}/Mtok</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: 10 }}>Output cost</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--mono)', fontSize: 13 }}>${parseFloat(model.output_cost_per_mtok || '0').toFixed(2)}</div>
                 </div>
                 <div>
-                  <div className="text-gray-400">Context</div>
-                  <div className="font-bold text-gray-900">{(model.context_window / 1000).toFixed(0)}k</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: 10 }}>Context</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--mono)', fontSize: 13 }}>{(model.context_window / 1000).toFixed(0)}k</div>
                 </div>
                 <div>
-                  <div className="text-gray-400">Outcomes</div>
-                  <div className="font-bold text-gray-900">{outcomes > 0 ? outcomes : '—'}</div>
+                  <div style={{ color: 'var(--text-3)', fontSize: 10 }}>Outcomes</div>
+                  <div style={{ fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--mono)', fontSize: 13 }}>{outcomes > 0 ? outcomes : '—'}</div>
                 </div>
               </div>
 
               {/* Strength badges */}
-              <div className="mt-3 flex gap-2 text-[10px]">
+              <div style={{ marginTop: 12, display: 'flex', gap: 8, fontSize: 10 }}>
                 {(model.reasoning_strength === 'high' || model.reasoning_strength === 'very_high') && (
-                  <span className="text-amber-600 font-medium">
+                  <span style={{ color: 'var(--amber)', fontWeight: 600 }}>
                     {model.reasoning_strength === 'very_high' ? 'Reasoning++' : 'Reasoning+'}
                   </span>
                 )}
                 {(model.code_strength === 'high' || model.code_strength === 'very_high') && (
-                  <span className="text-brand font-medium">
+                  <span style={{ color: 'var(--green)', fontWeight: 600 }}>
                     {model.code_strength === 'very_high' ? 'Code++' : 'Code+'}
                   </span>
                 )}
@@ -204,6 +209,11 @@ export default async function ModelsPage() {
           )
         })}
       </div>
+
+      <style>{`
+        @media (max-width: 900px) { .model-grid { grid-template-columns: 1fr 1fr !important; } .tier-grid { grid-template-columns: repeat(3, 1fr) !important; } }
+        @media (max-width: 600px) { .model-grid { grid-template-columns: 1fr !important; } .tier-grid { grid-template-columns: 1fr 1fr !important; } }
+      `}</style>
     </div>
   )
 }

@@ -127,11 +127,14 @@ export default async function ServersPage({
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">MCP Servers</h1>
-        <p className="text-gray-500 max-w-2xl mb-4">
+    <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px' }}>
+      {/* Page Hero */}
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">MCP Servers</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          Find the right MCP server<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>for the job.</em>
+        </h1>
+        <p style={{ fontSize: 16, color: 'var(--text-2)', maxWidth: 520, lineHeight: 1.65 }}>
           {servers.length} servers ranked by real execution data. Every score is outcome-backed on a 0-10 scale across 5 dimensions.
         </p>
         <div className="max-w-md">
@@ -140,26 +143,26 @@ export default async function ServersPage({
           </Suspense>
         </div>
         {searchQuery && (
-          <p className="text-sm text-gray-500 mt-3">
-            Showing <span className="font-semibold text-gray-700">{filteredServers.length}</span> results for &quot;<span className="font-semibold text-brand">{searchParams.q}</span>&quot;
+          <p style={{ fontSize: 14, color: 'var(--text-3)', marginTop: 12 }}>
+            Showing <span style={{ fontWeight: 600, color: 'var(--text)' }}>{filteredServers.length}</span> results for &quot;<span style={{ fontWeight: 600, color: 'var(--amber)' }}>{searchParams.q}</span>&quot;
           </p>
         )}
       </div>
 
       {/* Stats bar + Sort */}
-      <div className="flex items-center justify-between mb-8">
-        <div className="flex items-center gap-6 text-sm">
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">{filteredServers.length}</span>
-            <span className="text-gray-500">servers</span>
+      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32, marginTop: 24, flexWrap: 'wrap', gap: 16 }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14 }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontWeight: 700, color: 'var(--text)' }}>{filteredServers.length}</span>
+            <span style={{ color: 'var(--text-3)' }}>servers</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">{workflows?.length || 0}</span>
-            <span className="text-gray-500">categories</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontWeight: 700, color: 'var(--text)' }}>{workflows?.length || 0}</span>
+            <span style={{ color: 'var(--text-3)' }}>categories</span>
           </div>
-          <div className="flex items-center gap-2">
-            <span className="font-bold text-gray-900">5</span>
-            <span className="text-gray-500">score dimensions</span>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
+            <span style={{ fontWeight: 700, color: 'var(--text)' }}>5</span>
+            <span style={{ color: 'var(--text-3)' }}>score dimensions</span>
           </div>
         </div>
         <Suspense>
@@ -190,9 +193,9 @@ export default async function ServersPage({
           </div>
 
           {sortedServers.length === 0 && (
-            <div className="text-center py-20 text-gray-400">
-              <p className="text-lg font-bold mb-2">No servers found</p>
-              <p className="text-sm">Try a different filter or check back soon.</p>
+            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)' }}>
+              <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No servers found</p>
+              <p style={{ fontSize: 14 }}>Try a different filter or check back soon.</p>
             </div>
           )}
         </div>
