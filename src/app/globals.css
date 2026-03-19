@@ -233,8 +233,14 @@ body::before {
 }
 
 /* ── RESPONSIVE ── */
+@media (max-width: 1024px) {
+  .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+}
 @media (max-width: 768px) {
   .page-hero {
     padding: 40px 20px 32px;
   }
+  footer { padding: 40px 20px 24px !important; }
+  .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
+  .footer-bottom { flex-direction: column !important; gap: 8px !important; text-align: center !important; }
 }
