@@ -6,16 +6,14 @@ interface LogoProps {
 }
 
 export function Logo({ href = '/', className = '' }: LogoProps) {
-  // "toolroute.io" with purple dot on the period before "io"
-  // Matches the brand logo: bold black text, purple accent dot
+  // "toolroute." with brand purple dot — matches the official logo
   const wordmark = (
     <span
       className={`inline-block text-xl font-[800] tracking-tight lowercase text-gray-900 ${className}`}
-      aria-label="toolroute.io"
+      aria-label="toolroute"
     >
       toolroute
-      <span className="text-[#6C47D8]">.</span>
-      io
+      <span className="text-brand">.</span>
     </span>
   )
 

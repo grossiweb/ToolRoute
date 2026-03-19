@@ -40,9 +40,7 @@ export default function RootLayout({
             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-center md:text-left">
               <span className="font-bold text-xl tracking-tight">
                 <span className="text-gray-900">toolroute</span>
-                <span className="text-gray-900">.</span>
-                <span className="text-brand">i</span>
-                <span className="text-gray-900">o</span>
+                <span className="text-brand">.</span>
               </span>
               <span className="text-xs md:text-sm">· The routing engine for AI agents</span>
             </div>
