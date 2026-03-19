@@ -74,6 +74,31 @@ body::before {
 /* ── COMPAT STRIP ── */
 .compat-strip { scrollbar-width: none; -ms-overflow-style: none; }
 .compat-strip::-webkit-scrollbar { display: none; }
+@media (max-width: 768px) {
+  .compat-strip {
+    flex-direction: column !important;
+    align-items: center !important;
+    gap: 12px !important;
+  }
+  .compat-strip-label {
+    width: 100% !important;
+    text-align: center !important;
+    padding-right: 0 !important;
+    padding-bottom: 0 !important;
+    font-size: 12px !important;
+  }
+  .compat-strip-logos {
+    display: flex !important;
+    overflow-x: auto !important;
+    width: 100% !important;
+    justify-content: flex-start !important;
+    -webkit-overflow-scrolling: touch;
+    scrollbar-width: none;
+    -ms-overflow-style: none;
+    padding: 0 4px;
+  }
+  .compat-strip-logos::-webkit-scrollbar { display: none; }
+}
 
 /* ── LOGO THEME TOGGLES ── */
 [data-theme="dark"] .nav-logo-dark { display: block !important; }

@@ -225,7 +225,7 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Compat strip — wider, single line, mobile scroll */}
+      {/* Compat strip — wider, single line on desktop, stacked on mobile */}
       <div className="compat-strip" style={{
         display: 'flex', alignItems: 'center', gap: 0,
         position: 'relative', zIndex: 1,
@@ -233,28 +233,31 @@ export function HeroSection() {
         borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)',
         width: '100%', maxWidth: 960,
-        overflowX: 'auto',
-        WebkitOverflowScrolling: 'touch',
       }}>
-        <span style={{
+        <span className="compat-strip-label" style={{
           color: 'var(--text-3)', fontFamily: 'var(--sans)', fontSize: 13,
           fontWeight: 500, paddingRight: 20, whiteSpace: 'nowrap', flexShrink: 0,
         }}>Works with</span>
-        {COMPAT_LOGOS.map((item, i) => (
-          <span key={item.name} style={{
-            display: 'flex', alignItems: 'center', gap: 8,
-            padding: '4px 18px',
-            border: 'none', background: 'transparent',
-            color: 'var(--text-3)', fontSize: 13,
-            fontFamily: 'var(--sans)', fontWeight: 500,
-            borderRight: i < COMPAT_LOGOS.length - 1 ? '1px solid var(--border)' : 'none',
-            transition: 'color .2s',
-            whiteSpace: 'nowrap', flexShrink: 0,
-          }}>
-            {item.icon}
-            {item.name}
-          </span>
-        ))}
+        <div className="compat-strip-logos" style={{
+          display: 'flex', alignItems: 'center', gap: 0,
+          overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+        }}>
+          {COMPAT_LOGOS.map((item, i) => (
+            <span key={item.name} style={{
+              display: 'flex', alignItems: 'center', gap: 8,
+              padding: '4px 18px',
+              border: 'none', background: 'transparent',
+              color: 'var(--text-3)', fontSize: 13,
+              fontFamily: 'var(--sans)', fontWeight: 500,
+              borderRight: i < COMPAT_LOGOS.length - 1 ? '1px solid var(--border)' : 'none',
+              transition: 'color .2s',
+              whiteSpace: 'nowrap', flexShrink: 0,
+            }}>
+              {item.icon}
+              {item.name}
+            </span>
+          ))}
+        </div>
       </div>
     </section>
   )
