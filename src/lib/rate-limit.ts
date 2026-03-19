@@ -25,11 +25,11 @@ export function rateLimit(
   const now = Date.now()
   const entry = store.get(key)
 
-  // Clean up expired entries periodically (every 100 checks)
+  // Clean up expired entries periodically
   if (Math.random() < 0.01) {
-    for (const [k, v] of store) {
+    store.forEach((v, k) => {
       if (v.resetAt < now) store.delete(k)
-    }
+    })
   }
 
   if (!entry || entry.resetAt < now) {
