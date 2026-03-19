@@ -21,25 +21,28 @@ export function SearchBar({ basePath = '/servers', placeholder = 'Search MCP ser
   }, [searchParams, basePath, router])
 
   return (
-    <div className="relative">
-      <svg className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-gray-400" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M21 21l-6-6m2-5a7 7 0 11-14 0 7 7 0 0114 0z" />
+    <div style={{ position: 'relative', display: 'flex', alignItems: 'center', gap: 8, background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 9, padding: '8px 14px', transition: 'border-color .2s' }}>
+      <svg width="14" height="14" viewBox="0 0 14 14" fill="none">
+        <circle cx="6" cy="6" r="4.5" stroke="var(--text-3)" strokeWidth="1.4" />
+        <path d="M10 10l2.5 2.5" stroke="var(--text-3)" strokeWidth="1.4" strokeLinecap="round" />
       </svg>
       <input
         type="text"
         value={query}
         onChange={e => handleSearch(e.target.value)}
         placeholder={placeholder}
-        className="w-full pl-10 pr-4 py-2.5 border border-gray-200 rounded-lg text-sm focus:outline-none focus:border-brand focus:ring-1 focus:ring-brand/20 bg-white"
+        style={{
+          background: 'transparent', border: 'none', outline: 'none',
+          fontFamily: 'var(--mono)', fontSize: 13, color: 'var(--text)',
+          width: '100%', minWidth: 200,
+        }}
       />
       {query && (
         <button
           onClick={() => handleSearch('')}
-          className="absolute right-3 top-1/2 -translate-y-1/2 text-gray-400 hover:text-gray-600"
+          style={{ color: 'var(--text-3)', cursor: 'pointer', background: 'none', border: 'none', fontSize: 14 }}
         >
-          <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-            <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" />
-          </svg>
+          ✕
         </button>
       )}
     </div>

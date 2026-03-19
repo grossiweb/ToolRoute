@@ -34,13 +34,19 @@ export function SortDropdown({ currentSort, workflow, vertical, basePath = '/' }
   }
 
   return (
-    <div className="flex items-center gap-2 text-sm">
-      <label htmlFor="sort-select" className="text-gray-400 flex-shrink-0">Sort:</label>
+    <div style={{ display: 'flex', alignItems: 'center', gap: 8, fontSize: 14 }}>
+      <label htmlFor="sort-select" style={{ color: 'var(--text-3)', flexShrink: 0, fontFamily: 'var(--mono)', fontSize: 11 }}>Sort:</label>
       <select
         id="sort-select"
         value={currentSort}
         onChange={handleChange}
-        className="px-3 py-1.5 rounded-lg border border-gray-200 bg-white text-gray-700 text-sm font-medium focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand cursor-pointer"
+        style={{
+          padding: '6px 12px', borderRadius: 8,
+          border: '1px solid var(--border)', background: 'var(--bg2)',
+          color: 'var(--text-2)', fontSize: 13,
+          fontFamily: 'var(--mono)', fontWeight: 500,
+          cursor: 'pointer', outline: 'none',
+        }}
       >
         {SORT_OPTIONS.map(opt => (
           <option key={opt.key} value={opt.key}>
