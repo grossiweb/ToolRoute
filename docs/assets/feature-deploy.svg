@@ -1,41 +1,20 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 400 280">
-  <defs>
-    <linearGradient id="bg3" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a"/>
-      <stop offset="100%" style="stop-color:#1e293b"/>
-    </linearGradient>
-  </defs>
-  <rect width="400" height="280" rx="12" fill="url(#bg3)"/>
-
-  <!-- Header -->
-  <text x="24" y="36" fill="#22c55e" font-family="system-ui, sans-serif" font-size="11" font-weight="700" letter-spacing="1.5">DEPLOY IN SECONDS</text>
-  <text x="24" y="62" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Pick a stack.</text>
-  <text x="24" y="84" fill="white" font-family="system-ui, sans-serif" font-size="20" font-weight="700">Copy config. Ship.</text>
-
-  <!-- Platform buttons -->
-  <rect x="24" y="100" width="110" height="32" rx="8" fill="#8b5cf6" opacity="0.2" stroke="#8b5cf6" stroke-width="1"/>
-  <text x="79" y="120" fill="#c084fc" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle">Claude Desktop</text>
-
-  <rect x="144" y="100" width="80" height="32" rx="8" fill="#334155" stroke="#475569" stroke-width="1"/>
-  <text x="184" y="120" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle">Cursor</text>
-
-  <rect x="234" y="100" width="60" height="32" rx="8" fill="#334155" stroke="#475569" stroke-width="1"/>
-  <text x="264" y="120" fill="#94a3b8" font-family="system-ui, sans-serif" font-size="12" font-weight="600" text-anchor="middle">JSON</text>
-
-  <!-- Config preview -->
-  <rect x="24" y="144" width="352" height="112" rx="8" fill="#020617" stroke="#334155" stroke-width="1"/>
-  <text x="36" y="166" fill="#e2e8f0" font-family="monospace" font-size="11">{</text>
-  <text x="48" y="182" fill="#c084fc" font-family="monospace" font-size="11">"mcpServers"</text>
-  <text x="150" y="182" fill="#e2e8f0" font-family="monospace" font-size="11">: {</text>
-  <text x="60" y="198" fill="#fbbf24" font-family="monospace" font-size="11">"brave-search-mcp"</text>
-  <text x="200" y="198" fill="#e2e8f0" font-family="monospace" font-size="11">: { ... },</text>
-  <text x="60" y="214" fill="#fbbf24" font-family="monospace" font-size="11">"firecrawl-mcp"</text>
-  <text x="180" y="214" fill="#e2e8f0" font-family="monospace" font-size="11">: { ... },</text>
-  <text x="60" y="230" fill="#fbbf24" font-family="monospace" font-size="11">"context7"</text>
-  <text x="135" y="230" fill="#e2e8f0" font-family="monospace" font-size="11">: { ... }</text>
-  <text x="48" y="246" fill="#e2e8f0" font-family="monospace" font-size="11">} }</text>
-
-  <!-- Copy button -->
-  <rect x="300" y="148" width="68" height="24" rx="6" fill="#22c55e" opacity="0.2"/>
-  <text x="334" y="164" fill="#22c55e" font-family="system-ui, sans-serif" font-size="10" font-weight="600" text-anchor="middle">Copied!</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 350 220">
+  <rect width="350" height="220" rx="12" fill="#f8fafc"/>
+  <rect x="0" y="0" width="350" height="4" rx="2" fill="#6C47D8"/>
+  <!-- Title -->
+  <text x="24" y="36" fill="#111827" font-family="system-ui, sans-serif" font-size="16" font-weight="800">Connect in 30 Seconds</text>
+  <text x="24" y="54" fill="#6b7280" font-family="system-ui, sans-serif" font-size="11">MCP config · SDK · REST API · cURL</text>
+  <!-- Code block -->
+  <rect x="24" y="68" width="302" height="130" rx="8" fill="#1e293b"/>
+  <text x="36" y="88" fill="#64748b" font-family="monospace" font-size="9">// Works with any MCP client</text>
+  <text x="36" y="106" fill="#a78bfa" font-family="monospace" font-size="10" font-weight="600">{</text>
+  <text x="48" y="122" fill="#93c5fd" font-family="monospace" font-size="10">"mcpServers"</text>
+  <text x="143" y="122" fill="#e2e8f0" font-family="monospace" font-size="10">: {</text>
+  <text x="60" y="138" fill="#93c5fd" font-family="monospace" font-size="10">"toolroute"</text>
+  <text x="140" y="138" fill="#e2e8f0" font-family="monospace" font-size="10">: {</text>
+  <text x="72" y="154" fill="#93c5fd" font-family="monospace" font-size="10">"url"</text>
+  <text x="100" y="154" fill="#e2e8f0" font-family="monospace" font-size="10">: </text>
+  <text x="112" y="154" fill="#86efac" font-family="monospace" font-size="10">"https://toolroute.io/api/mcp"</text>
+  <text x="60" y="170" fill="#a78bfa" font-family="monospace" font-size="10">} } }</text>
+  <text x="36" y="188" fill="#64748b" font-family="monospace" font-size="9">// 11 tools. Zero config. Free.</text>
 </svg>

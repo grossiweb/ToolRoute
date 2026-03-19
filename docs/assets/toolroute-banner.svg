@@ -1,45 +1,53 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 200">
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 220">
   <defs>
     <linearGradient id="bg" x1="0%" y1="0%" x2="100%" y2="100%">
       <stop offset="0%" style="stop-color:#0f172a"/>
       <stop offset="100%" style="stop-color:#1e293b"/>
     </linearGradient>
     <linearGradient id="accent" x1="0%" y1="0%" x2="100%" y2="0%">
-      <stop offset="0%" style="stop-color:#8b5cf6"/>
-      <stop offset="100%" style="stop-color:#06b6d4"/>
+      <stop offset="0%" style="stop-color:#6C47D8"/>
+      <stop offset="100%" style="stop-color:#0F6E56"/>
     </linearGradient>
   </defs>
-  <rect width="720" height="200" rx="16" fill="url(#bg)"/>
-  <!-- Decorative circles -->
-  <circle cx="650" cy="40" r="80" fill="#8b5cf6" opacity="0.08"/>
-  <circle cx="80" cy="160" r="60" fill="#06b6d4" opacity="0.08"/>
-  <!-- Icon: route/path symbol -->
-  <g transform="translate(60, 60)">
-    <circle cx="0" cy="40" r="8" fill="#8b5cf6"/>
-    <circle cx="40" cy="10" r="6" fill="#06b6d4"/>
-    <circle cx="40" cy="40" r="6" fill="#06b6d4"/>
-    <circle cx="40" cy="70" r="6" fill="#06b6d4"/>
-    <circle cx="80" cy="40" r="8" fill="#22c55e"/>
-    <line x1="8" y1="40" x2="34" y2="12" stroke="#8b5cf6" stroke-width="2" opacity="0.5"/>
-    <line x1="8" y1="40" x2="34" y2="40" stroke="#8b5cf6" stroke-width="2.5"/>
-    <line x1="8" y1="40" x2="34" y2="68" stroke="#8b5cf6" stroke-width="2" opacity="0.5"/>
-    <line x1="46" y1="10" x2="72" y2="38" stroke="#06b6d4" stroke-width="2" opacity="0.5"/>
-    <line x1="46" y1="40" x2="72" y2="40" stroke="#06b6d4" stroke-width="2.5"/>
-    <line x1="46" y1="70" x2="72" y2="42" stroke="#06b6d4" stroke-width="2" opacity="0.5"/>
+  <rect width="720" height="220" rx="16" fill="url(#bg)"/>
+  <!-- Decorative -->
+  <circle cx="660" cy="50" r="90" fill="#6C47D8" opacity="0.06"/>
+  <circle cx="80" cy="180" r="70" fill="#0F6E56" opacity="0.06"/>
+  <circle cx="400" cy="-20" r="120" fill="#6C47D8" opacity="0.03"/>
+  <!-- Routing icon -->
+  <g transform="translate(55, 55)">
+    <!-- Input node -->
+    <circle cx="0" cy="45" r="10" fill="#6C47D8"/>
+    <text x="0" y="49" fill="white" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">?</text>
+    <!-- Tier nodes -->
+    <circle cx="50" cy="15" r="7" fill="#94a3b8" opacity="0.4"/>
+    <circle cx="50" cy="45" r="8" fill="#0F6E56"/>
+    <circle cx="50" cy="75" r="7" fill="#94a3b8" opacity="0.4"/>
+    <!-- Output node -->
+    <circle cx="100" cy="45" r="10" fill="#0F6E56"/>
+    <text x="100" y="49" fill="white" font-family="system-ui, sans-serif" font-size="10" font-weight="700" text-anchor="middle">$</text>
+    <!-- Lines -->
+    <line x1="10" y1="45" x2="42" y2="17" stroke="#6C47D8" stroke-width="1.5" opacity="0.3"/>
+    <line x1="10" y1="45" x2="42" y2="45" stroke="#6C47D8" stroke-width="2.5"/>
+    <line x1="10" y1="45" x2="42" y2="73" stroke="#6C47D8" stroke-width="1.5" opacity="0.3"/>
+    <line x1="58" y1="15" x2="90" y2="43" stroke="#0F6E56" stroke-width="1.5" opacity="0.3"/>
+    <line x1="58" y1="45" x2="90" y2="45" stroke="#0F6E56" stroke-width="2.5"/>
+    <line x1="58" y1="75" x2="90" y2="47" stroke="#0F6E56" stroke-width="1.5" opacity="0.3"/>
   </g>
-  <!-- Title -->
-  <text x="170" y="88" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="42" font-weight="800" letter-spacing="-1">ToolRoute</text>
+  <!-- Title: toolroute. -->
+  <text x="185" y="88" fill="white" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="800" letter-spacing="-1.5">toolroute</text>
+  <text x="454" y="88" fill="#6C47D8" font-family="system-ui, -apple-system, sans-serif" font-size="44" font-weight="800">.</text>
   <!-- Subtitle -->
-  <text x="170" y="120" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="16" font-weight="400">The intelligent routing layer for MCP servers</text>
+  <text x="185" y="116" fill="#94a3b8" font-family="system-ui, -apple-system, sans-serif" font-size="15" font-weight="400">Your agent is using the wrong model.</text>
   <!-- Tags -->
-  <rect x="170" y="136" width="90" height="24" rx="12" fill="#8b5cf6" opacity="0.2"/>
-  <text x="215" y="152" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">100+ Servers</text>
-  <rect x="270" y="136" width="100" height="24" rx="12" fill="#06b6d4" opacity="0.2"/>
-  <text x="320" y="152" fill="#67e8f9" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">5 Score Dims</text>
-  <rect x="380" y="136" width="95" height="24" rx="12" fill="#22c55e" opacity="0.2"/>
-  <text x="427" y="152" fill="#86efac" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Agent-First</text>
-  <rect x="485" y="136" width="75" height="24" rx="12" fill="#f97316" opacity="0.2"/>
-  <text x="522" y="152" fill="#fdba74" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Open Source</text>
-  <!-- Bottom accent line -->
-  <rect x="0" y="194" width="720" height="6" rx="0" fill="url(#accent)" opacity="0.6"/>
+  <rect x="185" y="132" width="95" height="24" rx="12" fill="#6C47D8" opacity="0.15"/>
+  <text x="232" y="148" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">20+ Models</text>
+  <rect x="290" y="132" width="105" height="24" rx="12" fill="#0F6E56" opacity="0.15"/>
+  <text x="342" y="148" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">200+ Servers</text>
+  <rect x="405" y="132" width="65" height="24" rx="12" fill="#0F6E56" opacity="0.15"/>
+  <text x="437" y="148" fill="#34d399" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Free</text>
+  <rect x="480" y="132" width="115" height="24" rx="12" fill="#6C47D8" opacity="0.15"/>
+  <text x="537" y="148" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="11" font-weight="600" text-anchor="middle">Decision Engine</text>
+  <!-- Bottom accent -->
+  <rect x="0" y="214" width="720" height="6" fill="url(#accent)" opacity="0.6"/>
 </svg>

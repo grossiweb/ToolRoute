@@ -1,4 +1,6 @@
-<h1 align="center">toolroute.</h1>
+<p align="center">
+  <img src="docs/assets/toolroute-banner.svg" alt="toolroute." width="720" />
+</p>
 
 <p align="center">
   <strong>Your agent is using the wrong model.</strong><br/>
@@ -91,6 +93,29 @@ curl -X POST https://toolroute.io/api/route \
 
 ---
 
+## At a Glance
+
+<table>
+<tr>
+<td width="50%">
+<img src="docs/assets/feature-route.svg" alt="Model Routing — 6 tiers from cheap to best" width="100%" />
+</td>
+<td width="50%">
+<img src="docs/assets/feature-scores.svg" alt="Cost Savings — 60-90% cheaper" width="100%" />
+</td>
+</tr>
+<tr>
+<td width="50%">
+<img src="docs/assets/feature-deploy.svg" alt="Connect in 30 seconds" width="100%" />
+</td>
+<td width="50%">
+<img src="docs/assets/feature-telemetry.svg" alt="Auto-escalation and fallbacks" width="100%" />
+</td>
+</tr>
+</table>
+
+---
+
 ## What You Get
 
 ### Model Routing
@@ -109,7 +134,9 @@ curl -X POST https://toolroute.io/api/route \
 
 ### Works With
 
-OpenRouter · LiteLLM · Claude Code · Cursor · Windsurf · Replit · Lovable · v0
+<p align="center">
+  <img src="docs/assets/works-with.svg" alt="Works with OpenRouter, LiteLLM, Claude Code, Cursor, Windsurf, Replit, Lovable, v0" width="720" />
+</p>
 
 ---
 

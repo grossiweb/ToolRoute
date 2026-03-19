@@ -1,42 +1,19 @@
-<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 120">
-  <defs>
-    <linearGradient id="bgw" x1="0%" y1="0%" x2="100%" y2="100%">
-      <stop offset="0%" style="stop-color:#0f172a"/>
-      <stop offset="100%" style="stop-color:#1e293b"/>
-    </linearGradient>
-  </defs>
-  <rect width="720" height="120" rx="12" fill="url(#bgw)"/>
-
-  <!-- Claude Desktop -->
-  <rect x="20" y="16" width="128" height="88" rx="10" fill="#1e1b4b" stroke="#6366f1" stroke-width="1.5"/>
-  <text x="84" y="48" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Claude</text>
-  <text x="84" y="64" fill="#a78bfa" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Desktop</text>
-  <rect x="48" y="76" width="72" height="18" rx="9" fill="#22c55e" opacity="0.2"/>
-  <text x="84" y="89" fill="#86efac" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">SUPPORTED</text>
-
-  <!-- Cursor -->
-  <rect x="160" y="16" width="128" height="88" rx="10" fill="#0c1a25" stroke="#06b6d4" stroke-width="1.5"/>
-  <text x="224" y="56" fill="#67e8f9" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Cursor</text>
-  <rect x="188" y="76" width="72" height="18" rx="9" fill="#22c55e" opacity="0.2"/>
-  <text x="224" y="89" fill="#86efac" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">SUPPORTED</text>
-
-  <!-- VS Code -->
-  <rect x="300" y="16" width="128" height="88" rx="10" fill="#0c1a25" stroke="#3b82f6" stroke-width="1.5"/>
-  <text x="364" y="56" fill="#93c5fd" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">VS Code</text>
-  <rect x="328" y="76" width="72" height="18" rx="9" fill="#22c55e" opacity="0.2"/>
-  <text x="364" y="89" fill="#86efac" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">SUPPORTED</text>
-
-  <!-- Any MCP Client -->
-  <rect x="440" y="16" width="128" height="88" rx="10" fill="#1a1a1a" stroke="#f97316" stroke-width="1.5"/>
-  <text x="504" y="48" fill="#fdba74" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Any MCP</text>
-  <text x="504" y="64" fill="#fdba74" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">Client</text>
-  <rect x="468" y="76" width="72" height="18" rx="9" fill="#22c55e" opacity="0.2"/>
-  <text x="504" y="89" fill="#86efac" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">SUPPORTED</text>
-
-  <!-- REST / SDK -->
-  <rect x="580" y="16" width="128" height="88" rx="10" fill="#1a1a1a" stroke="#8b5cf6" stroke-width="1.5"/>
-  <text x="644" y="48" fill="#c084fc" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">REST API</text>
-  <text x="644" y="64" fill="#c084fc" font-family="system-ui, sans-serif" font-size="13" font-weight="700" text-anchor="middle">+ SDK</text>
-  <rect x="608" y="76" width="72" height="18" rx="9" fill="#22c55e" opacity="0.2"/>
-  <text x="644" y="89" fill="#86efac" font-family="system-ui, sans-serif" font-size="9" font-weight="600" text-anchor="middle">SUPPORTED</text>
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 720 80">
+  <rect width="720" height="80" rx="12" fill="#f8fafc" stroke="#e5e7eb" stroke-width="1"/>
+  <text x="28" y="28" fill="#9ca3af" font-family="system-ui, sans-serif" font-size="10" font-weight="600" letter-spacing="1">WORKS WITH</text>
+  <!-- Logos as text -->
+  <text x="28" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">OpenRouter</text>
+  <text x="138" y="56" fill="#d1d5db" font-family="system-ui, sans-serif" font-size="13">·</text>
+  <text x="155" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">LiteLLM</text>
+  <text x="233" y="56" fill="#d1d5db" font-family="system-ui, sans-serif" font-size="13">·</text>
+  <text x="250" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Claude Code</text>
+  <text x="365" y="56" fill="#d1d5db" font-family="system-ui, sans-serif" font-size="13">·</text>
+  <text x="382" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Cursor</text>
+  <text x="442" y="56" fill="#d1d5db" font-family="system-ui, sans-serif" font-size="13">·</text>
+  <text x="459" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Windsurf</text>
+  <text x="542" y="56" fill="#d1d5db" font-family="system-ui, sans-serif" font-size="13">·</text>
+  <text x="559" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Replit</text>
+  <text x="610" y="56" fill="#d1d5db" font-family="system-ui, sans-serif" font-size="13">·</text>
+  <text x="627" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">Lovable</text>
+  <text x="698" y="56" fill="#6b7280" font-family="system-ui, sans-serif" font-size="13" font-weight="700">v0</text>
 </svg>
