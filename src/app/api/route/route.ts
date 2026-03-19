@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'
 import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -119,6 +120,16 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 120 requests/hour per IP
+  const rlKey = getRateLimitKey(request)
+  const rl = rateLimit('route', rlKey, 120)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    )
+  }
+
   const supabase = createServerSupabaseClient()
 
   let body: any

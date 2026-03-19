@@ -1,8 +1,15 @@
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
-// GET /api/admin/stats — Platform telemetry dashboard (with debug info)
-export async function GET() {
+// GET /api/admin/stats — Platform telemetry dashboard (protected)
+export async function GET(request: Request) {
+  // Auth check — requires ADMIN_SECRET or CRON_SECRET
+  const authHeader = request.headers.get('authorization')
+  const adminSecret = process.env.ADMIN_SECRET || process.env.CRON_SECRET
+  if (!adminSecret || authHeader !== `Bearer ${adminSecret}`) {
+    return NextResponse.json({ error: 'Unauthorized' }, { status: 401 })
+  }
+
   const supabase = createServerSupabaseClient()
 
   // Run all queries in parallel — capture errors too

@@ -3,7 +3,7 @@
 import { useState } from 'react'
 import Link from 'next/link'
 
-const TWEET_TEXT = `I just connected my agent to @toolroute — it picks the cheapest LLM model that actually works, automatically.
+const TWEET_TEXT = `I just connected my agent to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.
 
 Free routing for AI agents: https://toolroute.io`
 

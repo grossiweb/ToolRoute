@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import {
   detectTaskSignals,
   resolveModelTier,
@@ -66,6 +67,16 @@ export async function GET() {
 
 // POST /api/route/model — Get model recommendation
 export async function POST(request: NextRequest) {
+  // Rate limit: 120 requests/hour per IP
+  const rlKey = getRateLimitKey(request)
+  const rl = rateLimit('route-model', rlKey, 120)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    )
+  }
+
   const startMs = Date.now()
   const supabase = createServerSupabaseClient()
 

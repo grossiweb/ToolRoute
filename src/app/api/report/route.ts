@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } from '@/lib/scoring'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 
 // GET /api/report — Self-documenting guide for telemetry reporting
 export async function GET() {
@@ -51,6 +52,16 @@ export async function GET() {
 }
 
 export async function POST(request: NextRequest) {
+  // Rate limit: 200 requests/hour per IP
+  const rlKey = getRateLimitKey(request)
+  const rl = rateLimit('report', rlKey, 200)
+  if (!rl.allowed) {
+    return NextResponse.json(
+      { error: 'Rate limit exceeded. Try again later.' },
+      { status: 429, headers: { 'Retry-After': String(Math.ceil((rl.resetAt - Date.now()) / 1000)) } }
+    )
+  }
+
   const supabase = createServerSupabaseClient()
 
   let body: any

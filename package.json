@@ -11,6 +11,8 @@
   "dependencies": {
     "@supabase/ssr": "^0.3.0",
     "@supabase/supabase-js": "^2.43.4",
+    "@vercel/analytics": "^2.0.1",
+    "@vercel/speed-insights": "^2.0.0",
     "clsx": "^2.1.1",
     "next": "^14.2.35",
     "react": "^18",

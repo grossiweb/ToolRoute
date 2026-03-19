@@ -1,5 +1,7 @@
 import type { Metadata } from 'next'
 import { Inter } from 'next/font/google'
+import { Analytics } from '@vercel/analytics/react'
+import { SpeedInsights } from '@vercel/speed-insights/next'
 import './globals.css'
 import { NavBar } from '@/components/NavBar'
 
@@ -35,6 +37,8 @@ export default function RootLayout({
       <body className={inter.className}>
         <NavBar />
         <main>{children}</main>
+        <Analytics />
+        <SpeedInsights />
         <footer className="border-t border-gray-200 mt-16 md:mt-24 py-8 md:py-12">
           <div className="max-w-6xl mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-3 md:gap-4 text-sm text-gray-500">
             <div className="flex flex-col md:flex-row items-center gap-1 md:gap-2 text-center md:text-left">
