@@ -71,6 +71,10 @@ body::before {
   z-index: 9999;
 }
 
+/* ── COMPAT STRIP ── */
+.compat-strip { scrollbar-width: none; -ms-overflow-style: none; }
+.compat-strip::-webkit-scrollbar { display: none; }
+
 /* ── LOGO THEME TOGGLES ── */
 [data-theme="dark"] .nav-logo-dark { display: block !important; }
 [data-theme="dark"] .nav-logo-light { display: none !important; }

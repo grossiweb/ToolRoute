@@ -1,32 +1,60 @@
 'use client'
 
-/* SVG icons for the compat strip */
-const COMPAT_ICONS = {
-  OpenRouter: (
-    <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><circle cx="30" cy="50" r="22" stroke="currentColor" strokeWidth="7" fill="none" opacity=".7"/><circle cx="70" cy="50" r="22" stroke="currentColor" strokeWidth="7" fill="none" opacity=".7"/><line x1="52" y1="50" x2="48" y2="50" stroke="currentColor" strokeWidth="7"/></svg>
-  ),
-  LiteLLM: (
-    <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><rect x="8" y="8" width="84" height="84" rx="18" stroke="currentColor" strokeWidth="7" fill="none"/><path d="M32 28v44h36" stroke="currentColor" strokeWidth="9" strokeLinecap="round" strokeLinejoin="round"/></svg>
-  ),
-  'Claude Code': (
-    <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><rect x="8" y="8" width="84" height="84" rx="18" stroke="currentColor" strokeWidth="7" fill="none"/><path d="M33 72L50 28l17 44" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/><path d="M40 56h20" stroke="currentColor" strokeWidth="7" strokeLinecap="round"/></svg>
-  ),
-  Cursor: (
-    <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><rect x="10" y="10" width="36" height="80" rx="8" stroke="currentColor" strokeWidth="7" fill="none" transform="rotate(-8 10 10)"/><rect x="54" y="10" width="36" height="80" rx="8" stroke="currentColor" strokeWidth="7" fill="none" transform="rotate(8 54 10)"/></svg>
-  ),
-  Replit: (
-    <svg width="18" height="18" viewBox="0 0 100 100" fill="none"><rect x="8" y="8" width="42" height="42" rx="8" fill="currentColor" opacity=".8"/><rect x="55" y="8" width="37" height="37" rx="8" fill="currentColor" opacity=".5"/><rect x="8" y="55" width="37" height="37" rx="8" fill="currentColor" opacity=".5"/></svg>
-  ),
-  Windsurf: (
-    <svg width="22" height="18" viewBox="0 0 120 80" fill="none"><path d="M10 60 C10 60 30 10 50 10 C70 10 90 60 90 60" stroke="currentColor" strokeWidth="9" strokeLinecap="round" fill="none"/><path d="M25 48 C25 48 37 22 50 22 C63 22 75 48 75 48" stroke="currentColor" strokeWidth="7" strokeLinecap="round" fill="none" opacity=".55"/></svg>
-  ),
-  Lovable: (
-    <svg width="16" height="16" viewBox="0 0 100 100" fill="none"><path d="M50 80 C50 80 15 55 15 32 C15 20 24 12 35 12 C41 12 47 15 50 20 C53 15 59 12 65 12 C76 12 85 20 85 32 C85 55 50 80 50 80Z" stroke="currentColor" strokeWidth="7" fill="none" strokeLinejoin="round"/></svg>
-  ),
-  v0: (
-    <svg width="18" height="16" viewBox="0 0 80 60" fill="none"><path d="M8 12L28 48L48 12" stroke="currentColor" strokeWidth="7" strokeLinecap="round" strokeLinejoin="round" fill="none"/><circle cx="63" cy="30" r="14" stroke="currentColor" strokeWidth="7" fill="none"/></svg>
-  ),
-} as const
+/* Brand-accurate SVG logos for the compat strip — monochrome */
+const COMPAT_LOGOS: { name: string; icon: JSX.Element }[] = [
+  { name: 'OpenRouter', icon: (
+    <svg width="20" height="16" viewBox="0 0 512 500" fill="currentColor">
+      <path d="M3 249C18 249 76 236 106 219C136 202 136 202 198 158C276 102 332 121 423 121" fill="none" stroke="currentColor" strokeWidth="58" strokeLinecap="round"/>
+      <path d="M511 122L357 211V33L511 122Z"/>
+      <path d="M0 249C15 249 73 262 103 279C133 296 133 296 195 340C273 396 329 377 420 377" fill="none" stroke="currentColor" strokeWidth="58" strokeLinecap="round"/>
+      <path d="M508 376L354 288V465L508 376Z"/>
+    </svg>
+  )},
+  { name: 'LiteLLM', icon: (
+    <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
+      <rect x="10" y="10" width="80" height="80" rx="16" stroke="currentColor" strokeWidth="6" fill="none"/>
+      <path d="M35 28v44h30" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+    </svg>
+  )},
+  { name: 'Claude Code', icon: (
+    <svg width="18" height="18" viewBox="0 0 100 100" fill="none">
+      <path d="M50 10C25 10 10 25 10 50s15 40 40 40 40-15 40-40S75 10 50 10z" stroke="currentColor" strokeWidth="6" fill="none"/>
+      <path d="M38 62l12-34 12 34" stroke="currentColor" strokeWidth="6" strokeLinecap="round" strokeLinejoin="round"/>
+      <path d="M42 52h16" stroke="currentColor" strokeWidth="5" strokeLinecap="round"/>
+    </svg>
+  )},
+  { name: 'Cursor', icon: (
+    <svg width="16" height="18" viewBox="0 0 170 190" fill="currentColor">
+      <path d="M85 0L0 50v90l85 50 85-50V50L85 0zm0 18l68 40v72l-68 40-68-40V58l68-40z" fillRule="evenodd"/>
+      <path d="M85 58l38 22v44l-38 22-38-22V80l38-22z"/>
+    </svg>
+  )},
+  { name: 'Replit', icon: (
+    <svg width="16" height="18" viewBox="0 0 200 230" fill="currentColor">
+      <rect x="0" y="0" width="90" height="90" rx="12"/>
+      <rect x="110" y="0" width="90" height="90" rx="12" opacity=".55"/>
+      <rect x="0" y="110" width="90" height="90" rx="12" opacity=".55"/>
+      <rect x="110" y="110" width="90" height="90" rx="12" opacity=".3"/>
+    </svg>
+  )},
+  { name: 'Windsurf', icon: (
+    <svg width="20" height="16" viewBox="0 0 120 80" fill="none">
+      <path d="M15 65C15 65 35 12 55 12s40 53 40 53" stroke="currentColor" strokeWidth="8" strokeLinecap="round"/>
+      <path d="M30 50C30 50 40 22 55 22s25 28 25 28" stroke="currentColor" strokeWidth="6" strokeLinecap="round" opacity=".5"/>
+    </svg>
+  )},
+  { name: 'Lovable', icon: (
+    <svg width="16" height="15" viewBox="0 0 100 95" fill="currentColor">
+      <path d="M50 90C50 90 5 58 5 30 5 14 17 5 30 5c8 0 15 4 20 10C55 9 62 5 70 5c13 0 25 9 25 25 0 28-45 60-45 60z"/>
+    </svg>
+  )},
+  { name: 'v0', icon: (
+    <svg width="18" height="16" viewBox="0 0 80 60" fill="none">
+      <path d="M5 8l20 44L45 8" stroke="currentColor" strokeWidth="8" strokeLinecap="round" strokeLinejoin="round"/>
+      <circle cx="62" cy="30" r="16" stroke="currentColor" strokeWidth="7" fill="none"/>
+    </svg>
+  )},
+]
 
 export function HeroSection() {
   return (
@@ -205,31 +233,34 @@ export function HeroSection() {
         </div>
       </div>
 
-      {/* Compat strip */}
-      <div style={{
-        display: 'flex', alignItems: 'center', gap: 0, flexWrap: 'wrap',
-        justifyContent: 'center', position: 'relative', zIndex: 1,
+      {/* Compat strip — wider, single line, mobile scroll */}
+      <div className="compat-strip" style={{
+        display: 'flex', alignItems: 'center', gap: 0,
+        position: 'relative', zIndex: 1,
         padding: '20px 0 28px',
         borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)',
-        width: '100%', maxWidth: 780,
+        width: '100%', maxWidth: 960,
+        overflowX: 'auto',
+        WebkitOverflowScrolling: 'touch',
       }}>
         <span style={{
           color: 'var(--text-3)', fontFamily: 'var(--sans)', fontSize: 13,
-          fontWeight: 500, paddingRight: 24, whiteSpace: 'nowrap',
+          fontWeight: 500, paddingRight: 20, whiteSpace: 'nowrap', flexShrink: 0,
         }}>Works with</span>
-        {Object.entries(COMPAT_ICONS).map(([name, icon]) => (
-          <span key={name} style={{
-            display: 'flex', alignItems: 'center', gap: 7,
-            padding: '4px 16px',
+        {COMPAT_LOGOS.map((item, i) => (
+          <span key={item.name} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '4px 18px',
             border: 'none', background: 'transparent',
             color: 'var(--text-3)', fontSize: 13,
             fontFamily: 'var(--sans)', fontWeight: 500,
-            borderRight: '1px solid var(--border)',
+            borderRight: i < COMPAT_LOGOS.length - 1 ? '1px solid var(--border)' : 'none',
             transition: 'color .2s',
+            whiteSpace: 'nowrap', flexShrink: 0,
           }}>
-            {icon}
-            {name}
+            {item.icon}
+            {item.name}
           </span>
         ))}
       </div>
