@@ -20,10 +20,16 @@ const CATEGORY_ICONS: Record<string, string> = {
   data: '\uD83D\uDCC8',
 }
 
-function getTierBadge(score: number): { label: string; style: string } | null {
-  if (score >= 8.5) return { label: 'Gold', style: 'bg-amber-50 text-amber-700 border border-amber-200' }
-  if (score >= 7.0) return { label: 'Silver', style: 'bg-gray-50 text-gray-600 border border-gray-200' }
-  if (score >= 5.5) return { label: 'Bronze', style: 'bg-orange-50 text-orange-700 border border-orange-200' }
+const MEDAL_COLORS: Record<number, string> = {
+  0: '#fbbf24', // gold
+  1: '#94a3b8', // silver
+  2: '#c47c4a', // bronze
+}
+
+function getTierBadge(score: number): { label: string; bg: string; color: string; border: string } | null {
+  if (score >= 8.5) return { label: 'Gold', bg: 'var(--amber-dim)', color: '#fbbf24', border: '#fbbf2444' }
+  if (score >= 7.0) return { label: 'Silver', bg: 'rgba(148,163,184,0.12)', color: '#94a3b8', border: '#94a3b844' }
+  if (score >= 5.5) return { label: 'Bronze', bg: 'rgba(196,124,74,0.12)', color: '#c47c4a', border: '#c47c4a44' }
   return null
 }
 
@@ -120,150 +126,269 @@ export default async function LeaderboardsPage() {
   }
 
   return (
-    <div className="max-w-6xl mx-auto px-4 py-10">
-      {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-teal-50 text-teal text-xs font-semibold mb-4">
-          TOOL RANKINGS
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+    <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px' }}>
+      {/* Page Hero */}
+      <div className="page-hero" style={{
+        paddingTop: 80, paddingBottom: 56,
+        borderBottom: '1px solid var(--border)',
+        marginBottom: 48,
+      }}>
+        <div style={{
+          fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase' as const,
+          letterSpacing: 1.2, color: 'var(--amber)', marginBottom: 16,
+        }}>
           Leaderboards
+        </div>
+        <h1 style={{
+          fontFamily: 'var(--serif)', fontSize: 48, fontWeight: 400,
+          color: 'var(--text)', lineHeight: 1.15, maxWidth: 600, fontStyle: 'italic',
+        }}>
+          Who's routing best. This week.
         </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
+        <p style={{
+          fontFamily: 'var(--sans)', fontSize: 16, color: 'var(--text-3)',
+          maxWidth: 520, marginTop: 16, lineHeight: 1.6,
+        }}>
           AI tools ranked by category using real benchmark data. Each leaderboard tracks
           output quality, reliability, efficiency, cost, and trust.
         </p>
-        <div className="flex items-center justify-center gap-8 mt-6 text-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-brand">{totalCategories}</div>
-            <div className="text-gray-400">Categories</div>
+        <div style={{ display: 'flex', gap: 48, marginTop: 32 }}>
+          <div>
+            <div style={{
+              fontFamily: 'var(--serif)', fontSize: 36, fontStyle: 'italic',
+              color: 'var(--amber)', lineHeight: 1,
+            }}>
+              {totalCategories}
+            </div>
+            <div style={{
+              fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-3)',
+              textTransform: 'uppercase' as const, letterSpacing: 0.8, marginTop: 4,
+            }}>
+              Categories
+            </div>
           </div>
-          <div className="text-center">
-            <div className="text-2xl font-bold text-teal">{totalTools}</div>
-            <div className="text-gray-400">Ranked Tools</div>
+          <div>
+            <div style={{
+              fontFamily: 'var(--serif)', fontSize: 36, fontStyle: 'italic',
+              color: 'var(--green)', lineHeight: 1,
+            }}>
+              {totalTools}
+            </div>
+            <div style={{
+              fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-3)',
+              textTransform: 'uppercase' as const, letterSpacing: 0.8, marginTop: 4,
+            }}>
+              Ranked Tools
+            </div>
           </div>
         </div>
       </div>
 
       {/* Sidebar + Grid layout */}
-      <div className="flex gap-6">
+      <div style={{ display: 'flex', gap: 24 }}>
         <Suspense><Sidebar context="leaderboards" /></Suspense>
-        <div className="flex-1 min-w-0">
-      {/* Category Grid */}
-      {toolTypes && toolTypes.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {toolTypes.map((type: any) => {
-            const toolCount = toolCountMap.get(type.id) || 0
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Category Grid */}
+          {toolTypes && toolTypes.length > 0 ? (
+            <div style={{
+              display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+              gap: 16,
+            }}>
+              {toolTypes.map((type: any) => {
+                const toolCount = toolCountMap.get(type.id) || 0
+                return (
+                  <Link
+                    key={type.id}
+                    href={`/leaderboards/${type.slug}`}
+                    style={{
+                      display: 'block', padding: '20px 24px',
+                      background: 'var(--bg2)', border: '1px solid var(--border)',
+                      borderRadius: 'var(--radius-lg)',
+                      textDecoration: 'none', transition: 'border-color 0.2s',
+                    }}
+                    className="hover-card"
+                  >
+                    <div style={{ display: 'flex', alignItems: 'start', justifyContent: 'space-between', gap: 12, marginBottom: 12 }}>
+                      <div style={{ display: 'flex', alignItems: 'center', gap: 12 }}>
+                        {type.icon && (
+                          <div style={{ fontSize: 22, flexShrink: 0 }}>{type.icon}</div>
+                        )}
+                        <h2 style={{
+                          fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 15,
+                          color: 'var(--text)',
+                        }}>
+                          {type.name}
+                        </h2>
+                      </div>
+                      {toolCount > 0 && (
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: 10,
+                          background: 'var(--amber-dim)', color: 'var(--amber)',
+                          padding: '2px 8px', borderRadius: 999, flexShrink: 0,
+                          letterSpacing: 0.5, textTransform: 'uppercase' as const,
+                        }}>
+                          {toolCount} tool{toolCount !== 1 ? 's' : ''}
+                        </span>
+                      )}
+                    </div>
 
-            return (
-              <Link
-                key={type.id}
-                href={`/leaderboards/${type.slug}`}
-                className="card group hover:border-teal/30 transition-all duration-200"
-              >
-                <div className="flex items-start justify-between gap-3 mb-3">
-                  <div className="flex items-center gap-3">
-                    {type.icon && (
-                      <div className="text-2xl flex-shrink-0">{type.icon}</div>
+                    {type.description && (
+                      <p style={{
+                        fontSize: 13, color: 'var(--text-3)', lineHeight: 1.5,
+                        marginBottom: 16, display: '-webkit-box',
+                        WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
+                        overflow: 'hidden',
+                      }}>
+                        {type.description}
+                      </p>
                     )}
-                    <h2 className="font-bold text-gray-900 group-hover:text-teal transition-colors">
-                      {type.name}
-                    </h2>
-                  </div>
-                  {toolCount > 0 && (
-                    <span className="badge bg-teal-50 text-teal text-[10px] flex-shrink-0">
-                      {toolCount} tool{toolCount !== 1 ? 's' : ''}
-                    </span>
-                  )}
-                </div>
 
-                {type.description && (
-                  <p className="text-sm text-gray-500 line-clamp-2 mb-4">
-                    {type.description}
-                  </p>
-                )}
-
-                <div className="flex items-center text-xs text-brand font-medium group-hover:translate-x-1 transition-transform">
-                  View Leaderboard
-                  <svg className="w-3.5 h-3.5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                    <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                  </svg>
-                </div>
-              </Link>
-            )
-          })}
-        </div>
-      ) : (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg font-medium">No leaderboard categories yet</p>
-          <p className="text-sm mt-1">Categories will appear once tool types are seeded.</p>
-        </div>
-      )}
-
+                    <div style={{
+                      display: 'flex', alignItems: 'center',
+                      fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--amber)',
+                      letterSpacing: 0.3,
+                    }}>
+                      View Leaderboard
+                      <svg style={{ width: 14, height: 14, marginLeft: 4 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </div>
+                  </Link>
+                )
+              })}
+            </div>
+          ) : (
+            <div style={{ textAlign: 'center' as const, padding: '80px 0', color: 'var(--text-3)' }}>
+              <p style={{ fontSize: 16, fontFamily: 'var(--sans)' }}>No leaderboard categories yet</p>
+              <p style={{ fontSize: 13, marginTop: 4, color: 'var(--text-3)' }}>Categories will appear once tool types are seeded.</p>
+            </div>
+          )}
         </div>
       </div>
 
       {/* Challenge Champions Section */}
       {topAgentsByCredits.length > 0 && (
-        <div className="mt-14">
-          <div className="text-center mb-8">
-            <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold mb-4">
-              CHALLENGE CHAMPIONS
+        <div style={{ marginTop: 80 }}>
+          <div style={{ textAlign: 'center' as const, marginBottom: 40 }}>
+            <div style={{
+              fontFamily: 'var(--mono)', fontSize: 11, textTransform: 'uppercase' as const,
+              letterSpacing: 1.2, color: 'var(--amber)', marginBottom: 16,
+            }}>
+              Challenge Champions
             </div>
-            <h2 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">
+            <h2 style={{
+              fontFamily: 'var(--serif)', fontSize: 36, fontWeight: 400,
+              color: 'var(--text)', fontStyle: 'italic',
+            }}>
               Workflow Challenge Rankings
             </h2>
-            <p className="text-gray-500 max-w-xl mx-auto text-sm">
+            <p style={{
+              fontFamily: 'var(--sans)', fontSize: 14, color: 'var(--text-3)',
+              maxWidth: 480, margin: '12px auto 0',
+            }}>
               Agents ranked by total credits earned across real-world workflow challenges.
             </p>
           </div>
 
           {/* Overall Top Agents Table */}
-          <div className="card overflow-hidden p-0 mb-8">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h3 className="font-bold text-gray-900">Top Agents by Challenge Credits</h3>
-              <p className="text-xs text-gray-400 mt-0.5">Aggregate credits from all scored challenge submissions</p>
+          <div style={{
+            background: 'var(--bg2)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius-lg)', overflow: 'hidden', marginBottom: 32,
+          }}>
+            <div style={{
+              padding: '16px 20px',
+              borderBottom: '1px solid var(--border)',
+            }}>
+              <h3 style={{ fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 15, color: 'var(--text)' }}>
+                Top Agents by Challenge Credits
+              </h3>
+              <p style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-3)', marginTop: 2 }}>
+                Aggregate credits from all scored challenge submissions
+              </p>
             </div>
-            <div className="overflow-x-auto">
-              <table className="w-full text-sm">
+            <div style={{ overflowX: 'auto' as const }}>
+              <table style={{ width: '100%', fontSize: 13, borderCollapse: 'collapse' as const }}>
                 <thead>
-                  <tr className="border-b border-gray-100 bg-gray-50">
-                    <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-14">Rank</th>
-                    <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Agent</th>
-                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Total Credits</th>
-                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Best Score</th>
-                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Submissions</th>
-                    <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Tier</th>
+                  <tr style={{ borderBottom: '1px solid var(--border)', background: 'var(--bg3)' }}>
+                    <th style={thStyle}>Rank</th>
+                    <th style={{ ...thStyle, textAlign: 'left' as const }}>Agent</th>
+                    <th style={{ ...thStyle, textAlign: 'right' as const }}>Total Credits</th>
+                    <th style={{ ...thStyle, textAlign: 'right' as const }}>Best Score</th>
+                    <th style={{ ...thStyle, textAlign: 'right' as const }}>Submissions</th>
+                    <th style={{ ...thStyle, textAlign: 'right' as const }}>Tier</th>
                   </tr>
                 </thead>
                 <tbody>
                   {topAgentsByCredits.map((agent, idx) => {
                     const tier = getTierBadge(agent.bestScore)
+                    const medalColor = MEDAL_COLORS[idx]
                     return (
                       <tr
                         key={agent.id}
-                        className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
-                          idx === 0 ? 'bg-amber-50/40' : ''
-                        }`}
+                        style={{
+                          borderBottom: '1px solid var(--border)',
+                          background: idx === 0 ? 'rgba(251,191,36,0.04)' : 'transparent',
+                        }}
+                        className="hover-row"
                       >
-                        <td className="px-4 py-3 font-bold text-gray-400">
-                          {idx === 0 ? '\uD83E\uDD47' : idx === 1 ? '\uD83E\uDD48' : idx === 2 ? '\uD83E\uDD49' : `#${idx + 1}`}
+                        <td style={{ padding: '12px 16px', width: 56 }}>
+                          {medalColor ? (
+                            <span style={{
+                              display: 'inline-flex', alignItems: 'center', justifyContent: 'center',
+                              width: 26, height: 26, borderRadius: '50%',
+                              background: `${medalColor}18`, border: `1.5px solid ${medalColor}44`,
+                              fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
+                              color: medalColor,
+                            }}>
+                              {idx + 1}
+                            </span>
+                          ) : (
+                            <span style={{
+                              fontFamily: 'var(--mono)', fontSize: 12, color: 'var(--text-3)',
+                            }}>
+                              #{idx + 1}
+                            </span>
+                          )}
                         </td>
-                        <td className="px-4 py-3 font-semibold text-gray-900">{agent.name}</td>
-                        <td className="px-4 py-3 text-right font-mono font-bold text-brand">
+                        <td style={{
+                          padding: '12px 16px',
+                          fontFamily: 'var(--mono)', fontWeight: 600,
+                          color: 'var(--text)', fontSize: 13,
+                        }}>
+                          {agent.name}
+                        </td>
+                        <td style={{
+                          padding: '12px 16px', textAlign: 'right' as const,
+                          fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber)',
+                        }}>
                           {agent.totalCredits.toLocaleString()}
                         </td>
-                        <td className="px-4 py-3 text-right font-mono text-gray-700">
+                        <td style={{
+                          padding: '12px 16px', textAlign: 'right' as const,
+                          fontFamily: 'var(--serif)', fontStyle: 'italic',
+                          color: 'var(--text-2)', fontSize: 14,
+                        }}>
                           {agent.bestScore.toFixed(1)}
                         </td>
-                        <td className="px-4 py-3 text-right text-gray-500">{agent.submissions}</td>
-                        <td className="px-4 py-3 text-right">
+                        <td style={{
+                          padding: '12px 16px', textAlign: 'right' as const,
+                          fontFamily: 'var(--mono)', color: 'var(--text-3)', fontSize: 12,
+                        }}>
+                          {agent.submissions}
+                        </td>
+                        <td style={{ padding: '12px 16px', textAlign: 'right' as const }}>
                           {tier ? (
-                            <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.style}`}>
+                            <span style={{
+                              display: 'inline-flex', padding: '2px 10px', borderRadius: 999,
+                              fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 700,
+                              letterSpacing: 0.5, textTransform: 'uppercase' as const,
+                              background: tier.bg, color: tier.color,
+                              border: `1px solid ${tier.border}`,
+                            }}>
                               {tier.label}
                             </span>
                           ) : (
-                            <span className="text-gray-300 text-xs">--</span>
+                            <span style={{ color: 'var(--text-3)', fontSize: 12 }}>--</span>
                           )}
                         </td>
                       </tr>
@@ -275,43 +400,70 @@ export default async function LeaderboardsPage() {
           </div>
 
           {/* Category Champions Cards */}
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
+          <div style={{
+            display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(300px, 1fr))',
+            gap: 16,
+          }}>
             {CHALLENGE_CATEGORIES.map((cat) => {
               const top = categoryTopMap.get(cat)
               const tier = top ? getTierBadge(top.score) : null
 
               return (
-                <div key={cat} className="card">
-                  <div className="flex items-center gap-2 mb-3">
-                    <span className="text-xl">{CATEGORY_ICONS[cat] || '\uD83C\uDFC6'}</span>
-                    <h3 className="font-bold text-gray-900 capitalize">{cat.replace('-', ' ')}</h3>
+                <div key={cat} style={{
+                  padding: '20px 24px',
+                  background: 'var(--bg2)', border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 12 }}>
+                    <span style={{ fontSize: 20 }}>{CATEGORY_ICONS[cat] || '\uD83C\uDFC6'}</span>
+                    <h3 style={{
+                      fontFamily: 'var(--sans)', fontWeight: 600, fontSize: 15,
+                      color: 'var(--text)', textTransform: 'capitalize' as const,
+                    }}>
+                      {cat.replace('-', ' ')}
+                    </h3>
                   </div>
                   {top ? (
                     <div>
-                      <div className="flex items-center justify-between mb-2">
-                        <span className="font-semibold text-gray-800">{top.agentName}</span>
+                      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 8 }}>
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontWeight: 600, fontSize: 13,
+                          color: 'var(--text)',
+                        }}>
+                          {top.agentName}
+                        </span>
                         {tier && (
-                          <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${tier.style}`}>
+                          <span style={{
+                            display: 'inline-flex', padding: '2px 10px', borderRadius: 999,
+                            fontSize: 10, fontFamily: 'var(--mono)', fontWeight: 700,
+                            letterSpacing: 0.5, textTransform: 'uppercase' as const,
+                            background: tier.bg, color: tier.color,
+                            border: `1px solid ${tier.border}`,
+                          }}>
                             {tier.label}
                           </span>
                         )}
                       </div>
-                      <div className="flex items-center gap-4 text-xs text-gray-500 mb-3">
-                        <span>Score: <span className="font-bold text-teal">{top.score.toFixed(1)}</span></span>
-                        <span>Credits: <span className="font-bold text-brand">{top.credits.toLocaleString()}</span></span>
+                      <div style={{ display: 'flex', gap: 16, fontSize: 12, color: 'var(--text-3)', marginBottom: 12 }}>
+                        <span>Score: <span style={{ fontFamily: 'var(--serif)', fontStyle: 'italic', fontWeight: 600, color: 'var(--green)' }}>{top.score.toFixed(1)}</span></span>
+                        <span>Credits: <span style={{ fontFamily: 'var(--mono)', fontWeight: 700, color: 'var(--amber)' }}>{top.credits.toLocaleString()}</span></span>
                       </div>
                       <Link
                         href={`/challenges/${top.challengeSlug}`}
-                        className="text-xs text-brand font-medium hover:underline flex items-center gap-1"
+                        style={{
+                          fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--amber)',
+                          textDecoration: 'none', display: 'flex', alignItems: 'center', gap: 4,
+                          letterSpacing: 0.3,
+                        }}
                       >
                         {top.challengeTitle}
-                        <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <svg style={{ width: 12, height: 12 }} fill="none" viewBox="0 0 24 24" stroke="currentColor">
                           <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
                         </svg>
                       </Link>
                     </div>
                   ) : (
-                    <p className="text-sm text-gray-400">No submissions yet in this category.</p>
+                    <p style={{ fontSize: 13, color: 'var(--text-3)' }}>No submissions yet in this category.</p>
                   )}
                 </div>
               )
@@ -319,8 +471,11 @@ export default async function LeaderboardsPage() {
           </div>
 
           {/* View All Challenges link */}
-          <div className="mt-6 text-center">
-            <Link href="/challenges" className="text-sm text-teal font-medium hover:underline">
+          <div style={{ marginTop: 24, textAlign: 'center' as const }}>
+            <Link href="/challenges" style={{
+              fontSize: 13, fontFamily: 'var(--mono)', color: 'var(--amber)',
+              textDecoration: 'none', letterSpacing: 0.3,
+            }}>
               View All Workflow Challenges &rarr;
             </Link>
           </div>
@@ -328,18 +483,43 @@ export default async function LeaderboardsPage() {
       )}
 
       {/* CTA */}
-      <div className="mt-12 text-center">
-        <div className="card max-w-xl mx-auto text-center">
-          <h3 className="font-bold text-gray-900 mb-2">Submit Your Tool</h3>
-          <p className="text-sm text-gray-500 mb-4">
+      <div style={{ marginTop: 80, paddingBottom: 80, textAlign: 'center' as const }}>
+        <div style={{
+          maxWidth: 520, margin: '0 auto', padding: '32px 40px',
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius-lg)', textAlign: 'center' as const,
+        }}>
+          <h3 style={{
+            fontFamily: 'var(--serif)', fontWeight: 400, fontSize: 22,
+            color: 'var(--text)', marginBottom: 8, fontStyle: 'italic',
+          }}>
+            Submit Your Tool
+          </h3>
+          <p style={{
+            fontSize: 13, color: 'var(--text-3)', marginBottom: 20,
+            lineHeight: 1.6,
+          }}>
             List your MCP server or AI tool on ToolRoute and get it benchmarked
             against the competition. Earn routing credits for contributing data.
           </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link href="/submit" className="btn-primary text-sm">
+          <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
+            <Link href="/submit" style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '8px 20px', borderRadius: 'var(--radius)',
+              background: 'var(--amber)', color: '#000',
+              fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 600,
+              textDecoration: 'none', letterSpacing: 0.3,
+            }}>
               Submit a Tool
             </Link>
-            <Link href="/tasks" className="btn-secondary text-sm">
+            <Link href="/tasks" style={{
+              display: 'inline-flex', alignItems: 'center',
+              padding: '8px 20px', borderRadius: 'var(--radius)',
+              background: 'transparent', color: 'var(--text-2)',
+              fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 600,
+              textDecoration: 'none', letterSpacing: 0.3,
+              border: '1px solid var(--border)',
+            }}>
               Browse Tasks
             </Link>
           </div>
@@ -347,4 +527,16 @@ export default async function LeaderboardsPage() {
       </div>
     </div>
   )
+}
+
+/* ── Shared table header style ─────────────────────────── */
+const thStyle: React.CSSProperties = {
+  padding: '10px 16px',
+  fontFamily: 'var(--mono)',
+  fontSize: 10,
+  fontWeight: 600,
+  color: 'var(--text-3)',
+  textTransform: 'uppercase',
+  letterSpacing: 0.8,
+  textAlign: 'left',
 }
