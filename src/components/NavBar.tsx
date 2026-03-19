@@ -55,19 +55,19 @@ export function NavBar() {
 
       {/* Mobile menu */}
       {menuOpen && (
-        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-4 flex flex-col gap-3 text-sm font-medium">
-          <Link href="/models" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Models</Link>
-          <Link href="/servers" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Servers</Link>
-          <Link href="/challenges" className="text-gray-700 hover:text-amber-600" onClick={() => setMenuOpen(false)}>Challenges</Link>
-          <Link href="/agents" className="text-gray-700 hover:text-teal" onClick={() => setMenuOpen(false)}>Agents</Link>
-          <Link href="/leaderboards" className="text-gray-700 hover:text-brand" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
-          <div className="border-t border-gray-100 pt-3 flex flex-col gap-2">
-            <Link href="/compare" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Compare</Link>
-            <Link href="/stacks" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Stacks</Link>
-            <Link href="/tasks" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Tasks</Link>
-            <Link href="/dashboard" className="text-gray-500 hover:text-brand text-xs" onClick={() => setMenuOpen(false)}>Dashboard</Link>
+        <div className="md:hidden border-t border-gray-100 bg-white px-4 py-3 flex flex-col gap-0 text-sm font-medium">
+          <Link href="/models" className="text-gray-700 hover:text-brand py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Models</Link>
+          <Link href="/servers" className="text-gray-700 hover:text-brand py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Servers</Link>
+          <Link href="/challenges" className="text-gray-700 hover:text-amber-600 py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Challenges</Link>
+          <Link href="/agents" className="text-gray-700 hover:text-teal py-2.5 border-b border-gray-50" onClick={() => setMenuOpen(false)}>Agents</Link>
+          <Link href="/leaderboards" className="text-gray-700 hover:text-brand py-2.5" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
+          <div className="border-t border-gray-100 mt-1 pt-2 flex flex-wrap gap-x-4 gap-y-1.5">
+            <Link href="/compare" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Compare</Link>
+            <Link href="/stacks" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Stacks</Link>
+            <Link href="/tasks" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Tasks</Link>
+            <Link href="/dashboard" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Dashboard</Link>
           </div>
-          <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a server &rarr;</Link>
+          <Link href="/submit" className="text-brand font-semibold mt-2 pt-2 border-t border-gray-100" onClick={() => setMenuOpen(false)}>Submit a server &rarr;</Link>
         </div>
       )}
     </nav>

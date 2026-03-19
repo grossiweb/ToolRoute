@@ -75,29 +75,29 @@ curl -X POST https://toolroute.io/api/route \\
   return (
     <div className="max-w-4xl mx-auto">
       {/* Headline — the problem */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-5">
+      <div className="text-center mb-6 md:mb-8">
+        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4 md:mb-5">
           <span className="relative flex h-2 w-2">
             <span className="animate-ping absolute inline-flex h-full w-full rounded-full bg-brand opacity-75" />
             <span className="relative inline-flex rounded-full h-2 w-2 bg-brand" />
           </span>
           DECISION ENGINE FOR AI AGENTS
         </div>
-        <h1 className="text-4xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-4">
+        <h1 className="text-3xl md:text-5xl font-black text-gray-900 tracking-tight leading-tight mb-3 md:mb-4">
           Your agent is using<br />
           <span className="text-brand">the wrong model.</span>
         </h1>
-        <p className="text-lg text-gray-500 max-w-2xl mx-auto mb-2">
+        <p className="text-base md:text-lg text-gray-500 max-w-2xl mx-auto mb-2 px-2">
           ToolRoute picks the cheapest model that actually works — automatically.
           If it fails, we escalate to a better one. Built for agents, not humans.
         </p>
-        <p className="text-sm text-teal font-semibold mb-6">
+        <p className="text-sm text-teal font-semibold mb-4 md:mb-6">
           100% free. No API key needed.
         </p>
 
         {/* Works with strip — grayscale logos */}
-        <div className="flex items-center justify-center gap-5 md:gap-7 mb-3 flex-wrap">
-          <span className="text-xs text-gray-400 font-medium">Works with</span>
+        <div className="flex items-center justify-center gap-3 md:gap-6 mb-3 flex-wrap px-2">
+          <span className="text-xs text-gray-400 font-medium w-full md:w-auto text-center md:text-left mb-1 md:mb-0">Works with</span>
           {[
             { name: 'OpenRouter', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M16.778 1.844v1.919q-.569-.026-1.138-.032-.708-.008-1.415.037c-1.93.126-4.023.728-6.149 2.237-2.911 2.066-2.731 1.95-4.14 2.75-.396.223-1.342.574-2.185.798-.841.225-1.753.333-1.751.333v4.229s.768.108 1.61.333c.842.224 1.789.575 2.185.799 1.41.798 1.228.683 4.14 2.75 2.126 1.509 4.22 2.11 6.148 2.236.88.058 1.716.041 2.555.005v1.918l7.222-4.168-7.222-4.17v2.176c-.86.038-1.611.065-2.278.021-1.364-.09-2.417-.357-3.979-1.465-2.244-1.593-2.866-2.027-3.68-2.508.889-.518 1.449-.906 3.822-2.59 1.56-1.109 2.614-1.377 3.978-1.466.667-.044 1.418-.017 2.278.02v2.176L24 6.014Z"/></svg> },
             { name: 'LiteLLM', icon: <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor"><path d="M13 2L3 14h9l-1 8 10-12h-9l1-8z"/></svg> },
@@ -117,17 +117,17 @@ curl -X POST https://toolroute.io/api/route \\
       </div>
 
       {/* Connect Your Agent — code snippets */}
-      <div className="border border-gray-200 rounded-xl p-6 bg-white mb-6">
-        <div className="flex items-start justify-between mb-4 gap-4 flex-wrap">
+      <div className="border border-gray-200 rounded-xl p-4 md:p-6 bg-white mb-6">
+        <div className="flex items-start justify-between mb-3 md:mb-4 gap-3 flex-wrap">
           <div>
-            <h2 className="text-lg font-bold text-gray-900">Connect in 30 seconds</h2>
-            <p className="text-sm text-gray-500">Add as an MCP server, drop into your OpenRouter workflow, or call the API directly.</p>
+            <h2 className="text-base md:text-lg font-bold text-gray-900">Connect in 30 seconds</h2>
+            <p className="text-xs md:text-sm text-gray-500">Add as an MCP server, drop into your OpenRouter workflow, or call the API directly.</p>
           </div>
           <span className="text-[10px] font-semibold text-teal bg-teal-light px-2.5 py-1 rounded-full flex-shrink-0">100% free</span>
         </div>
 
         {/* Tabs */}
-        <div className="flex gap-1 mb-4 bg-gray-100 rounded-lg p-1 max-w-md">
+        <div className="flex gap-1 mb-3 md:mb-4 bg-gray-100 rounded-lg p-1 max-w-full md:max-w-md overflow-x-auto">
           {(['mcp', 'openrouter', 'python', 'curl'] as const).map((tab) => (
             <button
               key={tab}
@@ -144,7 +144,7 @@ curl -X POST https://toolroute.io/api/route \\
         </div>
 
         {/* Code block */}
-        <div className="relative bg-gray-900 rounded-xl p-5 font-mono text-sm overflow-x-auto">
+        <div className="relative bg-gray-900 rounded-xl p-3 md:p-5 font-mono text-xs md:text-sm overflow-x-auto">
           <button
             onClick={handleCopy}
             className="absolute top-3 right-3 px-2 py-1 rounded bg-gray-700 text-gray-300 text-xs hover:bg-gray-600 transition-colors"

@@ -93,27 +93,27 @@ ${result.reasoning || ''}`
   return (
     <div className="mb-8">
       {/* Big input — the primary action */}
-      <div className="border-2 border-brand/20 rounded-xl p-6 bg-brand-light/30 mb-4">
-        <label className="block text-lg font-bold text-gray-900 mb-1">
+      <div className="border-2 border-brand/20 rounded-xl p-4 md:p-6 bg-brand-light/30 mb-4">
+        <label className="block text-base md:text-lg font-bold text-gray-900 mb-1">
           What do you want your agent to do?
         </label>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-xs md:text-sm text-gray-500 mb-3 md:mb-4">
           Describe a task — we&apos;ll pick the cheapest model that works. Live API call, not a demo.
         </p>
 
-        <div className="flex gap-3 mb-3">
+        <div className="flex flex-col md:flex-row gap-2 md:gap-3 mb-3">
           <input
             type="text"
             value={task}
             onChange={(e) => setTask(e.target.value)}
             onKeyDown={(e) => e.key === 'Enter' && handleRoute()}
             placeholder="e.g. write a python function to parse CSV"
-            className="flex-1 px-5 py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-base bg-white"
+            className="flex-1 px-4 md:px-5 py-3 md:py-3.5 rounded-xl border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm md:text-base bg-white"
           />
           <button
             onClick={() => handleRoute()}
             disabled={loading || !task.trim()}
-            className="px-6 py-3.5 rounded-xl bg-brand text-white text-sm font-bold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
+            className="px-6 py-3 md:py-3.5 rounded-xl bg-brand text-white text-sm font-bold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed flex-shrink-0"
           >
             {loading ? 'Routing...' : 'Route it'}
           </button>
@@ -151,10 +151,10 @@ ${result.reasoning || ''}`
         <div className="bg-white rounded-xl border border-gray-200 overflow-hidden">
           {/* Savings banner */}
           {savings && savings > 0 && (
-            <div className="bg-teal-light px-4 py-2.5 flex items-center justify-between">
+            <div className="bg-teal-light px-3 md:px-4 py-2 md:py-2.5 flex flex-col md:flex-row items-start md:items-center justify-between gap-1">
               <div className="flex items-center gap-2">
-                <span className="text-teal font-black text-lg">{savings}%</span>
-                <span className="text-teal text-sm font-medium">cheaper than GPT-4o for this task</span>
+                <span className="text-teal font-black text-base md:text-lg">{savings}%</span>
+                <span className="text-teal text-xs md:text-sm font-medium">cheaper than GPT-4o for this task</span>
               </div>
               <span className="text-[10px] text-teal/70">
                 ${result.estimated_cost?.estimated_usd?.toFixed(4)} vs ${((result.estimated_cost?.input_tokens * GPT4O_INPUT_COST + result.estimated_cost?.output_tokens * GPT4O_OUTPUT_COST) / 1_000_000).toFixed(4)}
@@ -163,48 +163,48 @@ ${result.reasoning || ''}`
           )}
 
           {/* Header */}
-          <div className="px-4 py-3 border-b border-gray-100 flex items-center justify-between">
+          <div className="px-3 md:px-4 py-2.5 md:py-3 border-b border-gray-100 flex flex-wrap items-center justify-between gap-2">
             <div className="flex items-center gap-2">
               <span className="text-xs font-semibold text-brand bg-brand-light px-2 py-0.5 rounded-full">
                 {result.tier_label || result.tier}
               </span>
-              <span className="text-xs text-gray-400">
+              <span className="text-[10px] md:text-xs text-gray-400">
                 {result.routing_metadata?.routing_latency_ms}ms
               </span>
             </div>
             <div className="flex items-center gap-2">
-              <span className="text-xs text-gray-400">
+              <span className="hidden md:inline text-xs text-gray-400">
                 {result.routing_metadata?.candidates_evaluated} candidates evaluated
               </span>
               <button
                 onClick={handleCopyResult}
                 className="text-[10px] px-2 py-0.5 rounded bg-gray-100 text-gray-500 hover:bg-gray-200 transition-colors"
               >
-                {resultCopied ? '✓ Copied' : 'Copy result'}
+                {resultCopied ? '✓ Copied' : 'Copy'}
               </button>
             </div>
           </div>
 
           {/* Main result */}
-          <div className="px-4 py-4">
+          <div className="px-3 md:px-4 py-3 md:py-4">
             {/* Model recommendation */}
-            <div className="flex items-center gap-3 mb-3">
-              <div className="w-10 h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand font-bold text-sm">
+            <div className="flex items-center gap-2.5 md:gap-3 mb-3">
+              <div className="w-9 h-9 md:w-10 md:h-10 rounded-xl bg-brand-light flex items-center justify-center text-brand font-bold text-xs md:text-sm flex-shrink-0">
                 {result.model_details?.provider?.charAt(0).toUpperCase()}
               </div>
-              <div>
-                <div className="font-bold text-gray-900">{result.model_details?.display_name}</div>
-                <div className="text-xs text-gray-400">{result.model_details?.provider} &middot; {result.recommended_model}</div>
+              <div className="min-w-0 flex-1">
+                <div className="font-bold text-gray-900 text-sm md:text-base truncate">{result.model_details?.display_name}</div>
+                <div className="text-[10px] md:text-xs text-gray-400 truncate">{result.model_details?.provider} &middot; {result.recommended_model}</div>
               </div>
-              <div className="ml-auto text-right">
-                <div className="text-lg font-black text-brand">{(result.confidence * 100).toFixed(0)}%</div>
+              <div className="ml-auto text-right flex-shrink-0">
+                <div className="text-base md:text-lg font-black text-brand">{(result.confidence * 100).toFixed(0)}%</div>
                 <div className="text-[10px] text-gray-400">confidence</div>
               </div>
             </div>
 
             {/* Why this model */}
             {result.reasoning && (
-              <div className="text-sm text-gray-600 bg-gray-50 rounded-lg p-3 mb-3">
+              <div className="text-xs md:text-sm text-gray-600 bg-gray-50 rounded-lg p-2.5 md:p-3 mb-3">
                 <span className="font-semibold text-gray-700">Why this model: </span>
                 {result.reasoning}
               </div>
@@ -227,14 +227,14 @@ ${result.reasoning || ''}`
             )}
 
             {/* Cost */}
-            <div className="grid grid-cols-2 gap-3 text-xs mb-3">
-              <div className="bg-gray-50 rounded-lg p-2.5">
+            <div className="grid grid-cols-1 sm:grid-cols-2 gap-2 md:gap-3 text-xs mb-3">
+              <div className="bg-gray-50 rounded-lg p-2 md:p-2.5">
                 <div className="text-gray-400 mb-0.5">Estimated Cost</div>
                 <div className="font-bold text-gray-900">
                   ${result.estimated_cost?.estimated_usd?.toFixed(4) || '—'}
                 </div>
               </div>
-              <div className="bg-gray-50 rounded-lg p-2.5">
+              <div className="bg-gray-50 rounded-lg p-2 md:p-2.5">
                 <div className="text-gray-400 mb-0.5">Cost per MTok</div>
                 <div className="font-bold text-gray-900">
                   ${result.model_details?.input_cost_per_mtok?.toFixed(2) || '—'} in / ${result.model_details?.output_cost_per_mtok?.toFixed(2) || '—'} out
@@ -244,15 +244,15 @@ ${result.reasoning || ''}`
 
             {/* Escalation — the secret weapon, called out prominently */}
             {result.escalation && (
-              <div className="bg-amber-50 border border-amber-200 rounded-lg p-3 mb-3">
+              <div className="bg-amber-50 border border-amber-200 rounded-lg p-2.5 md:p-3 mb-3">
                 <div className="flex items-center gap-2 mb-1">
-                  <span className="text-amber-600 font-bold text-xs">AUTO-ESCALATION</span>
+                  <span className="text-amber-600 font-bold text-[10px] md:text-xs">AUTO-ESCALATION</span>
                 </div>
-                <div className="text-sm text-gray-700">
-                  If <span className="font-semibold">{result.model_details?.display_name}</span> fails, we automatically escalate to{' '}
+                <div className="text-xs md:text-sm text-gray-700">
+                  If <span className="font-semibold">{result.model_details?.display_name}</span> fails, we escalate to{' '}
                   <span className="font-semibold text-amber-700">{result.escalation.tier}</span>
                 </div>
-                <div className="text-xs text-gray-500 mt-1">{result.escalation.trigger}</div>
+                <div className="text-[10px] md:text-xs text-gray-500 mt-1">{result.escalation.trigger}</div>
               </div>
             )}
 
