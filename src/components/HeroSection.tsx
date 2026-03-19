@@ -241,6 +241,7 @@ export function HeroSection() {
         <div className="compat-strip-logos" style={{
           display: 'flex', alignItems: 'center', gap: 0,
           overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+          scrollbarWidth: 'none', msOverflowStyle: 'none',
         }}>
           {COMPAT_LOGOS.map((item, i) => (
             <span key={item.name} style={{

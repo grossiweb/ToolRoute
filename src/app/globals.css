@@ -74,6 +74,8 @@ body::before {
 /* ── COMPAT STRIP ── */
 .compat-strip { scrollbar-width: none; -ms-overflow-style: none; }
 .compat-strip::-webkit-scrollbar { display: none; }
+.compat-strip-logos { scrollbar-width: none; -ms-overflow-style: none; }
+.compat-strip-logos::-webkit-scrollbar { display: none; }
 @media (max-width: 768px) {
   .compat-strip {
     flex-direction: column !important;
@@ -282,3 +284,6 @@ body::before {
   .section-h2 { font-size: clamp(24px, 6vw, 36px) !important; }
   pre, code { font-size: 10px !important; }
 }
+
+/* ── Inner page hover cards ── */
+.hover-card:hover { border-color: var(--border-bright) !important; }
