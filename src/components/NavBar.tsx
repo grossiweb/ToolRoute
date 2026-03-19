@@ -57,27 +57,6 @@ export function NavBar() {
             className="nav-logo-light"
             style={{ height: 24, width: 'auto', maxWidth: 160, objectFit: 'contain', display: 'none' }}
           />
-          {/* Fallback text wordmark */}
-          <span style={{
-            fontFamily: 'var(--sans)',
-            fontSize: 18,
-            fontWeight: 800,
-            letterSpacing: -1,
-            color: 'var(--text)',
-            lineHeight: 1,
-          }}>
-            toolroute
-            <span style={{
-              width: 8,
-              height: 8,
-              borderRadius: '50%',
-              background: '#f59e0b',
-              display: 'inline-block',
-              marginLeft: 2,
-              position: 'relative',
-              top: -1,
-            }} />
-          </span>
         </Link>
 
         <span style={{
@@ -108,6 +87,7 @@ export function NavBar() {
             { href: '/servers', label: 'Servers' },
             { href: '/challenges', label: 'Challenges' },
             { href: '/leaderboards', label: 'Leaderboards' },
+            { href: '/verify', label: 'Verify' },
           ].map(link => (
             <li key={link.href}>
               <Link

@@ -78,10 +78,13 @@ export default function RootLayout({
               />
             </a>
             <span>&copy; 2026 toolroute.io</span>
-            <div style={{ display: 'flex', gap: 24 }}>
+            <div style={{ display: 'flex', gap: 24, flexWrap: 'wrap' }}>
               <a href="/models" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Models</a>
               <a href="/servers" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Servers</a>
               <a href="/challenges" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Challenges</a>
+              <a href="/leaderboards" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Leaderboards</a>
+              <a href="/agents" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Agents</a>
+              <a href="/verify" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Verify</a>
               <a href="/api-docs" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>API Docs</a>
               <a href="/privacy" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>Privacy</a>
               <a href="https://github.com/grossiweb/ToolRoute" style={{ color: 'var(--text-3)', textDecoration: 'none', fontSize: 13 }}>GitHub</a>
