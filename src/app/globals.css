@@ -47,7 +47,7 @@
 }
 
 /* ── BASE ── */
-html { scroll-behavior: smooth; }
+html { scroll-behavior: smooth; overflow-x: hidden; max-width: 100vw; }
 
 body {
   background: var(--bg);
@@ -242,16 +242,18 @@ body::before {
 }
 @media (max-width: 768px) {
   .page-hero { padding: 40px 20px 32px; }
-  .home-section { padding-left: 20px !important; padding-right: 20px !important; }
+  .home-section { padding-left: 20px !important; padding-right: 20px !important; overflow-x: hidden !important; }
   footer { padding: 40px 20px 24px !important; }
   .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
   .footer-bottom { flex-direction: column !important; gap: 8px !important; text-align: center !important; }
   .section-h2 { font-size: clamp(28px, 5vw, 48px) !important; }
   .section-sub { font-size: 14px !important; }
+  pre, code { max-width: 100% !important; overflow-x: auto !important; white-space: pre-wrap !important; word-break: break-word !important; font-size: 11px !important; }
 }
 @media (max-width: 480px) {
-  .home-section { padding-left: 16px !important; padding-right: 16px !important; padding-top: 48px !important; padding-bottom: 48px !important; }
+  .home-section { padding-left: 16px !important; padding-right: 16px !important; padding-top: 48px !important; padding-bottom: 48px !important; overflow-x: hidden !important; }
   footer { padding: 32px 16px 20px !important; }
   .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
   .section-h2 { font-size: clamp(24px, 6vw, 36px) !important; }
+  pre, code { font-size: 10px !important; }
 }

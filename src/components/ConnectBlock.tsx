@@ -120,20 +120,21 @@ tool = tr.route(task="web scraping")`,
 
   return (
     <div style={{
-      width: '100%',
+      width: '100%', maxWidth: '100%', minWidth: 0,
       border: '1px solid var(--border)',
       borderRadius: 'var(--radius-lg)',
       overflow: 'hidden',
       background: 'var(--bg2)',
       boxShadow: '0 40px 80px rgba(0,0,0,.4)',
+      boxSizing: 'border-box',
     }}>
       {/* Header with tabs */}
       <div style={{
         display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-        padding: '12px 18px',
+        padding: '10px 14px',
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg3)',
-        flexWrap: 'wrap', gap: 8,
+        flexWrap: 'wrap', gap: 6,
       }}>
         <div style={{ display: 'flex', gap: 2 }}>
           {(['openrouter', 'mcp', 'python', 'curl'] as const).map(t => (
@@ -192,6 +193,8 @@ tool = tr.route(task="web scraping")`,
         overflowX: 'auto',
         margin: 0,
         whiteSpace: 'pre',
+        maxWidth: '100%',
+        boxSizing: 'border-box',
       }}>
         {highlightedCode[tab]}
       </pre>

@@ -43,7 +43,7 @@ export default function RootLayout({
       <body>
         <ThemeScript />
         <NavBar />
-        <main style={{ paddingTop: 64 }}>{children}</main>
+        <main style={{ paddingTop: 64, overflowX: 'hidden', maxWidth: '100vw' }}>{children}</main>
         <Analytics />
         <SpeedInsights />
 

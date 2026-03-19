@@ -8,7 +8,7 @@ export const revalidate = 60
 
 export default function HomePage() {
   return (
-    <div>
+    <div style={{ overflowX: 'hidden', maxWidth: '100vw' }}>
       {/* Hero — full viewport */}
       <HeroSection />
 
@@ -392,10 +392,11 @@ export default function HomePage() {
               ))}
             </div>
           </div>
-          <div>
+          <div style={{ maxWidth: '100%', minWidth: 0 }}>
             <div style={{
               background: 'var(--code-bg)', border: '1px solid var(--border)',
               borderRadius: 'var(--radius-lg)', overflow: 'hidden',
+              maxWidth: '100%', boxSizing: 'border-box',
             }}>
               <div style={{
                 display: 'flex', alignItems: 'center', gap: 8, padding: '12px 16px',
@@ -408,7 +409,8 @@ export default function HomePage() {
               </div>
               <pre style={{
                 padding: '20px', fontFamily: 'var(--mono)', fontSize: 12,
-                lineHeight: 1.7, color: 'var(--text-2)', margin: 0, overflow: 'auto',
+                lineHeight: 1.7, color: 'var(--text-2)', margin: 0, overflowX: 'auto',
+                maxWidth: '100%', boxSizing: 'border-box',
               }}>
 {`$ `}<span style={{ color: '#e5c07b' }}>toolroute route</span>{` `}<span style={{ color: 'var(--text-3)' }}>--task</span>{` `}<span style={{ color: 'var(--green)' }}>&quot;scrape product prices&quot;</span>{`
 
