@@ -71,7 +71,7 @@ export function HeroSection() {
           background: 'var(--amber)', boxShadow: '0 0 8px var(--amber)',
           animation: 'pulse-dot 2s ease-in-out infinite',
         }} />
-        Decision engine for AI agents
+        Free for all agents
       </div>
 
       {/* Headline */}
@@ -87,7 +87,7 @@ export function HeroSection() {
         position: 'relative',
         zIndex: 1,
       }}>
-        Your agent is using
+        The right model,<br />the right tool,
       </h1>
       <div style={{
         fontFamily: 'var(--serif)',
@@ -100,7 +100,7 @@ export function HeroSection() {
         position: 'relative',
         zIndex: 1,
       }}>
-        the wrong <em style={{ color: 'var(--amber)' }}>model.</em>
+        for every <em style={{ color: 'var(--amber)' }}>task.</em>
       </div>
 
       {/* Sub */}
@@ -108,8 +108,7 @@ export function HeroSection() {
         fontSize: 18, color: 'var(--text-2)', maxWidth: 540,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        ToolRoute picks the cheapest LLM that actually works — before every call.
-        Automatic fallbacks. Gets smarter over time. 100% free.
+        Your agents are using the same expensive model for every task. ToolRoute picks the best model and MCP server per step — cutting costs while improving results.
       </p>
 
       {/* CTA buttons */}
@@ -120,28 +119,25 @@ export function HeroSection() {
       }}>
         <a
           href="/api-docs"
+          className="btn-primary"
           style={{
-            background: 'var(--amber)', color: '#000', border: 'none',
             padding: '14px 26px', borderRadius: 10,
-            fontSize: 15, fontFamily: 'var(--sans)', fontWeight: 700,
-            textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8,
-            transition: 'all .2s',
+            fontSize: 15, display: 'inline-flex', alignItems: 'center', gap: 8,
           }}
         >
-          Start routing →
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M8 2.5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          Use ToolRoute in your agent
         </a>
         <a
-          href="/models"
+          href="/api-docs"
+          className="btn-ghost"
           style={{
-            background: 'transparent', color: 'var(--text-2)',
-            border: '1px solid var(--border-bright)',
             padding: '14px 26px', borderRadius: 10,
-            fontSize: 15, fontFamily: 'var(--sans)', fontWeight: 500,
-            textDecoration: 'none', display: 'inline-flex', alignItems: 'center', gap: 8,
-            transition: 'all .2s',
+            fontSize: 15, display: 'inline-flex', alignItems: 'center', gap: 8,
           }}
         >
-          Browse models
+          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7.5h5M7.5 5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
+          View API docs
         </a>
       </div>
 
@@ -151,38 +147,50 @@ export function HeroSection() {
         marginBottom: 24, padding: '18px 24px',
         background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14,
         position: 'relative', zIndex: 1, width: '100%', maxWidth: 640,
-      }}>
+      }}
+      className="aha-flow"
+      >
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 100 }}>
           <div style={{
             width: 42, height: 42, borderRadius: 10,
             background: 'var(--bg3)', border: '1px solid var(--border-bright)',
-            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 18,
+            display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 22,
           }}>🤖</div>
-          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>Your agent</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)' }}>any framework</div>
+          <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>Your Agent</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)' }}>asks a question</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flex: 1, maxWidth: 70 }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)', letterSpacing: 0.5, textTransform: 'uppercase' }}>asks</div>
-          <svg width="40" height="12" viewBox="0 0 40 12"><path d="M0 6h36M32 2l4 4-4 4" stroke="var(--amber)" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>
+          <svg width="38" height="12" viewBox="0 0 38 12" fill="none"><path d="M1 6h32M27 1.5l6 4.5-6 4.5" stroke="var(--amber)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)', letterSpacing: 0.5 }}>routes to</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 100 }}>
           {/* eslint-disable-next-line @next/next/no-img-element */}
-          <div style={{
-            width: 42, height: 42, borderRadius: 10,
-            background: 'var(--amber)', color: '#000',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
-            boxShadow: '0 0 14px rgba(245,158,11,.4)',
-          }}>TR</div>
+          <img
+            className="tr-icon-dark"
+            src="/toolroute-icon-dark.png"
+            alt="ToolRoute"
+            width={42}
+            height={42}
+            style={{ objectFit: 'contain', borderRadius: 10, display: 'none' }}
+          />
+          {/* eslint-disable-next-line @next/next/no-img-element */}
+          <img
+            className="tr-icon-light"
+            src="/toolroute-icon-light.png"
+            alt="ToolRoute"
+            width={42}
+            height={42}
+            style={{ objectFit: 'contain', borderRadius: 10, display: 'none' }}
+          />
           <div style={{ fontSize: 12, fontWeight: 700, color: 'var(--text)', textAlign: 'center' }}>ToolRoute</div>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)' }}>routes</div>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)' }}>ranks candidates</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 3, flex: 1, maxWidth: 70 }}>
-          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)', letterSpacing: 0.5, textTransform: 'uppercase' }}>returns</div>
-          <svg width="40" height="12" viewBox="0 0 40 12"><path d="M0 6h36M32 2l4 4-4 4" stroke="var(--green)" strokeWidth="1.5" fill="none" strokeLinecap="round" /></svg>
+          <svg width="38" height="12" viewBox="0 0 38 12" fill="none"><path d="M1 6h32M27 1.5l6 4.5-6 4.5" stroke="var(--green)" strokeWidth="1.6" strokeLinecap="round" strokeLinejoin="round"/></svg>
+          <div style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)', letterSpacing: 0.5 }}>returns</div>
         </div>
 
         <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 5, minWidth: 100 }}>
