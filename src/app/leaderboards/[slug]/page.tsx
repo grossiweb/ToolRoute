@@ -84,10 +84,10 @@ export default async function LeaderboardDetailPage({
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/leaderboards" className="hover:text-teal transition-colors">Leaderboards</Link>
         <span>/</span>
-        <span className="text-gray-600">{toolType.name}</span>
+        <span className="text-[var(--text-2)]">{toolType.name}</span>
       </div>
 
       {/* Header */}
@@ -100,18 +100,18 @@ export default async function LeaderboardDetailPage({
             LEADERBOARD
           </div>
         </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+        <h1 className="text-3xl md:text-4xl font-black text-[var(--text)] mb-3">
           {toolType.name}
         </h1>
         {toolType.description && (
-          <p className="text-gray-500 max-w-3xl text-lg">
+          <p className="text-[var(--text-2)] max-w-3xl text-lg">
             {toolType.description}
           </p>
         )}
         <div className="flex items-center gap-4 mt-6 text-sm">
           <div className="text-center">
             <span className="text-2xl font-bold text-teal">{sortedTools.length}</span>
-            <span className="text-gray-400 ml-2">tool{sortedTools.length !== 1 ? 's' : ''} ranked</span>
+            <span className="text-[var(--text-3)] ml-2">tool{sortedTools.length !== 1 ? 's' : ''} ranked</span>
           </div>
         </div>
       </div>
@@ -122,11 +122,11 @@ export default async function LeaderboardDetailPage({
         <div className="flex-1 min-w-0">
       {/* Leaderboard Table */}
       {sortedTools.length > 0 ? (
-        <div className="card overflow-hidden p-0">
-          <div className="px-5 py-4 border-b border-gray-100 flex items-center justify-between">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" overflow-hidden p-0">
+          <div className="px-5 py-4 border-b border-[var(--border)] flex items-center justify-between">
             <div>
-              <h2 className="font-bold text-gray-900">{toolType.name} Rankings</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Ranked by overall ToolRoute Score across all benchmark dimensions</p>
+              <h2 className="font-bold text-[var(--text)]">{toolType.name} Rankings</h2>
+              <p className="text-xs text-[var(--text-3)] mt-0.5">Ranked by overall ToolRoute Score across all benchmark dimensions</p>
             </div>
             <Suspense>
               <SortDropdown currentSort={searchParams.sort || 'score'} basePath={`/leaderboards/${params.slug}`} />
@@ -135,16 +135,16 @@ export default async function LeaderboardDetailPage({
           <div className="overflow-x-auto">
             <table className="w-full text-sm">
               <thead>
-                <tr className="border-b border-gray-100 bg-gray-50">
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-14">Rank</th>
-                  <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Tool Name</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">ToolRoute Score</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Output</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Reliability</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Efficiency</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Cost</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Trust</th>
-                  <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Stars</th>
+                <tr className="border-b border-[var(--border)] bg-[var(--bg2)]">
+                  <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs w-14">Rank</th>
+                  <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Tool Name</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">ToolRoute Score</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Output</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Reliability</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Efficiency</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Cost</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Trust</th>
+                  <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Stars</th>
                 </tr>
               </thead>
               <tbody>
@@ -162,17 +162,17 @@ export default async function LeaderboardDetailPage({
                   return (
                     <tr
                       key={skill?.slug || idx}
-                      className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                      className={`border-b border-[var(--border)] hover:bg-[var(--bg2)] transition-colors ${
                         idx === 0 ? 'bg-amber-50/40' : ''
                       }`}
                     >
-                      <td className="px-4 py-3 font-bold text-gray-400">
+                      <td className="px-4 py-3 font-bold text-[var(--text-3)]">
                         {idx === 0 ? '\uD83E\uDD47' : idx === 1 ? '\uD83E\uDD48' : idx === 2 ? '\uD83E\uDD49' : `#${idx + 1}`}
                       </td>
                       <td className="px-4 py-3">
                         <Link
                           href={`/mcp-servers/${skill?.slug}`}
-                          className="font-semibold text-gray-900 hover:text-teal transition-colors"
+                          className="font-semibold text-[var(--text)] hover:text-teal transition-colors"
                         >
                           {skill?.canonical_name || 'Unknown'}
                         </Link>
@@ -186,7 +186,7 @@ export default async function LeaderboardDetailPage({
                             {formatScore(overallScore)}
                           </span>
                         ) : (
-                          <span className="text-gray-300">--</span>
+                          <span className="text-[var(--text-3)]">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -195,7 +195,7 @@ export default async function LeaderboardDetailPage({
                             {formatScore(outputScore)}
                           </span>
                         ) : (
-                          <span className="text-gray-300">--</span>
+                          <span className="text-[var(--text-3)]">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -204,7 +204,7 @@ export default async function LeaderboardDetailPage({
                             {formatScore(reliabilityScore)}
                           </span>
                         ) : (
-                          <span className="text-gray-300">--</span>
+                          <span className="text-[var(--text-3)]">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -213,7 +213,7 @@ export default async function LeaderboardDetailPage({
                             {formatScore(efficiencyScore)}
                           </span>
                         ) : (
-                          <span className="text-gray-300">--</span>
+                          <span className="text-[var(--text-3)]">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -222,7 +222,7 @@ export default async function LeaderboardDetailPage({
                             {formatScore(costScore)}
                           </span>
                         ) : (
-                          <span className="text-gray-300">--</span>
+                          <span className="text-[var(--text-3)]">--</span>
                         )}
                       </td>
                       <td className="px-4 py-3 text-right">
@@ -231,10 +231,10 @@ export default async function LeaderboardDetailPage({
                             {formatScore(trustScore)}
                           </span>
                         ) : (
-                          <span className="text-gray-300">--</span>
+                          <span className="text-[var(--text-3)]">--</span>
                         )}
                       </td>
-                      <td className="px-4 py-3 text-right font-mono text-xs text-gray-500">
+                      <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text-2)]">
                         {stars != null ? stars.toLocaleString() : '--'}
                       </td>
                     </tr>
@@ -246,8 +246,8 @@ export default async function LeaderboardDetailPage({
         </div>
       ) : (
         <div className="text-center py-20">
-          <p className="text-lg font-medium text-gray-600">No tools ranked in this category yet</p>
-          <p className="text-sm text-gray-400 mt-1 max-w-md mx-auto">
+          <p className="text-lg font-medium text-[var(--text-2)]">No tools ranked in this category yet</p>
+          <p className="text-sm text-[var(--text-3)] mt-1 max-w-md mx-auto">
             Submit telemetry data to start ranking tools in this category.
           </p>
           <Link href="/api-docs" className="btn-primary text-sm mt-4 inline-block">
@@ -290,9 +290,9 @@ export default async function LeaderboardDetailPage({
           <div className="mt-6 card border-teal/20 bg-gradient-to-r from-teal-50/50 to-white">
             <div className="flex items-center gap-2 mb-3">
               <span className="text-lg">💡</span>
-              <h3 className="font-bold text-gray-900 text-sm">Why {first?.canonical_name} is #1</h3>
+              <h3 className="font-bold text-[var(--text)] text-sm">Why {first?.canonical_name} is #1</h3>
             </div>
-            <p className="text-sm text-gray-600 mb-4">
+            <p className="text-sm text-[var(--text-2)] mb-4">
               {first?.canonical_name} leads {second?.canonical_name} by{' '}
               <span className="font-bold text-teal">
                 {biggestAdvantage ? `+${biggestAdvantage.diff.toFixed(1)}` : '—'}
@@ -306,12 +306,12 @@ export default async function LeaderboardDetailPage({
                 const v2 = normalizeScore(s2[d.key])
                 const leads = (v1 ?? 0) > (v2 ?? 0)
                 return (
-                  <div key={d.key} className={`text-center p-2 rounded-lg ${leads ? 'bg-teal-50' : 'bg-gray-50'}`}>
-                    <div className="text-[10px] text-gray-400 mb-1">{d.label}</div>
-                    <div className={`text-sm font-bold ${leads ? 'text-teal-700' : 'text-gray-500'}`}>
+                  <div key={d.key} className={`text-center p-2 rounded-lg ${leads ? 'bg-teal-50' : 'bg-[var(--bg2)]'}`}>
+                    <div className="text-[10px] text-[var(--text-3)] mb-1">{d.label}</div>
+                    <div className={`text-sm font-bold ${leads ? 'text-teal-700' : 'text-[var(--text-2)]'}`}>
                       {v1 != null ? formatScore(v1) : '—'}
                     </div>
-                    <div className="text-[10px] text-gray-400">
+                    <div className="text-[10px] text-[var(--text-3)]">
                       vs {v2 != null ? formatScore(v2) : '—'}
                     </div>
                   </div>
@@ -326,8 +326,8 @@ export default async function LeaderboardDetailPage({
       </div>
 
       {/* Score Guide — compact inline */}
-      <div className="mt-4 flex items-center gap-4 text-[10px] text-gray-400">
-        <span className="font-semibold text-gray-500">Score Guide:</span>
+      <div className="mt-4 flex items-center gap-4 text-[10px] text-[var(--text-3)]">
+        <span className="font-semibold text-[var(--text-2)]">Score Guide:</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400"></span>9+ Exceptional</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400"></span>8+ Excellent</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400"></span>7+ Good</span>
@@ -337,9 +337,9 @@ export default async function LeaderboardDetailPage({
 
       {/* CTA */}
       <div className="mt-10 text-center">
-        <div className="card max-w-xl mx-auto text-center">
-          <h3 className="font-bold text-gray-900 mb-2">Contribute Benchmark Data</h3>
-          <p className="text-sm text-gray-500 mb-4">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" max-w-xl mx-auto text-center">
+          <h3 className="font-bold text-[var(--text)] mb-2">Contribute Benchmark Data</h3>
+          <p className="text-sm text-[var(--text-2)] mb-4">
             Help improve these rankings by submitting real-world telemetry.
             Contributors earn routing credits for every data point.
           </p>

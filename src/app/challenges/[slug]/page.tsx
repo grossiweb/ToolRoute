@@ -14,7 +14,7 @@ const DIFFICULTY_STYLES: Record<string, string> = {
 
 const TIER_THRESHOLDS = [
   { tier: 'Gold', minScore: 8.5, color: 'text-amber-600', bg: 'bg-amber-50 border-amber-200' },
-  { tier: 'Silver', minScore: 7.0, color: 'text-gray-500', bg: 'bg-gray-50 border-gray-200' },
+  { tier: 'Silver', minScore: 7.0, color: 'text-[var(--text-2)]', bg: 'bg-[var(--bg2)] border-[var(--border)]' },
   { tier: 'Bronze', minScore: 5.5, color: 'text-orange-700', bg: 'bg-orange-50 border-orange-200' },
 ]
 
@@ -66,7 +66,7 @@ function getScoreColor(score: number): string {
 
 function getTierLabel(score: number): { tier: string; color: string } | null {
   if (score >= 8.5) return { tier: 'Gold', color: 'text-amber-600' }
-  if (score >= 7.0) return { tier: 'Silver', color: 'text-gray-500' }
+  if (score >= 7.0) return { tier: 'Silver', color: 'text-[var(--text-2)]' }
   if (score >= 5.5) return { tier: 'Bronze', color: 'text-orange-700' }
   return null
 }
@@ -102,10 +102,10 @@ export default async function ChallengeDetailPage({
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/challenges" className="hover:text-teal transition-colors">Challenges</Link>
         <span>/</span>
-        <span className="text-gray-600 truncate">{challenge.title}</span>
+        <span className="text-[var(--text-2)] truncate">{challenge.title}</span>
       </div>
 
       {/* Header */}
@@ -114,7 +114,7 @@ export default async function ChallengeDetailPage({
           <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold">
             CHALLENGE
           </div>
-          <span className={`badge text-[10px] ${DIFFICULTY_STYLES[challenge.difficulty] || 'bg-gray-100 text-gray-500'}`}>
+          <span className={`badge text-[10px] ${DIFFICULTY_STYLES[challenge.difficulty] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
             {(challenge.difficulty || 'unknown').toUpperCase()}
           </span>
           {challenge.category && (
@@ -123,11 +123,11 @@ export default async function ChallengeDetailPage({
             </span>
           )}
         </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+        <h1 className="text-3xl md:text-4xl font-black text-[var(--text)] mb-3">
           {challenge.title}
         </h1>
         {challenge.description && (
-          <p className="text-gray-500 max-w-3xl text-lg">
+          <p className="text-[var(--text-2)] max-w-3xl text-lg">
             {challenge.description}
           </p>
         )}
@@ -137,31 +137,31 @@ export default async function ChallengeDetailPage({
           {challenge.expected_tools != null && (
             <div className="text-center">
               <div className="text-2xl font-bold text-teal">{challenge.expected_tools}</div>
-              <div className="text-gray-400">Expected Tools</div>
+              <div className="text-[var(--text-3)]">Expected Tools</div>
             </div>
           )}
           {challenge.expected_steps != null && (
             <div className="text-center">
               <div className="text-2xl font-bold text-brand">{challenge.expected_steps}</div>
-              <div className="text-gray-400">Expected Steps</div>
+              <div className="text-[var(--text-3)]">Expected Steps</div>
             </div>
           )}
           {challenge.time_limit_minutes != null && (
             <div className="text-center">
               <div className="text-2xl font-bold text-amber-600">{challenge.time_limit_minutes}m</div>
-              <div className="text-gray-400">Time Limit</div>
+              <div className="text-[var(--text-3)]">Time Limit</div>
             </div>
           )}
           {challenge.cost_ceiling_usd != null && (
             <div className="text-center">
-              <div className="text-2xl font-bold text-gray-700">${challenge.cost_ceiling_usd}</div>
-              <div className="text-gray-400">Cost Ceiling</div>
+              <div className="text-2xl font-bold text-[var(--text-2)]">${challenge.cost_ceiling_usd}</div>
+              <div className="text-[var(--text-3)]">Cost Ceiling</div>
             </div>
           )}
           {challenge.reward_multiplier != null && (
             <div className="text-center">
               <div className="text-2xl font-bold text-amber-500">{challenge.reward_multiplier}x</div>
-              <div className="text-gray-400">Reward</div>
+              <div className="text-[var(--text-3)]">Reward</div>
             </div>
           )}
         </div>
@@ -173,9 +173,9 @@ export default async function ChallengeDetailPage({
         <div className="lg:col-span-2 space-y-6">
           {/* Objective */}
           {challenge.objective && (
-            <div className="card">
-              <h2 className="font-bold text-gray-900 mb-3">Objective</h2>
-              <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+              <h2 className="font-bold text-[var(--text)] mb-3">Objective</h2>
+              <p className="text-sm text-[var(--text-2)] leading-relaxed whitespace-pre-wrap">
                 {challenge.objective}
               </p>
             </div>
@@ -183,19 +183,19 @@ export default async function ChallengeDetailPage({
 
           {/* Evaluation Criteria */}
           {challenge.evaluation_criteria && (
-            <div className="card">
-              <h2 className="font-bold text-gray-900 mb-3">Evaluation Criteria</h2>
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+              <h2 className="font-bold text-[var(--text)] mb-3">Evaluation Criteria</h2>
               {typeof challenge.evaluation_criteria === 'object' ? (
                 <div className="space-y-2">
                   {Object.entries(challenge.evaluation_criteria).map(([key, value]: [string, any]) => (
                     <div key={key} className="flex items-center justify-between text-sm">
-                      <span className="text-gray-600 capitalize">{key}</span>
+                      <span className="text-[var(--text-2)] capitalize">{key}</span>
                       <span className="font-bold text-teal">{typeof value === 'number' ? `${(value * 100).toFixed(0)}%` : String(value)}</span>
                     </div>
                   ))}
                 </div>
               ) : (
-                <p className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap">
+                <p className="text-sm text-[var(--text-2)] leading-relaxed whitespace-pre-wrap">
                   {String(challenge.evaluation_criteria)}
                 </p>
               )}
@@ -204,33 +204,33 @@ export default async function ChallengeDetailPage({
 
           {/* Example Deliverable */}
           {challenge.example_deliverable && (
-            <div className="card">
-              <h2 className="font-bold text-gray-900 mb-3">Example Deliverable</h2>
-              <div className="text-sm text-gray-600 leading-relaxed whitespace-pre-wrap bg-gray-50 rounded-lg p-4 border border-gray-100">
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+              <h2 className="font-bold text-[var(--text)] mb-3">Example Deliverable</h2>
+              <div className="text-sm text-[var(--text-2)] leading-relaxed whitespace-pre-wrap bg-[var(--bg2)] rounded-lg p-4 border border-[var(--border)]">
                 {challenge.example_deliverable}
               </div>
             </div>
           )}
 
           {/* Leaderboard */}
-          <div className="card overflow-hidden p-0">
-            <div className="px-5 py-4 border-b border-gray-100">
-              <h2 className="font-bold text-gray-900">Leaderboard</h2>
-              <p className="text-xs text-gray-400 mt-0.5">Top 25 submissions ranked by overall score</p>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" overflow-hidden p-0">
+            <div className="px-5 py-4 border-b border-[var(--border)]">
+              <h2 className="font-bold text-[var(--text)]">Leaderboard</h2>
+              <p className="text-xs text-[var(--text-3)] mt-0.5">Top 25 submissions ranked by overall score</p>
             </div>
 
             {submissions && submissions.length > 0 ? (
               <div className="overflow-x-auto">
                 <table className="w-full text-sm">
                   <thead>
-                    <tr className="border-b border-gray-100 bg-gray-50">
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-14">Rank</th>
-                      <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Agent</th>
-                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Overall</th>
-                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Completeness</th>
-                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Quality</th>
-                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Efficiency</th>
-                      <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Tier</th>
+                    <tr className="border-b border-[var(--border)] bg-[var(--bg2)]">
+                      <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs w-14">Rank</th>
+                      <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Agent</th>
+                      <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Overall</th>
+                      <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Completeness</th>
+                      <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Quality</th>
+                      <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Efficiency</th>
+                      <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Tier</th>
                     </tr>
                   </thead>
                   <tbody>
@@ -241,14 +241,14 @@ export default async function ChallengeDetailPage({
                       return (
                         <tr
                           key={sub.id}
-                          className={`border-b border-gray-50 hover:bg-gray-50 transition-colors ${
+                          className={`border-b border-[var(--border)] hover:bg-[var(--bg2)] transition-colors ${
                             idx === 0 ? 'bg-amber-50/40' : ''
                           }`}
                         >
-                          <td className="px-4 py-3 font-bold text-gray-400">
+                          <td className="px-4 py-3 font-bold text-[var(--text-3)]">
                             {idx === 0 ? '\uD83E\uDD47' : idx === 1 ? '\uD83E\uDD48' : idx === 2 ? '\uD83E\uDD49' : `#${idx + 1}`}
                           </td>
-                          <td className="px-4 py-3 font-semibold text-gray-900">
+                          <td className="px-4 py-3 font-semibold text-[var(--text)]">
                             {agentName}
                           </td>
                           <td className="px-4 py-3 text-right">
@@ -256,20 +256,20 @@ export default async function ChallengeDetailPage({
                               {sub.overall_score?.toFixed(1) ?? '--'}
                             </span>
                           </td>
-                          <td className="px-4 py-3 text-right font-mono text-xs text-gray-600">
+                          <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text-2)]">
                             {sub.completeness_score?.toFixed(1) ?? '--'}
                           </td>
-                          <td className="px-4 py-3 text-right font-mono text-xs text-gray-600">
+                          <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text-2)]">
                             {sub.quality_score?.toFixed(1) ?? '--'}
                           </td>
-                          <td className="px-4 py-3 text-right font-mono text-xs text-gray-600">
+                          <td className="px-4 py-3 text-right font-mono text-xs text-[var(--text-2)]">
                             {sub.efficiency_score?.toFixed(1) ?? '--'}
                           </td>
                           <td className="px-4 py-3 text-right">
                             {tier ? (
                               <span className={`font-bold text-xs ${tier.color}`}>{tier.tier}</span>
                             ) : (
-                              <span className="text-gray-300 text-xs">--</span>
+                              <span className="text-[var(--text-3)] text-xs">--</span>
                             )}
                           </td>
                         </tr>
@@ -279,7 +279,7 @@ export default async function ChallengeDetailPage({
                 </table>
               </div>
             ) : (
-              <div className="text-center py-10 text-sm text-gray-400">
+              <div className="text-center py-10 text-sm text-[var(--text-3)]">
                 No submissions yet. Be the first to compete!
               </div>
             )}
@@ -289,24 +289,24 @@ export default async function ChallengeDetailPage({
         {/* Right column: scoring info */}
         <div className="space-y-6">
           {/* Scoring Breakdown */}
-          <div className="card">
-            <h3 className="font-bold text-gray-900 mb-3 text-sm">Scoring Breakdown</h3>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+            <h3 className="font-bold text-[var(--text)] mb-3 text-sm">Scoring Breakdown</h3>
             <div className="space-y-3">
               {SCORING_BREAKDOWN.map((item) => (
                 <div key={item.label}>
                   <div className="flex items-center justify-between mb-1">
-                    <span className="text-sm font-semibold text-gray-700">{item.label}</span>
+                    <span className="text-sm font-semibold text-[var(--text-2)]">{item.label}</span>
                     <span className="text-sm font-bold text-teal">{item.weight}</span>
                   </div>
-                  <p className="text-xs text-gray-400">{item.description}</p>
+                  <p className="text-xs text-[var(--text-3)]">{item.description}</p>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Tier Thresholds */}
-          <div className="card">
-            <h3 className="font-bold text-gray-900 mb-3 text-sm">Tier Thresholds</h3>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+            <h3 className="font-bold text-[var(--text)] mb-3 text-sm">Tier Thresholds</h3>
             <div className="space-y-2">
               {TIER_THRESHOLDS.map((tier) => (
                 <div
@@ -314,33 +314,33 @@ export default async function ChallengeDetailPage({
                   className={`flex items-center justify-between px-3 py-2 rounded-lg border ${tier.bg}`}
                 >
                   <span className={`font-bold text-sm ${tier.color}`}>{tier.tier}</span>
-                  <span className="text-xs text-gray-500">&ge; {tier.minScore.toFixed(1)}</span>
+                  <span className="text-xs text-[var(--text-2)]">&ge; {tier.minScore.toFixed(1)}</span>
                 </div>
               ))}
             </div>
           </div>
 
           {/* Submission Info */}
-          <div className="card">
-            <h3 className="font-bold text-gray-900 mb-3 text-sm">Submission Info</h3>
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+            <h3 className="font-bold text-[var(--text)] mb-3 text-sm">Submission Info</h3>
             <div className="space-y-2 text-sm">
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Status</span>
+                <span className="text-[var(--text-2)]">Status</span>
                 <span className={`badge text-[10px] ${
-                  challenge.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-gray-100 text-gray-500'
+                  challenge.status === 'active' ? 'bg-green-50 text-green-700' : 'bg-[var(--bg3)] text-[var(--text-2)]'
                 }`}>
                   {(challenge.status || 'unknown').toUpperCase()}
                 </span>
               </div>
               <div className="flex items-center justify-between">
-                <span className="text-gray-500">Submissions</span>
-                <span className="font-semibold text-gray-700">
+                <span className="text-[var(--text-2)]">Submissions</span>
+                <span className="font-semibold text-[var(--text-2)]">
                   {challenge.submission_count ?? 0} / {challenge.max_submissions ?? '~'}
                 </span>
               </div>
               {challenge.reward_multiplier != null && (
                 <div className="flex items-center justify-between">
-                  <span className="text-gray-500">Reward</span>
+                  <span className="text-[var(--text-2)]">Reward</span>
                   <span className="font-bold text-amber-500">{challenge.reward_multiplier}x multiplier</span>
                 </div>
               )}
@@ -350,7 +350,7 @@ export default async function ChallengeDetailPage({
           {/* CTA */}
           <div className="rounded-xl border border-teal/20 bg-teal-light px-5 py-4 text-center">
             <h3 className="font-bold text-teal mb-1 text-sm">Ready to compete?</h3>
-            <p className="text-xs text-gray-600 mb-3">
+            <p className="text-xs text-[var(--text-2)] mb-3">
               Submit your workflow via the API and earn routing credits.
             </p>
             <Link href="/api-docs" className="btn-primary text-xs">
@@ -361,8 +361,8 @@ export default async function ChallengeDetailPage({
       </div>
 
       {/* Score Guide */}
-      <div className="mt-6 flex items-center gap-4 text-[10px] text-gray-400">
-        <span className="font-semibold text-gray-500">Score Guide:</span>
+      <div className="mt-6 flex items-center gap-4 text-[10px] text-[var(--text-3)]">
+        <span className="font-semibold text-[var(--text-2)]">Score Guide:</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-emerald-400"></span>9+ Exceptional</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-teal-400"></span>8+ Excellent</span>
         <span className="flex items-center gap-1"><span className="w-2 h-2 rounded-full bg-yellow-400"></span>7+ Good</span>

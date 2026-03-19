@@ -94,20 +94,20 @@ export default async function ReportPage({ params }: { params: { slug: string } 
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/olympics" className="hover:text-brand transition-colors">Olympics</Link>
         <span>/</span>
-        <span className="text-gray-600">Event {event.event_number}</span>
+        <span className="text-[var(--text-2)]">Event {event.event_number}</span>
       </div>
 
       {/* Header */}
       <div className="mb-8">
         <div className="flex items-center gap-3 mb-2">
           <StatusBadge status={event.status} />
-          <span className="text-xs font-bold text-gray-400">EVENT {event.event_number}</span>
+          <span className="text-xs font-bold text-[var(--text-3)]">EVENT {event.event_number}</span>
         </div>
-        <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">{event.name}</h1>
-        <p className="text-gray-500">{event.description}</p>
+        <h1 className="text-2xl md:text-3xl font-black text-[var(--text)] mb-2">{event.name}</h1>
+        <p className="text-[var(--text-2)]">{event.description}</p>
       </div>
 
       {/* Stats Overview */}
@@ -119,9 +119,9 @@ export default async function ReportPage({ params }: { params: { slug: string } 
       </div>
 
       {/* Methodology */}
-      <div className="card mb-8">
-        <h2 className="font-bold text-gray-900 mb-3">Methodology</h2>
-        <div className="text-sm text-gray-600 space-y-2">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-8">
+        <h2 className="font-bold text-[var(--text)] mb-3">Methodology</h2>
+        <div className="text-sm text-[var(--text-2)] space-y-2">
           <p>
             Skills are benchmarked using the <strong>{benchmarkProfile?.name || 'standard'}</strong> profile.
             Scoring formula version: {benchmarkProfile?.scoring_formula_version || '1.0'}.
@@ -141,7 +141,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
 
       {/* Rankings */}
       <div className="mb-8">
-        <h2 className="text-xl font-bold text-gray-900 mb-4">Rankings</h2>
+        <h2 className="text-xl font-bold text-[var(--text)] mb-4">Rankings</h2>
 
         {competitors && competitors.length > 0 ? (
           <div className="space-y-3">
@@ -161,7 +161,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
                       <div className="flex items-center gap-2 mb-1">
                         <Link
                           href={`/mcp-servers/${skill?.slug}`}
-                          className="font-bold text-gray-900 hover:text-brand transition-colors"
+                          className="font-bold text-[var(--text)] hover:text-brand transition-colors"
                         >
                           {skill?.canonical_name}
                         </Link>
@@ -169,7 +169,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
                           <span className="badge bg-teal-light text-teal text-[10px]">Official</span>
                         )}
                       </div>
-                      <p className="text-sm text-gray-500 mb-3">{skill?.short_description}</p>
+                      <p className="text-sm text-[var(--text-2)] mb-3">{skill?.short_description}</p>
 
                       {/* Score breakdown */}
                       {showScore && scores ? (
@@ -181,7 +181,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
                           <ScoreDimension label="Trust" value={scores.trust_score} />
                         </div>
                       ) : (
-                        <p className="text-sm text-gray-400 italic">
+                        <p className="text-sm text-[var(--text-3)] italic">
                           Accumulating data — {comp.sample_size}/{minSamples} runs recorded
                         </p>
                       )}
@@ -194,12 +194,12 @@ export default async function ReportPage({ params }: { params: { slug: string } 
                           <div className={`text-2xl font-black ${getValueColor(comp.value_score)}`}>
                             {formatScore(comp.value_score)}
                           </div>
-                          <div className="text-[10px] text-gray-400">Value Score</div>
+                          <div className="text-[10px] text-[var(--text-3)]">Value Score</div>
                         </>
                       ) : (
-                        <div className="text-sm text-gray-300">—</div>
+                        <div className="text-sm text-[var(--text-3)]">—</div>
                       )}
-                      <div className="text-[10px] text-gray-400 mt-1">
+                      <div className="text-[10px] text-[var(--text-3)] mt-1">
                         {comp.sample_size} run{comp.sample_size !== 1 ? 's' : ''}
                       </div>
                     </div>
@@ -209,16 +209,16 @@ export default async function ReportPage({ params }: { params: { slug: string } 
             })}
           </div>
         ) : (
-          <div className="text-center py-12 text-gray-400">
+          <div className="text-center py-12 text-[var(--text-3)]">
             <p>No competitors registered for this event yet.</p>
           </div>
         )}
       </div>
 
       {/* CTA */}
-      <div className="card text-center">
-        <h3 className="font-bold text-gray-900 mb-2">Help Build This Benchmark</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" text-center">
+        <h3 className="font-bold text-[var(--text)] mb-2">Help Build This Benchmark</h3>
+        <p className="text-sm text-[var(--text-2)] mb-4">
           Run the skills in this event against real tasks and submit your results.
           Comparative evaluations earn 2.5x routing credits.
         </p>
@@ -234,30 +234,30 @@ export default async function ReportPage({ params }: { params: { slug: string } 
 function PublishedReport({ report }: { report: any }) {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/olympics" className="hover:text-brand transition-colors">Olympics</Link>
         <span>/</span>
-        <span className="text-gray-600">Report</span>
+        <span className="text-[var(--text-2)]">Report</span>
       </div>
 
-      <h1 className="text-2xl md:text-3xl font-black text-gray-900 mb-2">{report.title}</h1>
-      <p className="text-gray-500 mb-6">{report.summary}</p>
+      <h1 className="text-2xl md:text-3xl font-black text-[var(--text)] mb-2">{report.title}</h1>
+      <p className="text-[var(--text-2)] mb-6">{report.summary}</p>
 
-      <div className="card mb-6">
-        <h2 className="font-bold text-gray-900 mb-3">Methodology</h2>
-        <p className="text-sm text-gray-600">{report.methodology}</p>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-6">
+        <h2 className="font-bold text-[var(--text)] mb-3">Methodology</h2>
+        <p className="text-sm text-[var(--text-2)]">{report.methodology}</p>
       </div>
 
       {report.findings_json && Object.keys(report.findings_json).length > 0 && (
-        <div className="card">
-          <h2 className="font-bold text-gray-900 mb-3">Findings</h2>
-          <pre className="text-xs text-gray-600 overflow-x-auto">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+          <h2 className="font-bold text-[var(--text)] mb-3">Findings</h2>
+          <pre className="text-xs text-[var(--text-2)] overflow-x-auto">
             {JSON.stringify(report.findings_json, null, 2)}
           </pre>
         </div>
       )}
 
-      <div className="text-sm text-gray-400 mt-6">
+      <div className="text-sm text-[var(--text-3)] mt-6">
         Sample size: {report.sample_size} outcomes
         {report.published_at && ` · Published ${new Date(report.published_at).toLocaleDateString()}`}
       </div>
@@ -267,9 +267,9 @@ function PublishedReport({ report }: { report: any }) {
 
 function StatCard({ label, value }: { label: string; value: number | string }) {
   return (
-    <div className="card text-center">
-      <div className="text-xl font-bold text-gray-900">{value}</div>
-      <div className="text-xs text-gray-400">{label}</div>
+    <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" text-center">
+      <div className="text-xl font-bold text-[var(--text)]">{value}</div>
+      <div className="text-xs text-[var(--text-3)]">{label}</div>
     </div>
   )
 }
@@ -277,8 +277,8 @@ function StatCard({ label, value }: { label: string; value: number | string }) {
 function ScoreDimension({ label, value }: { label: string; value: number | null }) {
   return (
     <div className="text-center">
-      <div className="text-xs text-gray-400 mb-1">{label}</div>
-      <div className={`text-sm font-bold ${value != null ? getValueColor(value) : 'text-gray-300'}`}>
+      <div className="text-xs text-[var(--text-3)] mb-1">{label}</div>
+      <div className={`text-sm font-bold ${value != null ? getValueColor(value) : 'text-[var(--text-3)]'}`}>
         {value != null ? formatScore(value) : '—'}
       </div>
     </div>
@@ -289,11 +289,11 @@ function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     open: 'bg-green-50 text-green-700',
     running: 'bg-blue-50 text-blue-700',
-    completed: 'bg-gray-100 text-gray-600',
+    completed: 'bg-[var(--bg3)] text-[var(--text-2)]',
     paused: 'bg-amber-50 text-amber-700',
   }
   return (
-    <span className={`badge text-[10px] ${styles[status] || 'bg-gray-100 text-gray-500'}`}>
+    <span className={`badge text-[10px] ${styles[status] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
       {status.toUpperCase()}
     </span>
   )

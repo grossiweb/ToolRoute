@@ -87,17 +87,17 @@ export default async function MCPServerPage({ params }: { params: { slug: string
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/servers" className="hover:text-brand transition-colors">Servers</Link>
         <span>/</span>
-        <span className="text-gray-600">{skill.canonical_name}</span>
+        <span className="text-[var(--text-2)]">{skill.canonical_name}</span>
       </div>
 
       {/* Header */}
       <div className="flex items-start justify-between gap-6 mb-4">
         <div className="flex-1">
           <div className="flex items-center gap-3 mb-1 flex-wrap">
-            <h1 className="text-3xl font-black text-gray-900">{skill.canonical_name} MCP Server</h1>
+            <h1 className="text-3xl font-black text-[var(--text)]">{skill.canonical_name} MCP Server</h1>
             {skill.vendor_type === 'official' && (
               <span className="badge bg-teal-light text-teal text-xs">Official</span>
             )}
@@ -105,9 +105,9 @@ export default async function MCPServerPage({ params }: { params: { slug: string
               <span className="badge bg-brand-light text-brand text-xs">Grade: {grade}</span>
             )}
           </div>
-          <p className="text-lg text-gray-600">{skill.short_description}</p>
+          <p className="text-lg text-[var(--text-2)]">{skill.short_description}</p>
 
-          <div className="flex items-center gap-4 mt-4 text-sm text-gray-500">
+          <div className="flex items-center gap-4 mt-4 text-sm text-[var(--text-2)]">
             {skill.repo_url && (
               <a href={skill.repo_url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-1 hover:text-brand transition-colors">
                 <GitHubIcon />
@@ -135,29 +135,29 @@ export default async function MCPServerPage({ params }: { params: { slug: string
       </div>
 
       {/* Trust signals bar */}
-      <div className="flex items-center gap-4 flex-wrap bg-gray-50 border border-gray-200 rounded-xl px-5 py-3 mb-8">
+      <div className="flex items-center gap-4 flex-wrap bg-[var(--bg2)] border border-[var(--border)] rounded-xl px-5 py-3 mb-8">
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400 font-medium">Value Score:</span>
-          <span className="font-bold text-gray-900">
+          <span className="text-[var(--text-3)] font-medium">Value Score:</span>
+          <span className="font-bold text-[var(--text)]">
             {score?.value_score != null ? formatScore(score.value_score) : '--'}
           </span>
         </div>
-        <div className="w-px h-5 bg-gray-200" />
+        <div className="w-px h-5 bg-[var(--bg3)]" />
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400 font-medium">Sample size:</span>
-          <span className="font-bold text-gray-900">{totalSampleSize} runs</span>
+          <span className="text-[var(--text-3)] font-medium">Sample size:</span>
+          <span className="font-bold text-[var(--text)]">{totalSampleSize} runs</span>
         </div>
-        <div className="w-px h-5 bg-gray-200" />
+        <div className="w-px h-5 bg-[var(--bg3)]" />
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400 font-medium">Confidence:</span>
+          <span className="text-[var(--text-3)] font-medium">Confidence:</span>
           <span className={`inline-block px-2 py-0.5 rounded-full text-xs font-semibold ${confidence.color}`}>
             {confidence.label}
           </span>
         </div>
-        <div className="w-px h-5 bg-gray-200" />
+        <div className="w-px h-5 bg-[var(--bg3)]" />
         <div className="flex items-center gap-2 text-sm">
-          <span className="text-gray-400 font-medium">Last updated:</span>
-          <span className="font-bold text-gray-900">
+          <span className="text-[var(--text-3)] font-medium">Last updated:</span>
+          <span className="font-bold text-[var(--text)]">
             {daysSinceUpdate != null
               ? daysSinceUpdate === 0 ? 'Today' : `${daysSinceUpdate}d ago`
               : 'No data yet'}
@@ -167,8 +167,8 @@ export default async function MCPServerPage({ params }: { params: { slug: string
 
       {/* Score breakdown */}
       {score && (
-        <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
-          <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Score Breakdown</h2>
+        <div className="bg-[var(--bg2)] border border-[var(--border)] rounded-xl p-6 mb-8">
+          <h2 className="text-sm font-bold text-[var(--text-2)] uppercase tracking-wider mb-4">Score Breakdown</h2>
           <div className="grid grid-cols-2 md:grid-cols-5 gap-4">
             <ScoreBlock label="Output Quality" value={score.output_score} description="How good are the results?" />
             <ScoreBlock label="Reliability" value={score.reliability_score} description="Does it work consistently?" />
@@ -176,7 +176,7 @@ export default async function MCPServerPage({ params }: { params: { slug: string
             <ScoreBlock label="Cost" value={score.cost_score} description="Is it worth the price?" />
             <ScoreBlock label="Trust" value={score.trust_score} description="Is it safe to use?" />
           </div>
-          <p className="text-xs text-gray-400 mt-4">
+          <p className="text-xs text-[var(--text-3)] mt-4">
             All scores are out of 10. {score.overall_score ? `Based on accumulated telemetry.` : 'Accumulating data.'}
           </p>
         </div>
@@ -188,14 +188,14 @@ export default async function MCPServerPage({ params }: { params: { slug: string
       {/* Description */}
       {skill.long_description && (
         <div className="mb-8">
-          <h2 className="text-lg font-bold text-gray-900 mb-3">About</h2>
-          <p className="text-gray-600 leading-relaxed">{skill.long_description}</p>
+          <h2 className="text-lg font-bold text-[var(--text)] mb-3">About</h2>
+          <p className="text-[var(--text-2)] leading-relaxed">{skill.long_description}</p>
         </div>
       )}
 
       {/* Install */}
       <div className="mb-8">
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Quick Install</h2>
+        <h2 className="text-lg font-bold text-[var(--text)] mb-3">Quick Install</h2>
         <div className="bg-gray-900 text-green-400 rounded-xl p-4 font-mono text-sm">
           {skill.slug === 'context7' && <span>npx ctx7 setup</span>}
           {skill.slug === 'playwright-mcp' && <span>npm install @playwright/mcp</span>}
@@ -210,38 +210,38 @@ export default async function MCPServerPage({ params }: { params: { slug: string
       <FallbackSection skillId={skill.id} skillSlug={skill.slug} skillName={skill.canonical_name} />
 
       {/* Badge for maintainers */}
-      <div className="mb-8 bg-gray-50 border border-gray-200 rounded-xl p-6">
-        <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Add Badge to Your README</h2>
-        <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-gray-300 overflow-x-auto mb-3">
+      <div className="mb-8 bg-[var(--bg2)] border border-[var(--border)] rounded-xl p-6">
+        <h2 className="text-sm font-bold text-[var(--text-2)] uppercase tracking-wider mb-3">Add Badge to Your README</h2>
+        <div className="bg-gray-900 rounded-lg p-3 font-mono text-xs text-[var(--text-3)] overflow-x-auto mb-3">
           {`[![ToolRoute Score](https://toolroute.io/api/badge/${skill.slug})](https://toolroute.io/mcp-servers/${skill.slug})`}
         </div>
         <div className="flex items-center gap-3">
-          <div className="flex items-center gap-2 bg-gray-200 rounded-full px-3 py-1.5">
+          <div className="flex items-center gap-2 bg-[var(--bg3)] rounded-full px-3 py-1.5">
             <span className="text-xs font-bold text-teal">ToolRoute</span>
-            <span className="text-xs text-gray-400">|</span>
-            <span className="text-xs font-bold text-gray-800">{score?.value_score != null ? `${formatScore(score.value_score)}/10` : score?.overall_score != null ? `${formatScore(score.overall_score)}/10` : 'unrated'}</span>
+            <span className="text-xs text-[var(--text-3)]">|</span>
+            <span className="text-xs font-bold text-[var(--text)]">{score?.value_score != null ? `${formatScore(score.value_score)}/10` : score?.overall_score != null ? `${formatScore(score.overall_score)}/10` : 'unrated'}</span>
           </div>
-          <span className="text-xs text-gray-500">Badge updates automatically as your score changes</span>
+          <span className="text-xs text-[var(--text-2)]">Badge updates automatically as your score changes</span>
         </div>
       </div>
 
       {/* Contribute */}
       <div className="border border-brand/30 bg-brand-light rounded-xl p-6">
         <h2 className="text-base font-bold text-brand mb-2">Help improve this score</h2>
-        <p className="text-sm text-gray-600 mb-4">
+        <p className="text-sm text-[var(--text-2)] mb-4">
           Used this MCP server? Report your execution outcome and earn routing credits that improve your future recommendations.
         </p>
         <div className="space-y-2 mb-4">
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-700">Report an outcome</span>
+            <span className="text-[var(--text-2)]">Report an outcome</span>
             <span className="font-semibold text-teal-700">+3 to +10 routing credits</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-700">Compare two servers</span>
+            <span className="text-[var(--text-2)]">Compare two servers</span>
             <span className="font-semibold text-teal-700">+8 to +25 routing credits</span>
           </div>
           <div className="flex items-center justify-between text-sm">
-            <span className="text-gray-700">Submit a benchmark package</span>
+            <span className="text-[var(--text-2)]">Submit a benchmark package</span>
             <span className="font-semibold text-teal-700">+15 to +40 routing credits</span>
           </div>
         </div>
@@ -259,17 +259,17 @@ export default async function MCPServerPage({ params }: { params: { slug: string
 function ScoreBlock({ label, value, description }: { label: string; value: number | null; description: string }) {
   if (value == null) return (
     <div className="text-center">
-      <div className="text-2xl font-black text-gray-300 mb-1">—</div>
-      <div className="text-xs font-semibold text-gray-500">{label}</div>
-      <div className="text-xs text-gray-400 mt-0.5">{description}</div>
+      <div className="text-2xl font-black text-[var(--text-3)] mb-1">—</div>
+      <div className="text-xs font-semibold text-[var(--text-2)]">{label}</div>
+      <div className="text-xs text-[var(--text-3)] mt-0.5">{description}</div>
     </div>
   )
   const color = value >= 8.5 ? 'text-teal' : value >= 7 ? 'text-brand' : value >= 5 ? 'text-amber-600' : 'text-red-600'
   return (
     <div className="text-center">
       <div className={`text-2xl font-black mb-1 ${color}`}>{formatScore(value)}</div>
-      <div className="text-xs font-semibold text-gray-700">{label}</div>
-      <div className="text-xs text-gray-400 mt-0.5">{description}</div>
+      <div className="text-xs font-semibold text-[var(--text-2)]">{label}</div>
+      <div className="text-xs text-[var(--text-3)] mt-0.5">{description}</div>
     </div>
   )
 }
@@ -291,7 +291,7 @@ function getConfidenceLabel(sampleSize: number): { label: string; color: string 
   if (sampleSize >= 50) return { label: 'High', color: 'text-teal-700 bg-teal-50' }
   if (sampleSize >= 20) return { label: 'Medium', color: 'text-amber-700 bg-amber-50' }
   if (sampleSize >= 5) return { label: 'Low', color: 'text-orange-700 bg-orange-50' }
-  return { label: 'Accumulating', color: 'text-gray-500 bg-gray-100' }
+  return { label: 'Accumulating', color: 'text-[var(--text-2)] bg-[var(--bg3)]' }
 }
 
 async function FallbackSection({ skillId, skillSlug, skillName }: { skillId: string; skillSlug: string; skillName: string }) {
@@ -310,14 +310,14 @@ async function FallbackSection({ skillId, skillSlug, skillName }: { skillId: str
   const alternatives = (edges || []).filter((e: any) => e.skill_b?.slug)
 
   return (
-    <div className="mb-8 bg-gray-50 border border-gray-200 rounded-xl p-6">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-3">Fallback Intelligence</h2>
+    <div className="mb-8 bg-[var(--bg2)] border border-[var(--border)] rounded-xl p-6">
+      <h2 className="text-sm font-bold text-[var(--text-2)] uppercase tracking-wider mb-3">Fallback Intelligence</h2>
       {alternatives.length > 0 ? (
         <div className="space-y-2">
           {alternatives.map((edge: any) => (
             <div key={edge.skill_b.slug} className="flex items-center gap-2 text-sm">
-              <span className="text-gray-500">If {skillName} fails</span>
-              <span className="text-gray-400">&rarr;</span>
+              <span className="text-[var(--text-2)]">If {skillName} fails</span>
+              <span className="text-[var(--text-3)]">&rarr;</span>
               <a href={`/mcp-servers/${edge.skill_b.slug}`} className="font-medium text-brand hover:underline">
                 {edge.skill_b.canonical_name}
               </a>
@@ -325,8 +325,8 @@ async function FallbackSection({ skillId, skillSlug, skillName }: { skillId: str
           ))}
         </div>
       ) : (
-        <p className="text-sm text-gray-500">
-          Fallback routing available via <code className="bg-gray-200 px-1.5 py-0.5 rounded text-xs font-mono">POST /api/route</code> — the routing engine automatically selects the best alternative when this server is unavailable or underperforming.
+        <p className="text-sm text-[var(--text-2)]">
+          Fallback routing available via <code className="bg-[var(--bg3)] px-1.5 py-0.5 rounded text-xs font-mono">POST /api/route</code> — the routing engine automatically selects the best alternative when this server is unavailable or underperforming.
         </p>
       )}
     </div>
@@ -348,12 +348,12 @@ async function BenchmarkSection({ skillId }: { skillId: string }) {
   if (!rollups || rollups.length === 0) return null
 
   return (
-    <div className="bg-gray-50 border border-gray-200 rounded-xl p-6 mb-8">
-      <h2 className="text-sm font-bold text-gray-500 uppercase tracking-wider mb-4">Benchmark Performance</h2>
+    <div className="bg-[var(--bg2)] border border-[var(--border)] rounded-xl p-6 mb-8">
+      <h2 className="text-sm font-bold text-[var(--text-2)] uppercase tracking-wider mb-4">Benchmark Performance</h2>
       <div className="overflow-x-auto">
         <table className="w-full text-sm">
           <thead>
-            <tr className="text-left text-xs font-semibold text-gray-500 uppercase tracking-wider">
+            <tr className="text-left text-xs font-semibold text-[var(--text-2)] uppercase tracking-wider">
               <th className="pb-3 pr-4">Profile</th>
               <th className="pb-3 pr-4 text-right">Samples</th>
               <th className="pb-3 pr-4 text-right">Success Rate</th>
@@ -362,22 +362,22 @@ async function BenchmarkSection({ skillId }: { skillId: string }) {
               <th className="pb-3 text-right">Confidence</th>
             </tr>
           </thead>
-          <tbody className="divide-y divide-gray-200">
+          <tbody className="divide-y divide-[var(--border)]">
             {rollups.map((r: any) => {
               const conf = getConfidenceLabel(r.sample_size ?? 0)
               return (
                 <tr key={r.id}>
-                  <td className="py-2.5 pr-4 font-medium text-gray-900">
+                  <td className="py-2.5 pr-4 font-medium text-[var(--text)]">
                     {r.benchmark_profiles?.name ?? 'Unknown'}
                   </td>
-                  <td className="py-2.5 pr-4 text-right text-gray-600">{r.sample_size ?? 0}</td>
-                  <td className="py-2.5 pr-4 text-right text-gray-600">
+                  <td className="py-2.5 pr-4 text-right text-[var(--text-2)]">{r.sample_size ?? 0}</td>
+                  <td className="py-2.5 pr-4 text-right text-[var(--text-2)]">
                     {r.success_rate != null ? `${(r.success_rate * 100).toFixed(0)}%` : '--'}
                   </td>
-                  <td className="py-2.5 pr-4 text-right text-gray-600">
+                  <td className="py-2.5 pr-4 text-right text-[var(--text-2)]">
                     {r.avg_value_score != null ? r.avg_value_score.toFixed(1) : '--'}
                   </td>
-                  <td className="py-2.5 pr-4 text-right text-gray-600">
+                  <td className="py-2.5 pr-4 text-right text-[var(--text-2)]">
                     {r.cost_per_useful_outcome_usd != null ? `$${r.cost_per_useful_outcome_usd.toFixed(3)}` : '--'}
                   </td>
                   <td className="py-2.5 text-right">

@@ -41,51 +41,51 @@ export default function VerifyPage() {
 
   return (
     <div className="max-w-2xl mx-auto px-4 py-10">
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4">
-          AGENT VERIFICATION
-        </div>
-        <h1 className="text-3xl font-black text-gray-900 mb-3">Verify your agent</h1>
-        <p className="text-gray-500">
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">AGENT VERIFICATION</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          Verify your<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>agent.</em>
+        </h1>
+        <p style={{ color: 'var(--text-2)' }}>
           Tweet about ToolRoute to get verified status. Takes 30 seconds.
         </p>
       </div>
 
       {/* Benefits */}
-      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8">
-        <div className="border border-gray-200 rounded-xl p-4 bg-white text-center">
+      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 mb-8 mt-8">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="text-center">
           <div className="text-2xl mb-2">2&times;</div>
-          <div className="text-sm font-bold text-gray-900">Credit Multiplier</div>
-          <div className="text-xs text-gray-500 mt-1">Earn double routing credits on every telemetry report</div>
+          <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>Credit Multiplier</div>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-2)' }}>Earn double routing credits on every telemetry report</div>
         </div>
-        <div className="border border-gray-200 rounded-xl p-4 bg-white text-center">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="text-center">
           <div className="text-2xl mb-2">&#10003;</div>
-          <div className="text-sm font-bold text-gray-900">Verified Badge</div>
-          <div className="text-xs text-gray-500 mt-1">Stand out on leaderboards and agent profiles</div>
+          <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>Verified Badge</div>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-2)' }}>Stand out on leaderboards and agent profiles</div>
         </div>
-        <div className="border border-gray-200 rounded-xl p-4 bg-white text-center">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="text-center">
           <div className="text-2xl mb-2">&#9733;</div>
-          <div className="text-sm font-bold text-gray-900">Priority Routing</div>
-          <div className="text-xs text-gray-500 mt-1">Higher confidence scores and priority in rankings</div>
+          <div className="text-sm font-bold" style={{ color: 'var(--text)' }}>Priority Routing</div>
+          <div className="text-xs mt-1" style={{ color: 'var(--text-2)' }}>Higher confidence scores and priority in rankings</div>
         </div>
       </div>
 
       {step === 'info' && (
         <div className="space-y-6">
           {/* Step 1: Tweet */}
-          <div className="border border-gray-200 rounded-xl p-5 bg-white">
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
             <div className="flex items-center gap-3 mb-3">
               <div className="w-8 h-8 rounded-full bg-brand text-white font-bold text-sm flex items-center justify-center flex-shrink-0">1</div>
-              <h2 className="font-bold text-gray-900">Tweet about ToolRoute</h2>
+              <h2 className="font-bold" style={{ color: 'var(--text)' }}>Tweet about ToolRoute</h2>
             </div>
 
             {/* Tweet preview */}
-            <div className="bg-gray-50 rounded-lg p-4 mb-4 text-sm text-gray-700 border border-gray-100">
+            <div className="rounded-lg p-4 mb-4 text-sm" style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text-2)' }}>
               <div className="flex items-center gap-2 mb-2">
-                <div className="w-8 h-8 rounded-full bg-gray-200" />
+                <div className="w-8 h-8 rounded-full" style={{ background: 'var(--bg3)' }} />
                 <div>
-                  <div className="font-semibold text-gray-900 text-xs">Your Name</div>
-                  <div className="text-gray-400 text-xs">@yourhandle</div>
+                  <div className="font-semibold text-xs" style={{ color: 'var(--text)' }}>Your Name</div>
+                  <div className="text-xs" style={{ color: 'var(--text-3)' }}>@yourhandle</div>
                 </div>
               </div>
               <p className="whitespace-pre-line">{TWEET_TEXT}</p>
@@ -106,10 +106,10 @@ export default function VerifyPage() {
           </div>
 
           {/* Step 2 preview */}
-          <div className="border border-gray-200 rounded-xl p-5 bg-white opacity-50">
+          <div className="opacity-50" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
             <div className="flex items-center gap-3">
-              <div className="w-8 h-8 rounded-full bg-gray-200 text-gray-400 font-bold text-sm flex items-center justify-center flex-shrink-0">2</div>
-              <h2 className="font-bold text-gray-400">Confirm your tweet</h2>
+              <div className="w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center flex-shrink-0" style={{ background: 'var(--bg3)', color: 'var(--text-3)' }}>2</div>
+              <h2 className="font-bold" style={{ color: 'var(--text-3)' }}>Confirm your tweet</h2>
             </div>
           </div>
         </div>
@@ -118,41 +118,43 @@ export default function VerifyPage() {
       {step === 'tweeted' && (
         <div className="space-y-6">
           {/* Step 1: Done */}
-          <div className="border border-teal/30 rounded-xl p-5 bg-teal-light/30">
+          <div className="rounded-xl p-5" style={{ border: '1px solid rgba(var(--teal-rgb, 45,212,191), 0.3)', background: 'var(--bg2)' }}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full bg-teal text-white font-bold text-sm flex items-center justify-center flex-shrink-0">&#10003;</div>
-              <h2 className="font-bold text-gray-900">Tweet sent</h2>
+              <h2 className="font-bold" style={{ color: 'var(--text)' }}>Tweet sent</h2>
             </div>
           </div>
 
           {/* Step 2: Confirm */}
-          <div className="border border-gray-200 rounded-xl p-5 bg-white">
+          <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-brand text-white font-bold text-sm flex items-center justify-center flex-shrink-0">2</div>
-              <h2 className="font-bold text-gray-900">Confirm your details</h2>
+              <h2 className="font-bold" style={{ color: 'var(--text)' }}>Confirm your details</h2>
             </div>
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">Agent name</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Agent name</label>
                 <input
                   type="text"
                   value={agentName}
                   onChange={(e) => setAgentName(e.target.value)}
                   placeholder="e.g. my-research-agent"
-                  className="w-full px-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm"
+                  className="w-full px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)' }}
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium text-gray-700 mb-1">X handle (so we can find your tweet)</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>X handle (so we can find your tweet)</label>
                 <div className="relative">
-                  <span className="absolute left-3 top-2.5 text-gray-400 text-sm">@</span>
+                  <span className="absolute left-3 top-2.5 text-sm" style={{ color: 'var(--text-3)' }}>@</span>
                   <input
                     type="text"
                     value={xHandle}
                     onChange={(e) => setXHandle(e.target.value)}
                     placeholder="yourhandle"
-                    className="w-full pl-8 pr-4 py-2.5 rounded-lg border border-gray-200 focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm"
+                    className="w-full pl-8 pr-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm"
+                    style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)' }}
                   />
                 </div>
               </div>
@@ -168,7 +170,8 @@ export default function VerifyPage() {
 
           <button
             onClick={() => setStep('info')}
-            className="text-xs text-gray-400 hover:text-gray-600 transition-colors"
+            className="text-xs hover:text-brand transition-colors"
+            style={{ color: 'var(--text-3)' }}
           >
             &larr; Haven&apos;t tweeted yet? Go back
           </button>
@@ -176,14 +179,14 @@ export default function VerifyPage() {
       )}
 
       {step === 'submitted' && (
-        <div className="border border-teal/30 rounded-xl p-6 bg-teal-light/30 text-center">
+        <div className="rounded-xl p-6 text-center" style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
           <div className="text-3xl mb-3">&#10003;</div>
-          <h2 className="text-xl font-bold text-gray-900 mb-2">Verification submitted!</h2>
-          <p className="text-sm text-gray-600 mb-4">
+          <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>Verification submitted!</h2>
+          <p className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>
             We&apos;ll review your tweet and upgrade your agent to verified status.
             This usually happens within 24 hours.
           </p>
-          <p className="text-xs text-gray-400 mb-6">
+          <p className="text-xs mb-6" style={{ color: 'var(--text-3)' }}>
             Agent: <span className="font-semibold">{agentName}</span> &middot; X: <span className="font-semibold">@{xHandle.replace('@', '')}</span>
           </p>
           <Link href="/" className="px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors inline-block">
@@ -193,7 +196,7 @@ export default function VerifyPage() {
       )}
 
       {/* Footer */}
-      <div className="mt-8 text-center text-xs text-gray-400">
+      <div className="mt-8 text-center text-xs" style={{ color: 'var(--text-3)' }}>
         Don&apos;t have an agent yet?{' '}
         <Link href="/api-docs" className="text-brand hover:underline">Read the API docs</Link>
         {' '}to get started.

@@ -13,7 +13,7 @@ function getConfidenceLevel(sampleSize: number): { label: string; color: string 
   if (sampleSize >= 50) return { label: 'High', color: 'text-teal bg-teal-light' }
   if (sampleSize >= 20) return { label: 'Medium', color: 'text-brand bg-brand-light' }
   if (sampleSize >= 5) return { label: 'Low', color: 'text-amber-700 bg-amber-50' }
-  return { label: 'Accumulating', color: 'text-gray-500 bg-gray-100' }
+  return { label: 'Accumulating', color: 'text-[var(--text-2)] bg-[var(--bg3)]' }
 }
 
 export default async function OlympicsPage() {
@@ -57,43 +57,41 @@ export default async function OlympicsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="text-center mb-8">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-amber-50 text-amber-700 text-xs font-semibold mb-4">
-          LIVE COMPETITIONS
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          MCP Server Olympics
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">LIVE COMPETITIONS</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          MCP Server<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Olympics.</em>
         </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
+        <p className="text-[var(--text-2)] max-w-2xl mx-auto">
           Continuous benchmarking competitions where MCP servers compete head-to-head on real agent tasks.
           Results are scored on output quality, reliability, latency, cost, and correction burden.
         </p>
         <div className="flex items-center justify-center gap-8 mt-6 text-sm">
           <div className="text-center">
             <div className="text-2xl font-bold text-brand">{events?.length || 0}</div>
-            <div className="text-gray-400">Events</div>
+            <div className="text-[var(--text-3)]">Events</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-teal">{missionCount || 0}</div>
-            <div className="text-gray-400">Active Missions</div>
+            <div className="text-[var(--text-3)]">Active Missions</div>
           </div>
           <div className="text-center">
             <div className="text-2xl font-bold text-amber-600">{outcomeCount || 0}</div>
-            <div className="text-gray-400">Outcome Records</div>
+            <div className="text-[var(--text-3)]">Outcome Records</div>
           </div>
         </div>
       </div>
 
       {/* How Benchmarks Work */}
-      <div className="mb-10 rounded-xl border border-gray-200 bg-gray-50 px-6 py-5">
-        <h3 className="font-bold text-gray-800 text-sm mb-2">How benchmarks work</h3>
-        <p className="text-sm text-gray-600 leading-relaxed">
+      <div className="mb-10 rounded-xl border border-[var(--border)] bg-[var(--bg2)] px-6 py-5">
+        <h3 className="font-bold text-[var(--text)] text-sm mb-2">How benchmarks work</h3>
+        <p className="text-sm text-[var(--text-2)] leading-relaxed">
           Each event runs real agent workflows across MCP servers. Scores combine:&nbsp;
-          <span className="font-semibold text-gray-700">Output quality</span>,&nbsp;
-          <span className="font-semibold text-gray-700">Reliability</span>,&nbsp;
-          <span className="font-semibold text-gray-700">Latency</span>,&nbsp;
-          <span className="font-semibold text-gray-700">Cost per successful outcome</span>,&nbsp;
-          <span className="font-semibold text-gray-700">Human correction burden</span>.
+          <span className="font-semibold text-[var(--text-2)]">Output quality</span>,&nbsp;
+          <span className="font-semibold text-[var(--text-2)]">Reliability</span>,&nbsp;
+          <span className="font-semibold text-[var(--text-2)]">Latency</span>,&nbsp;
+          <span className="font-semibold text-[var(--text-2)]">Cost per successful outcome</span>,&nbsp;
+          <span className="font-semibold text-[var(--text-2)]">Human correction burden</span>.
         </p>
       </div>
 
@@ -109,18 +107,18 @@ export default async function OlympicsPage() {
             const confidence = getConfidenceLevel(totalSamples)
 
             return (
-              <div key={event.id} className="card">
+              <div key={event.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
                 {/* Event header */}
                 <div className="flex items-start justify-between gap-4 mb-4">
                   <div className="flex-1">
                     <div className="flex items-center gap-3 mb-1">
-                      <span className="text-xs font-bold text-gray-400">
+                      <span className="text-xs font-bold text-[var(--text-3)]">
                         EVENT {event.event_number}
                       </span>
                       <StatusBadge status={event.status} />
                     </div>
-                    <h2 className="text-lg font-bold text-gray-900">{event.name}</h2>
-                    <p className="text-sm text-gray-500 mt-1">{event.description}</p>
+                    <h2 className="text-lg font-bold text-[var(--text)]">{event.name}</h2>
+                    <p className="text-sm text-[var(--text-2)] mt-1">{event.description}</p>
                   </div>
                   {hasResults ? (
                     <Link
@@ -130,7 +128,7 @@ export default async function OlympicsPage() {
                       Full Report
                     </Link>
                   ) : (
-                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-gray-200 bg-gray-50 text-xs text-gray-400 flex-shrink-0 cursor-default">
+                    <span className="inline-flex items-center gap-1.5 px-3 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--bg2)] text-xs text-[var(--text-3)] flex-shrink-0 cursor-default">
                       <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z" /></svg>
                       Report Coming Soon
                     </span>
@@ -138,13 +136,13 @@ export default async function OlympicsPage() {
                 </div>
 
                 {/* Event stats bar */}
-                <div className="flex items-center gap-4 text-xs text-gray-500 mb-4 flex-wrap">
+                <div className="flex items-center gap-4 text-xs text-[var(--text-2)] mb-4 flex-wrap">
                   <div className="flex items-center gap-1.5">
-                    <span className="font-medium text-gray-600">Sample size:</span>
-                    <span className="font-bold text-gray-800">{totalSamples}</span>
+                    <span className="font-medium text-[var(--text-2)]">Sample size:</span>
+                    <span className="font-bold text-[var(--text)]">{totalSamples}</span>
                   </div>
                   <div className="flex items-center gap-1.5">
-                    <span className="font-medium text-gray-600">Confidence:</span>
+                    <span className="font-medium text-[var(--text-2)]">Confidence:</span>
                     <span className={`inline-flex px-2 py-0.5 rounded-full text-[10px] font-bold ${confidence.color}`}>
                       {confidence.label}
                     </span>
@@ -153,7 +151,7 @@ export default async function OlympicsPage() {
 
                 {/* Rankings */}
                 {eventCompetitors.length > 0 ? (
-                  <div className="border-t border-gray-100 pt-4">
+                  <div className="border-t border-[var(--border)] pt-4">
                     <div className="space-y-2">
                       {eventCompetitors.map((comp: any, idx: number) => {
                         const skill = comp.skills
@@ -166,7 +164,7 @@ export default async function OlympicsPage() {
                             className={`flex items-center gap-4 px-4 py-3 rounded-lg ${
                               idx === 0 && showScore
                                 ? 'bg-amber-50 border border-amber-200'
-                                : 'bg-gray-50'
+                                : 'bg-[var(--bg2)]'
                             }`}
                           >
                             <div className="text-xl w-8 text-center flex-shrink-0">
@@ -175,7 +173,7 @@ export default async function OlympicsPage() {
                             <div className="flex-1 min-w-0">
                               <Link
                                 href={`/mcp-servers/${skill?.slug}`}
-                                className="font-semibold text-sm text-gray-900 hover:text-brand transition-colors"
+                                className="font-semibold text-sm text-[var(--text)] hover:text-brand transition-colors"
                               >
                                 {skill?.canonical_name || 'Unknown'}
                               </Link>
@@ -189,9 +187,9 @@ export default async function OlympicsPage() {
                                   {formatScore(comp.value_score)}
                                 </div>
                               ) : (
-                                <div className="text-xs text-gray-400">Accumulating data</div>
+                                <div className="text-xs text-[var(--text-3)]">Accumulating data</div>
                               )}
-                              <div className="text-[10px] text-gray-400">
+                              <div className="text-[10px] text-[var(--text-3)]">
                                 {comp.sample_size} run{comp.sample_size !== 1 ? 's' : ''}
                               </div>
                             </div>
@@ -201,7 +199,7 @@ export default async function OlympicsPage() {
                     </div>
                   </div>
                 ) : (
-                  <div className="border-t border-gray-100 pt-4 text-center text-sm text-gray-400 py-4">
+                  <div className="border-t border-[var(--border)] pt-4 text-center text-sm text-[var(--text-3)] py-4">
                     No competitors yet — <Link href="/api-docs" className="text-brand hover:underline">submit telemetry</Link> to enter MCP servers.
                   </div>
                 )}
@@ -209,7 +207,7 @@ export default async function OlympicsPage() {
             )
           })
         ) : (
-          <div className="text-center py-20 text-gray-400">
+          <div className="text-center py-20 text-[var(--text-3)]">
             <p className="text-lg font-medium">Olympics loading...</p>
             <p className="text-sm mt-1">Events will appear once the database is seeded.</p>
           </div>
@@ -219,16 +217,16 @@ export default async function OlympicsPage() {
       {/* Telemetry Incentive Callout */}
       <div className="mt-10 rounded-xl border border-teal/20 bg-teal-light px-6 py-5 text-center">
         <h3 className="font-bold text-teal mb-1 text-sm">Earn routing credits by reporting outcomes</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-[var(--text-2)]">
           Agents that submit telemetry receive routing credits, benchmark rewards, and leaderboard ranking.
         </p>
       </div>
 
       {/* CTA */}
       <div className="mt-8 text-center">
-        <div className="card max-w-xl mx-auto text-center">
-          <h3 className="font-bold text-gray-900 mb-2">Contribute Benchmark Data</h3>
-          <p className="text-sm text-gray-500 mb-4">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" max-w-xl mx-auto text-center">
+          <h3 className="font-bold text-[var(--text)] mb-2">Contribute Benchmark Data</h3>
+          <p className="text-sm text-[var(--text-2)] mb-4">
             Run head-to-head comparisons and earn 2.5x routing credits.
             Benchmark packages earn 4.0x rewards.
           </p>
@@ -255,11 +253,11 @@ function StatusBadge({ status }: { status: string }) {
   const styles: Record<string, string> = {
     open: 'bg-green-50 text-green-700',
     running: 'bg-blue-50 text-blue-700',
-    completed: 'bg-gray-100 text-gray-600',
+    completed: 'bg-[var(--bg3)] text-[var(--text-2)]',
     paused: 'bg-amber-50 text-amber-700',
   }
   return (
-    <span className={`badge text-[10px] ${styles[status] || 'bg-gray-100 text-gray-500'}`}>
+    <span className={`badge text-[10px] ${styles[status] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
       {status.toUpperCase()}
     </span>
   )

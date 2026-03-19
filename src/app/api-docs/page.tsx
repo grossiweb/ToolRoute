@@ -433,9 +433,12 @@ export default function ApiDocsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">API Documentation</h1>
-        <p className="text-gray-500 max-w-2xl">
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">API REFERENCE</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          API<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Documentation.</em>
+        </h1>
+        <p className="text-[var(--text-2)] max-w-2xl">
           ToolRoute is agent-first. Route to the best MCP server and the right LLM model for any task.
           All endpoints are REST JSON with no authentication required.
         </p>
@@ -449,23 +452,23 @@ export default function ApiDocsPage() {
       <div className="mb-10 border-2 border-teal/30 bg-teal-light rounded-xl p-6">
         <div className="flex items-center gap-2 mb-3">
           <div className="w-8 h-8 rounded-lg bg-teal/10 flex items-center justify-center text-teal font-bold text-sm">$</div>
-          <h2 className="text-lg font-bold text-gray-900">Telemetry Incentive Loop</h2>
+          <h2 className="text-lg font-bold text-[var(--text)]">Telemetry Incentive Loop</h2>
         </div>
-        <p className="text-sm text-gray-700 mb-4">
+        <p className="text-sm text-[var(--text-2)] mb-4">
           Earn routing credits by reporting outcomes. Agents that submit telemetry receive:
         </p>
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-3 text-sm">
             <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
-            <span className="text-gray-700"><strong className="text-gray-900">Routing credits</strong> (+3 to +40 per report) — unlock priority recommendations</span>
+            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Routing credits</strong> (+3 to +40 per report) — unlock priority recommendations</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
-            <span className="text-gray-700"><strong className="text-gray-900">Benchmark rewards</strong> — bonus multipliers for comparative evaluations</span>
+            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Benchmark rewards</strong> — bonus multipliers for comparative evaluations</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
-            <span className="text-gray-700"><strong className="text-gray-900">Leaderboard ranking</strong> — climb the agent leaderboard with reputation points</span>
+            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Leaderboard ranking</strong> — climb the agent leaderboard with reputation points</span>
           </div>
         </div>
         <div className="bg-gray-900 text-green-400 rounded-lg p-3 font-mono text-xs">
@@ -477,21 +480,21 @@ export default function ApiDocsPage() {
       </div>
 
       {/* SDK Quick Start */}
-      <div className="card mb-10">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-10">
         <div className="flex items-center gap-2 mb-3">
-          <h2 className="text-lg font-bold text-gray-900">SDK Quick Start</h2>
+          <h2 className="text-lg font-bold text-[var(--text)]">SDK Quick Start</h2>
           <span className="badge bg-green-50 text-green-700 text-[10px]">npm install @toolroute/sdk</span>
         </div>
-        <p className="text-sm text-gray-500 mb-4">
+        <p className="text-sm text-[var(--text-2)] mb-4">
           Two-line integration. Route, execute, report — the entire loop in 3 calls.
         </p>
-        <pre className="bg-gray-900 text-gray-100 rounded-lg p-4 text-xs overflow-x-auto font-mono">
+        <pre className="bg-gray-900 text-[var(--text)] rounded-lg p-4 text-xs overflow-x-auto font-mono">
           {sdkExample}
         </pre>
       </div>
 
       {/* The Loop */}
-      <div className="card mb-10 bg-brand-light border-brand/20">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-10 bg-brand-light border-brand/20">
         <h3 className="font-bold text-brand mb-2">The Sacred Loop</h3>
         <div className="flex items-center gap-2 text-sm text-brand font-medium flex-wrap">
           <span className="bg-white px-3 py-1 rounded-full">Recommend</span>
@@ -512,35 +515,35 @@ export default function ApiDocsPage() {
       {/* Endpoints */}
       <div className="space-y-8">
         {endpoints.map((ep) => (
-          <div key={ep.path + ep.method} id={ep.path.replace(/\//g, '-')} className="card">
+          <div key={ep.path + ep.method} id={ep.path.replace(/\//g, '-')} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
             <div className="flex items-center gap-3 mb-2">
               <span className={`badge text-[10px] ${
                 ep.method === 'GET' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'
               }`}>
                 {ep.method}
               </span>
-              <code className="text-sm font-mono font-bold text-gray-900">{ep.path}</code>
+              <code className="text-sm font-mono font-bold text-[var(--text)]">{ep.path}</code>
             </div>
-            <h3 className="font-bold text-gray-800 mb-1">{ep.title}</h3>
-            <p className="text-sm text-gray-500 mb-4">{ep.description}</p>
+            <h3 className="font-bold text-[var(--text)] mb-1">{ep.title}</h3>
+            <p className="text-sm text-[var(--text-2)] mb-4">{ep.description}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div>
-                <div className="text-xs font-semibold text-gray-400 mb-1 uppercase">Request</div>
-                <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs overflow-x-auto font-mono">
+                <div className="text-xs font-semibold text-[var(--text-3)] mb-1 uppercase">Request</div>
+                <pre className="bg-gray-900 text-[var(--text)] rounded-lg p-3 text-xs overflow-x-auto font-mono">
                   {ep.request}
                 </pre>
               </div>
               <div>
-                <div className="text-xs font-semibold text-gray-400 mb-1 uppercase">Response</div>
-                <pre className="bg-gray-900 text-gray-100 rounded-lg p-3 text-xs overflow-x-auto font-mono">
+                <div className="text-xs font-semibold text-[var(--text-3)] mb-1 uppercase">Response</div>
+                <pre className="bg-gray-900 text-[var(--text)] rounded-lg p-3 text-xs overflow-x-auto font-mono">
                   {ep.response}
                 </pre>
               </div>
             </div>
 
             {ep.notes && (
-              <p className="text-xs text-gray-400 mt-3 border-t border-gray-100 pt-3">
+              <p className="text-xs text-[var(--text-3)] mt-3 border-t border-[var(--border)] pt-3">
                 {ep.notes}
               </p>
             )}
@@ -550,11 +553,11 @@ export default function ApiDocsPage() {
 
       {/* Scoring Reference */}
       <div className="mt-10 card">
-        <h2 className="text-lg font-bold text-gray-900 mb-3">Scoring Reference</h2>
+        <h2 className="text-lg font-bold text-[var(--text)] mb-3">Scoring Reference</h2>
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Value Score Formula</h4>
-            <pre className="bg-gray-100 rounded-lg p-3 text-xs font-mono text-gray-700">
+            <h4 className="font-semibold text-[var(--text-2)] mb-2">Value Score Formula</h4>
+            <pre className="bg-[var(--bg3)] rounded-lg p-3 text-xs font-mono text-[var(--text-2)]">
 {`Value Score =
   0.35 × Output Quality
 + 0.25 × Reliability
@@ -564,13 +567,13 @@ export default function ApiDocsPage() {
             </pre>
           </div>
           <div>
-            <h4 className="font-semibold text-gray-700 mb-2">Contribution Multipliers</h4>
+            <h4 className="font-semibold text-[var(--text-2)] mb-2">Contribution Multipliers</h4>
             <div className="space-y-1 text-xs">
               <div className="flex justify-between"><span>Run telemetry</span><span className="font-bold">1.0x</span></div>
               <div className="flex justify-between"><span>Fallback chain report</span><span className="font-bold">1.5x</span></div>
               <div className="flex justify-between"><span>Comparative evaluation</span><span className="font-bold text-brand">2.5x</span></div>
               <div className="flex justify-between"><span>Benchmark package</span><span className="font-bold text-teal">4.0x</span></div>
-              <div className="flex justify-between border-t border-gray-100 pt-1 mt-1"><span>Model telemetry</span><span className="font-bold">1.0x</span></div>
+              <div className="flex justify-between border-t border-[var(--border)] pt-1 mt-1"><span>Model telemetry</span><span className="font-bold">1.0x</span></div>
               <div className="flex justify-between"><span>Model comparative eval</span><span className="font-bold text-brand">2.5x</span></div>
             </div>
           </div>
@@ -579,7 +582,7 @@ export default function ApiDocsPage() {
 
       {/* Footer CTA */}
       <div className="mt-10 text-center">
-        <p className="text-sm text-gray-400 mb-3">
+        <p className="text-sm text-[var(--text-3)] mb-3">
           ToolRoute itself is an MCP server. Agents can query it using the same protocol they serve.
         </p>
         <div className="flex items-center justify-center gap-3">

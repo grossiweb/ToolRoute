@@ -104,20 +104,25 @@ export default function ModelComparePage() {
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/models" className="hover:text-brand transition-colors">Models</Link>
         <span>/</span>
-        <span className="text-gray-600">Compare</span>
+        <span className="text-[var(--text-2)]">Compare</span>
       </div>
 
-      <h1 className="text-3xl font-black text-gray-900 mb-2">Compare Models</h1>
-      <p className="text-gray-500 mb-8">Select up to 4 models to compare side-by-side.</p>
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">MODEL COMPARE</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          Compare<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Models.</em>
+        </h1>
+        <p className="text-[var(--text-2)]">Select up to 4 models to compare side-by-side.</p>
+      </div>
 
       {/* Model Selector */}
-      <div className="card mb-8">
-        <h2 className="font-bold text-gray-900 mb-3 text-sm">Select Models ({selected.length}/4)</h2>
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-8">
+        <h2 className="font-bold text-[var(--text)] mb-3 text-sm">Select Models ({selected.length}/4)</h2>
         {loading ? (
-          <div className="text-sm text-gray-400">Loading models...</div>
+          <div className="text-sm text-[var(--text-3)]">Loading models...</div>
         ) : (
           <div className="flex flex-wrap gap-2">
             {models.map(m => (
@@ -127,7 +132,7 @@ export default function ModelComparePage() {
                 className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-all ${
                   selected.includes(m.slug)
                     ? 'bg-brand text-white border-brand'
-                    : 'bg-white text-gray-600 border-gray-200 hover:border-brand/30'
+                    : 'bg-[var(--bg)] text-[var(--text-2)] border-[var(--border)] hover:border-brand/30'
                 } ${selected.length >= 4 && !selected.includes(m.slug) ? 'opacity-40 cursor-not-allowed' : ''}`}
                 disabled={selected.length >= 4 && !selected.includes(m.slug)}
               >
@@ -140,13 +145,13 @@ export default function ModelComparePage() {
 
       {/* Comparison Table */}
       {compared.length >= 2 ? (
-        <div className="card overflow-x-auto p-0">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100 bg-gray-50">
-                <th className="text-left px-4 py-3 text-xs font-semibold text-gray-500 w-40">Attribute</th>
+              <tr className="border-b border-[var(--border)] bg-[var(--bg2)]">
+                <th className="text-left px-4 py-3 text-xs font-semibold text-[var(--text-2)] w-40">Attribute</th>
                 {compared.map(m => (
-                  <th key={m.slug} className="text-center px-4 py-3 text-xs font-bold text-gray-900">
+                  <th key={m.slug} className="text-center px-4 py-3 text-xs font-bold text-[var(--text)]">
                     {m.display_name}
                   </th>
                 ))}
@@ -154,11 +159,11 @@ export default function ModelComparePage() {
             </thead>
             <tbody>
               {/* Provider */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Provider</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Provider</td>
                 {compared.map(m => (
                   <td key={m.slug} className="px-4 py-3 text-center">
-                    <span className={`badge text-[10px] ${PROVIDER_COLORS[m.provider] || 'bg-gray-100 text-gray-600'}`}>
+                    <span className={`badge text-[10px] ${PROVIDER_COLORS[m.provider] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
                       {m.provider}
                     </span>
                   </td>
@@ -166,13 +171,13 @@ export default function ModelComparePage() {
               </tr>
 
               {/* Tiers */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Routing Tiers</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Routing Tiers</td>
                 {compared.map(m => (
                   <td key={m.slug} className="px-4 py-3 text-center">
                     <div className="flex flex-wrap gap-1 justify-center">
                       {m.tiers.map(t => (
-                        <span key={t} className={`badge text-[9px] ${TIER_COLORS[t] || 'bg-gray-100 text-gray-500'}`}>
+                        <span key={t} className={`badge text-[9px] ${TIER_COLORS[t] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
                           {t.replace(/_/g, ' ')}
                         </span>
                       ))}
@@ -182,12 +187,12 @@ export default function ModelComparePage() {
               </tr>
 
               {/* Context Window */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Context Window</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Context Window</td>
                 {compared.map(m => {
                   const best = Math.max(...compared.map(c => c.context_window))
                   return (
-                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.context_window === best ? 'font-bold text-brand' : 'text-gray-600'}`}>
+                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.context_window === best ? 'font-bold text-brand' : 'text-[var(--text-2)]'}`}>
                       {(m.context_window / 1000).toFixed(0)}K
                     </td>
                   )
@@ -195,12 +200,12 @@ export default function ModelComparePage() {
               </tr>
 
               {/* Input Cost */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Input $/1M tokens</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Input $/1M tokens</td>
                 {compared.map(m => {
                   const cheapest = Math.min(...compared.map(c => c.input_cost_per_mtok))
                   return (
-                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.input_cost_per_mtok === cheapest ? 'font-bold text-green-600' : 'text-gray-600'}`}>
+                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.input_cost_per_mtok === cheapest ? 'font-bold text-green-600' : 'text-[var(--text-2)]'}`}>
                       ${m.input_cost_per_mtok.toFixed(2)}
                     </td>
                   )
@@ -208,12 +213,12 @@ export default function ModelComparePage() {
               </tr>
 
               {/* Output Cost */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Output $/1M tokens</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Output $/1M tokens</td>
                 {compared.map(m => {
                   const cheapest = Math.min(...compared.map(c => c.output_cost_per_mtok))
                   return (
-                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.output_cost_per_mtok === cheapest ? 'font-bold text-green-600' : 'text-gray-600'}`}>
+                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.output_cost_per_mtok === cheapest ? 'font-bold text-green-600' : 'text-[var(--text-2)]'}`}>
                       ${m.output_cost_per_mtok.toFixed(2)}
                     </td>
                   )
@@ -222,35 +227,35 @@ export default function ModelComparePage() {
 
               {/* Capabilities */}
               {(['supports_tools', 'supports_structured_output', 'supports_vision'] as const).map(cap => (
-                <tr key={cap} className="border-b border-gray-50">
-                  <td className="px-4 py-3 text-xs text-gray-500 font-medium">
+                <tr key={cap} className="border-b border-[var(--border)]">
+                  <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">
                     {cap === 'supports_tools' ? 'Tool Calling' : cap === 'supports_structured_output' ? 'Structured Output' : 'Vision'}
                   </td>
                   {compared.map(m => (
                     <td key={m.slug} className="px-4 py-3 text-center text-sm">
-                      {m[cap] ? <span className="text-green-600 font-bold">✓</span> : <span className="text-gray-300">✗</span>}
+                      {m[cap] ? <span className="text-green-600 font-bold">✓</span> : <span className="text-[var(--text-3)]">✗</span>}
                     </td>
                   ))}
                 </tr>
               ))}
 
               {/* Outcomes */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Outcome Reports</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Outcome Reports</td>
                 {compared.map(m => (
-                  <td key={m.slug} className="px-4 py-3 text-center text-xs font-mono text-gray-600">
+                  <td key={m.slug} className="px-4 py-3 text-center text-xs font-mono text-[var(--text-2)]">
                     {m.outcomes || '--'}
                   </td>
                 ))}
               </tr>
 
               {/* Avg Quality */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Avg Quality</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Avg Quality</td>
                 {compared.map(m => {
                   const best = Math.max(...compared.filter(c => c.avg_quality != null).map(c => c.avg_quality!))
                   return (
-                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.avg_quality != null && m.avg_quality === best ? 'font-bold text-brand' : 'text-gray-600'}`}>
+                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.avg_quality != null && m.avg_quality === best ? 'font-bold text-brand' : 'text-[var(--text-2)]'}`}>
                       {m.avg_quality != null ? (m.avg_quality / 10 * 10).toFixed(1) : '--'}
                     </td>
                   )
@@ -259,11 +264,11 @@ export default function ModelComparePage() {
 
               {/* Avg Latency */}
               <tr>
-                <td className="px-4 py-3 text-xs text-gray-500 font-medium">Avg Latency</td>
+                <td className="px-4 py-3 text-xs text-[var(--text-2)] font-medium">Avg Latency</td>
                 {compared.map(m => {
                   const fastest = Math.min(...compared.filter(c => c.avg_latency != null).map(c => c.avg_latency!))
                   return (
-                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.avg_latency != null && m.avg_latency === fastest ? 'font-bold text-green-600' : 'text-gray-600'}`}>
+                    <td key={m.slug} className={`px-4 py-3 text-center text-xs font-mono ${m.avg_latency != null && m.avg_latency === fastest ? 'font-bold text-green-600' : 'text-[var(--text-2)]'}`}>
                       {m.avg_latency != null ? `${m.avg_latency}ms` : '--'}
                     </td>
                   )
@@ -273,7 +278,7 @@ export default function ModelComparePage() {
           </table>
         </div>
       ) : (
-        <div className="text-center py-12 text-gray-400 card">
+        <div className="text-center py-12 text-[var(--text-3)] card">
           <p className="text-lg font-medium mb-1">Select at least 2 models</p>
           <p className="text-sm">Click on model names above to add them to the comparison.</p>
         </div>

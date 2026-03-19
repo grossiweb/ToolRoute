@@ -91,15 +91,18 @@ export default function ComparePage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="mb-8">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">Compare MCP Servers</h1>
-        <p className="text-gray-500">
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">COMPARE</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          Compare MCP<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Servers.</em>
+        </h1>
+        <p className="text-[var(--text-2)]">
           Side-by-side comparison of MCP servers across outcome scoring dimensions.
         </p>
       </div>
 
       {/* Server selector */}
-      <div className="card mb-8">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-8">
         <div className="flex items-center gap-3 flex-wrap mb-4">
           {selected.map((s) => (
             <div
@@ -123,19 +126,19 @@ export default function ComparePage() {
                 placeholder={selected.length === 0 ? 'Search MCP servers to compare...' : 'Add another server...'}
                 value={search}
                 onChange={(e) => setSearch(e.target.value)}
-                className="w-full border border-gray-200 rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand"
+                className="w-full border border-[var(--border)] rounded-lg px-4 py-2 text-sm focus:outline-none focus:border-brand"
               />
               {search.length > 0 && filteredSkills.length > 0 && (
-                <div className="absolute top-full left-0 right-0 mt-1 bg-white border border-gray-200 rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
+                <div className="absolute top-full left-0 right-0 mt-1 bg-[var(--bg)] border border-[var(--border)] rounded-lg shadow-lg z-10 max-h-48 overflow-y-auto">
                   {filteredSkills.slice(0, 10).map((s) => (
                     <button
                       key={s.id}
                       onClick={() => addSkill(s)}
-                      className="w-full text-left px-4 py-2 text-sm hover:bg-gray-50 transition-colors flex items-center justify-between"
+                      className="w-full text-left px-4 py-2 text-sm hover:bg-[var(--bg2)] transition-colors flex items-center justify-between"
                     >
-                      <span className="font-medium text-gray-800">{s.canonical_name}</span>
+                      <span className="font-medium text-[var(--text)]">{s.canonical_name}</span>
                       {s.skill_scores?.overall_score != null && (
-                        <span className="text-xs text-gray-400">
+                        <span className="text-xs text-[var(--text-3)]">
                           {formatScore(s.skill_scores.overall_score)}
                         </span>
                       )}
@@ -146,7 +149,7 @@ export default function ComparePage() {
             </div>
           )}
         </div>
-        <p className="text-xs text-gray-400">
+        <p className="text-xs text-[var(--text-3)]">
           {selected.length}/4 MCP servers selected
         </p>
       </div>
@@ -154,8 +157,8 @@ export default function ComparePage() {
       {/* Share comparison */}
       {selected.length >= 2 && (
         <div className="flex items-center justify-between mb-8">
-          <p className="text-sm text-gray-500">
-            Comparing <span className="font-semibold text-gray-700">{selected.length}</span> servers across {dimensions.length} dimensions
+          <p className="text-sm text-[var(--text-2)]">
+            Comparing <span className="font-semibold text-[var(--text-2)]">{selected.length}</span> servers across {dimensions.length} dimensions
           </p>
           <button
             onClick={() => {
@@ -165,7 +168,7 @@ export default function ComparePage() {
               setLinkCopied(true)
               setTimeout(() => setLinkCopied(false), 2000)
             }}
-            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-gray-200 bg-white text-sm font-medium text-gray-700 hover:border-brand/30 hover:text-brand transition-all"
+            className="flex items-center gap-2 px-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--bg)] text-sm font-medium text-[var(--text-2)] hover:border-brand/30 hover:text-brand transition-all"
           >
             {linkCopied ? (
               <>
@@ -184,18 +187,18 @@ export default function ComparePage() {
 
       {/* Comparison table */}
       {selected.length >= 2 ? (
-        <div className="card overflow-x-auto p-0">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" overflow-x-auto p-0">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-36">
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs w-36">
                   Dimension
                 </th>
                 {selected.map((s) => (
                   <th key={s.id} className="text-center px-4 py-3 min-w-[140px]">
                     <Link
                       href={`/mcp-servers/${s.slug}`}
-                      className="font-bold text-gray-900 hover:text-brand transition-colors text-sm"
+                      className="font-bold text-[var(--text)] hover:text-brand transition-colors text-sm"
                     >
                       {s.canonical_name}
                     </Link>
@@ -217,8 +220,8 @@ export default function ComparePage() {
                 const maxVal = validValues.length > 0 ? Math.max(...validValues) : null
 
                 return (
-                  <tr key={dim.key} className="border-b border-gray-50">
-                    <td className="px-4 py-3 font-medium text-gray-600 text-xs">
+                  <tr key={dim.key} className="border-b border-[var(--border)]">
+                    <td className="px-4 py-3 font-medium text-[var(--text-2)] text-xs">
                       {dim.label}
                     </td>
                     {selected.map((s, idx) => {
@@ -238,7 +241,7 @@ export default function ComparePage() {
                               )}
                             </span>
                           ) : (
-                            <span className="text-gray-300">&mdash;</span>
+                            <span className="text-[var(--text-3)]">&mdash;</span>
                           )}
                         </td>
                       )
@@ -248,8 +251,8 @@ export default function ComparePage() {
               })}
 
               {/* Cost per Useful Outcome row */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-600 text-xs">
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 font-medium text-[var(--text-2)] text-xs">
                   <span className="group relative cursor-help">
                     Cost per Useful Outcome
                     <span className="pointer-events-none absolute left-0 bottom-full mb-1 w-56 rounded bg-gray-800 px-3 py-2 text-xs text-white opacity-0 group-hover:opacity-100 transition-opacity z-20">
@@ -260,7 +263,7 @@ export default function ComparePage() {
                 {selected.map((s) => {
                   const cost = rollups[s.id]?.cost_per_useful_outcome_usd
                   return (
-                    <td key={s.id} className="text-center px-4 py-3 text-gray-700">
+                    <td key={s.id} className="text-center px-4 py-3 text-[var(--text-2)]">
                       {cost != null ? `$${Number(cost).toFixed(3)}` : '\u2014'}
                     </td>
                   )
@@ -268,10 +271,10 @@ export default function ComparePage() {
               </tr>
 
               {/* GitHub stars row */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-600 text-xs">GitHub Stars</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 font-medium text-[var(--text-2)] text-xs">GitHub Stars</td>
                 {selected.map((s) => (
-                  <td key={s.id} className="text-center px-4 py-3 text-gray-700">
+                  <td key={s.id} className="text-center px-4 py-3 text-[var(--text-2)]">
                     {s.skill_metrics?.github_stars != null
                       ? s.skill_metrics.github_stars.toLocaleString()
                       : '\u2014'}
@@ -280,12 +283,12 @@ export default function ComparePage() {
               </tr>
 
               {/* Last commit row */}
-              <tr className="border-b border-gray-50">
-                <td className="px-4 py-3 font-medium text-gray-600 text-xs">Last Commit</td>
+              <tr className="border-b border-[var(--border)]">
+                <td className="px-4 py-3 font-medium text-[var(--text-2)] text-xs">Last Commit</td>
                 {selected.map((s) => {
                   const days = s.skill_metrics?.days_since_last_commit
                   return (
-                    <td key={s.id} className="text-center px-4 py-3 text-gray-700">
+                    <td key={s.id} className="text-center px-4 py-3 text-[var(--text-2)]">
                       {days != null
                         ? days === 0
                           ? 'Today'
@@ -298,9 +301,9 @@ export default function ComparePage() {
 
               {/* Pricing row */}
               <tr>
-                <td className="px-4 py-3 font-medium text-gray-600 text-xs">Pricing</td>
+                <td className="px-4 py-3 font-medium text-[var(--text-2)] text-xs">Pricing</td>
                 {selected.map((s) => (
-                  <td key={s.id} className="text-center px-4 py-3 text-gray-700 capitalize">
+                  <td key={s.id} className="text-center px-4 py-3 text-[var(--text-2)] capitalize">
                     {s.skill_cost_models?.pricing_model?.replace(/_/g, ' ') || '\u2014'}
                   </td>
                 ))}
@@ -309,7 +312,7 @@ export default function ComparePage() {
           </table>
         </div>
       ) : (
-        <div className="text-center py-16 text-gray-400">
+        <div className="text-center py-16 text-[var(--text-3)]">
           <p className="text-lg font-medium">Select at least 2 MCP servers to compare</p>
           <p className="text-sm mt-1">
             Use the search above to find and add MCP servers.
@@ -361,10 +364,10 @@ export default function ComparePage() {
             <div className="flex items-start gap-3 mb-4">
               <span className="text-2xl">🏆</span>
               <div>
-                <h3 className="font-bold text-gray-900">
+                <h3 className="font-bold text-[var(--text)]">
                   Why <span className="text-teal">{winner.canonical_name}</span> Wins
                 </h3>
-                <p className="text-sm text-gray-500 mt-1">
+                <p className="text-sm text-[var(--text-2)] mt-1">
                   {winner.canonical_name} leads in {winCount} of {scoreDims.length} scoring dimensions
                   with a <span className="font-bold text-teal">{formatScore(winner._vs)}</span> value score
                   vs {runnerUp.canonical_name}&apos;s <span className="font-semibold text-brand">{formatScore(runnerUp._vs)}</span>.
@@ -374,7 +377,7 @@ export default function ComparePage() {
 
             {advantages.length > 0 && (
               <div className="mb-4">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">Key Advantages</h4>
+                <h4 className="text-xs font-semibold text-[var(--text-2)] uppercase tracking-wide mb-2">Key Advantages</h4>
                 <div className="flex flex-wrap gap-2">
                   {advantages.map(a => (
                     <span key={a.label} className="inline-flex items-center gap-1.5 px-3 py-1 rounded-full bg-teal-50 text-teal-700 text-xs font-medium">
@@ -388,7 +391,7 @@ export default function ComparePage() {
 
             {runnerUpWins.length > 0 && (
               <div className="mb-4">
-                <h4 className="text-xs font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                <h4 className="text-xs font-semibold text-[var(--text-2)] uppercase tracking-wide mb-2">
                   Where <span className="text-brand">{runnerUp.canonical_name}</span> is stronger
                 </h4>
                 <div className="flex flex-wrap gap-2">
@@ -401,8 +404,8 @@ export default function ComparePage() {
               </div>
             )}
 
-            <div className="flex items-center justify-between pt-3 border-t border-gray-100">
-              <p className="text-[10px] text-gray-400">Verdict based on {scoreDims.length}-dimension outcome scoring</p>
+            <div className="flex items-center justify-between pt-3 border-t border-[var(--border)]">
+              <p className="text-[10px] text-[var(--text-3)]">Verdict based on {scoreDims.length}-dimension outcome scoring</p>
               <button
                 onClick={() => {
                   const slugs = selected.map(s => s.slug).join(',')
@@ -411,7 +414,7 @@ export default function ComparePage() {
                   setLinkCopied(true)
                   setTimeout(() => setLinkCopied(false), 2000)
                 }}
-                className="text-xs text-gray-500 hover:text-brand transition-colors"
+                className="text-xs text-[var(--text-2)] hover:text-brand transition-colors"
               >
                 {linkCopied ? '✓ Copied!' : 'Share verdict →'}
               </button>
@@ -423,8 +426,8 @@ export default function ComparePage() {
       {/* Olympics CTA */}
       {selected.length >= 2 && (
         <div className="mt-8 card text-center">
-          <h3 className="font-bold text-gray-900 mb-2">Run a Head-to-Head Benchmark</h3>
-          <p className="text-sm text-gray-500 mb-4">
+          <h3 className="font-bold text-[var(--text)] mb-2">Run a Head-to-Head Benchmark</h3>
+          <p className="text-sm text-[var(--text-2)] mb-4">
             Compare these MCP servers on real tasks through the MCP Server Olympics.
             Earn 2.5x routing credits for comparative evaluations.
           </p>
@@ -437,7 +440,7 @@ export default function ComparePage() {
       {/* Telemetry Incentive Callout */}
       <div className="mt-8 rounded-xl border border-teal/20 bg-teal-light px-6 py-5 text-center">
         <h3 className="font-bold text-teal mb-1 text-sm">Earn routing credits by reporting outcomes</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-[var(--text-2)]">
           Agents that submit telemetry receive routing credits, benchmark rewards, and leaderboard ranking.
         </p>
       </div>

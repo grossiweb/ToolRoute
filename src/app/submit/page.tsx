@@ -143,7 +143,7 @@ export default function SubmitPage() {
       <div className="max-w-2xl mx-auto px-4 py-20">
         {/* Confetti-style decorative border */}
         <div className="relative overflow-hidden rounded-2xl bg-gradient-to-br from-brand via-brand-dark to-teal p-px">
-          <div className="relative bg-white rounded-2xl p-10 text-center overflow-hidden">
+          <div className="relative bg-[var(--bg)] rounded-2xl p-10 text-center overflow-hidden">
             {/* Decorative bouncing dots */}
             <div className="absolute inset-0 pointer-events-none" aria-hidden="true">
               <div className="absolute top-4 left-8 w-3 h-3 rounded-full bg-brand/20 animate-bounce" style={{ animationDelay: '0s' }} />
@@ -164,7 +164,7 @@ export default function SubmitPage() {
                 </svg>
               </div>
 
-              <h1 className="text-3xl font-black text-gray-900 mb-3">Server Submitted!</h1>
+              <h1 className="text-3xl font-black text-[var(--text)] mb-3">Server Submitted!</h1>
 
               {resultData?.auto_approved ? (
                 <div className="inline-flex items-center gap-2 bg-teal-light text-teal px-4 py-2 rounded-full text-sm font-semibold mb-4">
@@ -182,7 +182,7 @@ export default function SubmitPage() {
                 </div>
               )}
 
-              <p className="text-gray-500 mb-8 max-w-md mx-auto leading-relaxed">
+              <p className="text-[var(--text-2)] mb-8 max-w-md mx-auto leading-relaxed">
                 Your server has been added to the ToolRoute pipeline. Once approved, it will appear
                 in the catalog and be available for agent routing recommendations.
               </p>
@@ -224,11 +224,11 @@ export default function SubmitPage() {
             </svg>
           </div>
           <div>
-            <h1 className="text-3xl font-black text-gray-900">Submit a Server</h1>
-            <p className="text-sm text-gray-500">Add an MCP server to the ToolRoute catalog</p>
+            <h1 className="text-3xl font-black" style={{ color: 'var(--text)' }}>Submit a Server</h1>
+            <p className="text-sm text-[var(--text-2)]">Add an MCP server to the ToolRoute catalog</p>
           </div>
         </div>
-        <p className="text-gray-600 leading-relaxed max-w-2xl">
+        <p className="text-[var(--text-2)] leading-relaxed max-w-2xl">
           ToolRoute is the open intelligence layer for MCP skills. Submit your MCP server and it enters
           the benchmark pipeline — scored on output quality, reliability, efficiency, cost, and trust.
           Agents use these scores to route tasks to the best tool automatically.
@@ -244,11 +244,11 @@ export default function SubmitPage() {
             </svg>
           </div>
           <div className="text-sm">
-            <p className="font-semibold text-gray-900 mb-1">Submission Guidelines</p>
-            <ul className="text-gray-600 space-y-1">
+            <p className="font-semibold text-[var(--text)] mb-1">Submission Guidelines</p>
+            <ul className="text-[var(--text-2)] space-y-1">
               <li className="flex items-start gap-2">
                 <span className="text-teal font-bold mt-0.5">&#x2713;</span>
-                Repos with <strong className="text-gray-900">10+ GitHub stars</strong> are auto-approved within 24 hours
+                Repos with <strong className="text-[var(--text)]">10+ GitHub stars</strong> are auto-approved within 24 hours
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal font-bold mt-0.5">&#x2713;</span>
@@ -260,7 +260,7 @@ export default function SubmitPage() {
               </li>
               <li className="flex items-start gap-2">
                 <span className="text-teal font-bold mt-0.5">&#x2713;</span>
-                Agents use your scores in production routing via <code className="text-xs bg-white/80 px-1.5 py-0.5 rounded font-mono">POST /api/route</code>
+                Agents use your scores in production routing via <code className="text-xs bg-[var(--bg)]/80 px-1.5 py-0.5 rounded font-mono">POST /api/route</code>
               </li>
             </ul>
           </div>
@@ -276,12 +276,12 @@ export default function SubmitPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M15 9h3.75M15 12h3.75M15 15h3.75M4.5 19.5h15a2.25 2.25 0 002.25-2.25V6.75A2.25 2.25 0 0019.5 4.5h-15a2.25 2.25 0 00-2.25 2.25v10.5A2.25 2.25 0 004.5 19.5zm6-10.125a1.875 1.875 0 11-3.75 0 1.875 1.875 0 013.75 0zm1.294 6.336a6.721 6.721 0 01-3.17.789 6.721 6.721 0 01-3.168-.789 3.376 3.376 0 016.338 0z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Basic Info</h2>
+            <h2 className="text-lg font-bold text-[var(--text)]">Basic Info</h2>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-6 space-y-5">
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                 GitHub Repository URL <span className="text-red-500">*</span>
               </label>
               <input
@@ -290,14 +290,14 @@ export default function SubmitPage() {
                 placeholder="https://github.com/owner/repo"
                 value={form.repo_url}
                 onChange={e => setForm(f => ({ ...f, repo_url: e.target.value }))}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
+                className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
               />
-              <p className="text-xs text-gray-400 mt-1">We fetch star count to determine auto-approval eligibility</p>
+              <p className="text-xs text-[var(--text-3)] mt-1">We fetch star count to determine auto-approval eligibility</p>
             </div>
 
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   Server Name <span className="text-red-500">*</span>
                 </label>
                 <input
@@ -306,12 +306,12 @@ export default function SubmitPage() {
                   placeholder="e.g. Firecrawl MCP"
                   value={form.canonical_name}
                   onChange={e => setForm(f => ({ ...f, canonical_name: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
                 />
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   Vendor / Maintainer
                 </label>
                 <input
@@ -319,13 +319,13 @@ export default function SubmitPage() {
                   placeholder="e.g. Anthropic, Community"
                   value={form.vendor_name}
                   onChange={e => setForm(f => ({ ...f, vendor_name: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
                 />
               </div>
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+              <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                 One-line Description <span className="text-red-500">*</span>
               </label>
               <input
@@ -334,22 +334,22 @@ export default function SubmitPage() {
                 placeholder="What does this server do for an agent?"
                 value={form.short_description}
                 onChange={e => setForm(f => ({ ...f, short_description: e.target.value }))}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
+                className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
               />
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Contact Email <span className="text-gray-400 font-normal">(optional)</span>
+              <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
+                Contact Email <span className="text-[var(--text-3)] font-normal">(optional)</span>
               </label>
               <input
                 type="email"
                 placeholder="you@example.com"
                 value={form.email}
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
+                className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
               />
-              <p className="text-xs text-gray-400 mt-1">For maintainer verification only — never shared publicly</p>
+              <p className="text-xs text-[var(--text-3)] mt-1">For maintainer verification only — never shared publicly</p>
             </div>
           </div>
         </section>
@@ -363,20 +363,20 @@ export default function SubmitPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M6 6h.008v.008H6V6z" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Classification</h2>
+            <h2 className="text-lg font-bold text-[var(--text)]">Classification</h2>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-6 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-2 gap-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   Primary Workflow <span className="text-red-500">*</span>
                 </label>
                 <select
                   required
                   value={form.workflow_slug}
                   onChange={e => setForm(f => ({ ...f, workflow_slug: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-white"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-[var(--bg)]"
                 >
                   <option value="">Select a workflow...</option>
                   {WORKFLOW_OPTIONS.map(w => (
@@ -386,13 +386,13 @@ export default function SubmitPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   Primary Vertical
                 </label>
                 <select
                   value={form.vertical_slug}
                   onChange={e => setForm(f => ({ ...f, vertical_slug: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-white"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-[var(--bg)]"
                 >
                   <option value="">Select a vertical...</option>
                   {VERTICAL_OPTIONS.map(v => (
@@ -403,10 +403,10 @@ export default function SubmitPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-2">
+              <label className="block text-sm font-semibold text-[var(--text-2)] mb-2">
                 Capabilities / Tags
               </label>
-              <p className="text-xs text-gray-400 mb-3">Select all that apply to this MCP server</p>
+              <p className="text-xs text-[var(--text-3)] mb-3">Select all that apply to this MCP server</p>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-2">
                 {CAPABILITY_OPTIONS.map(cap => (
                   <label
@@ -415,7 +415,7 @@ export default function SubmitPage() {
                       flex items-center gap-2 px-3 py-2 rounded-lg border text-sm cursor-pointer transition-all
                       ${form.capabilities.includes(cap)
                         ? 'border-brand bg-brand-light/60 text-brand font-medium'
-                        : 'border-gray-200 bg-white text-gray-600 hover:border-gray-300'
+                        : 'border-[var(--border)] bg-[var(--bg)] text-[var(--text-2)] hover:border-[var(--border)]'
                       }
                     `}
                   >
@@ -426,7 +426,7 @@ export default function SubmitPage() {
                       className="sr-only"
                     />
                     <div className={`w-4 h-4 rounded border-2 flex items-center justify-center flex-shrink-0 transition-colors
-                      ${form.capabilities.includes(cap) ? 'border-brand bg-brand' : 'border-gray-300 bg-white'}
+                      ${form.capabilities.includes(cap) ? 'border-brand bg-brand' : 'border-[var(--border)] bg-[var(--bg)]'}
                     `}>
                       {form.capabilities.includes(cap) && (
                         <svg className="w-2.5 h-2.5 text-white" fill="none" viewBox="0 0 24 24" strokeWidth={4} stroke="currentColor">
@@ -450,19 +450,19 @@ export default function SubmitPage() {
                 <path strokeLinecap="round" strokeLinejoin="round" d="M17.25 6.75L22.5 12l-5.25 5.25m-10.5 0L1.5 12l5.25-5.25m7.5-3l-4.5 16.5" />
               </svg>
             </div>
-            <h2 className="text-lg font-bold text-gray-900">Technical Details</h2>
+            <h2 className="text-lg font-bold text-[var(--text)]">Technical Details</h2>
           </div>
 
-          <div className="bg-white border border-gray-200 rounded-xl p-6 space-y-5">
+          <div className="bg-[var(--bg)] border border-[var(--border)] rounded-xl p-6 space-y-5">
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-5">
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   Transport Type
                 </label>
                 <select
                   value={form.transport_type}
                   onChange={e => setForm(f => ({ ...f, transport_type: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-white"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-[var(--bg)]"
                 >
                   {TRANSPORT_OPTIONS.map(t => (
                     <option key={t.value} value={t.value}>{t.label}</option>
@@ -471,13 +471,13 @@ export default function SubmitPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   Install Method
                 </label>
                 <select
                   value={form.install_method}
                   onChange={e => setForm(f => ({ ...f, install_method: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-white"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-[var(--bg)]"
                 >
                   {INSTALL_OPTIONS.map(m => (
                     <option key={m.value} value={m.value}>{m.label}</option>
@@ -486,13 +486,13 @@ export default function SubmitPage() {
               </div>
 
               <div>
-                <label className="block text-sm font-semibold text-gray-700 mb-1.5">
+                <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
                   License
                 </label>
                 <select
                   value={form.license}
                   onChange={e => setForm(f => ({ ...f, license: e.target.value }))}
-                  className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-white"
+                  className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors bg-[var(--bg)]"
                 >
                   {LICENSE_OPTIONS.map(l => (
                     <option key={l.value} value={l.value}>{l.label}</option>
@@ -502,15 +502,15 @@ export default function SubmitPage() {
             </div>
 
             <div>
-              <label className="block text-sm font-semibold text-gray-700 mb-1.5">
-                Notes <span className="text-gray-400 font-normal">(optional)</span>
+              <label className="block text-sm font-semibold text-[var(--text-2)] mb-1.5">
+                Notes <span className="text-[var(--text-3)] font-normal">(optional)</span>
               </label>
               <textarea
                 rows={3}
                 placeholder="Any context about this server, its use cases, or why it should be featured..."
                 value={form.notes}
                 onChange={e => setForm(f => ({ ...f, notes: e.target.value }))}
-                className="w-full px-3.5 py-2.5 border border-gray-200 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors resize-none"
+                className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors resize-none"
               />
             </div>
           </div>
@@ -552,7 +552,7 @@ export default function SubmitPage() {
               )}
             </span>
           </button>
-          <p className="text-xs text-gray-400 text-center mt-3">
+          <p className="text-xs text-[var(--text-3)] text-center mt-3">
             By submitting, you confirm this is a legitimate MCP server and you have the right to list it on ToolRoute.
           </p>
         </div>

@@ -67,9 +67,12 @@ export default async function CombinationsPage({
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="mb-10">
-        <h1 className="text-3xl font-black text-gray-900 mb-2">MCP Server Stacks</h1>
-        <p className="text-gray-500 max-w-2xl">
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">SERVER STACKS</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          MCP Server<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Stacks.</em>
+        </h1>
+        <p className="text-[var(--text-2)] max-w-2xl">
           Pre-built workflow stacks combining MCP servers for maximum effectiveness.
         </p>
       </div>
@@ -89,12 +92,12 @@ export default async function CombinationsPage({
             const stats = getComboStats(skills, combo.setup_complexity)
 
             return (
-              <Link key={combo.id} href={`/combinations/${combo.slug}`} className="card group block">
+              <Link key={combo.id} href={`/combinations/${combo.slug}`} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" group block">
                 {/* Header */}
                 <div className="flex items-start justify-between gap-3 mb-3">
                   <div>
                     <div className="flex items-center gap-2 mb-1">
-                      <h2 className="font-bold text-gray-900 group-hover:text-brand transition-colors">{combo.name}</h2>
+                      <h2 className="font-bold text-[var(--text)] group-hover:text-brand transition-colors">{combo.name}</h2>
                       {combo.featured && (
                         <span className="badge bg-amber-50 text-amber-700 text-[10px]">Featured</span>
                       )}
@@ -106,20 +109,20 @@ export default async function CombinationsPage({
                   <ComplexityBadge level={combo.setup_complexity} />
                 </div>
 
-                <p className="text-sm text-gray-500 mb-4">{combo.description}</p>
+                <p className="text-sm text-[var(--text-2)] mb-4">{combo.description}</p>
 
                 {/* Aggregate stats */}
-                <div className="grid grid-cols-3 gap-3 mb-4 bg-gray-50 rounded-lg p-3">
+                <div className="grid grid-cols-3 gap-3 mb-4 bg-[var(--bg2)] rounded-lg p-3">
                   <div className="text-center">
-                    <div className="text-xs text-gray-400 mb-0.5">Avg Cost</div>
-                    <div className="text-sm font-bold text-gray-800">{stats.avgCost}</div>
+                    <div className="text-xs text-[var(--text-3)] mb-0.5">Avg Cost</div>
+                    <div className="text-sm font-bold text-[var(--text)]">{stats.avgCost}</div>
                   </div>
-                  <div className="text-center border-x border-gray-200">
-                    <div className="text-xs text-gray-400 mb-0.5">Avg Latency</div>
-                    <div className="text-sm font-bold text-gray-800">{stats.avgLatency}</div>
+                  <div className="text-center border-x border-[var(--border)]">
+                    <div className="text-xs text-[var(--text-3)] mb-0.5">Avg Latency</div>
+                    <div className="text-sm font-bold text-[var(--text)]">{stats.avgLatency}</div>
                   </div>
                   <div className="text-center">
-                    <div className="text-xs text-gray-400 mb-0.5">Success Rate</div>
+                    <div className="text-xs text-[var(--text-3)] mb-0.5">Success Rate</div>
                     <div className="text-sm font-bold text-teal">{stats.successRate}</div>
                   </div>
                 </div>
@@ -127,7 +130,7 @@ export default async function CombinationsPage({
                 {/* Execution order — numbered steps */}
                 {skills.length > 0 && (
                   <div className="mb-4">
-                    <div className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-2">Execution Order</div>
+                    <div className="text-xs font-semibold text-[var(--text-3)] uppercase tracking-wider mb-2">Execution Order</div>
                     <div className="flex flex-col gap-2">
                       {skills.map((cs: any, idx: number) => {
                         const skill = cs.skills
@@ -140,12 +143,12 @@ export default async function CombinationsPage({
                             <div className="flex items-center gap-2 flex-1 min-w-0">
                               <Link
                                 href={`/mcp-servers/${skill?.slug}`}
-                                className="text-sm font-medium text-gray-800 hover:text-brand transition-colors truncate"
+                                className="text-sm font-medium text-[var(--text)] hover:text-brand transition-colors truncate"
                               >
                                 {skill?.canonical_name}
                               </Link>
                               {cs.role_in_combo && (
-                                <span className="text-xs text-gray-400">
+                                <span className="text-xs text-[var(--text-3)]">
                                   &rarr; {cs.role_in_combo}
                                 </span>
                               )}
@@ -163,12 +166,12 @@ export default async function CombinationsPage({
                 )}
 
                 {/* Footer */}
-                <div className="flex items-center justify-between pt-3 border-t border-gray-100 text-xs text-gray-400">
+                <div className="flex items-center justify-between pt-3 border-t border-[var(--border)] text-xs text-[var(--text-3)]">
                   <span>
                     {combo.workflows?.name || 'General'}
                   </span>
                   <span>
-                    Confidence: <strong className="text-gray-600">{combo.confidence_level}</strong>
+                    Confidence: <strong className="text-[var(--text-2)]">{combo.confidence_level}</strong>
                   </span>
                 </div>
               </Link>
@@ -176,7 +179,7 @@ export default async function CombinationsPage({
           })}
         </div>
       ) : (
-        <div className="text-center py-20 text-gray-400">
+        <div className="text-center py-20 text-[var(--text-3)]">
           <p className="text-lg font-medium">No stacks found</p>
           <p className="text-sm mt-1">
             {searchParams.vertical
@@ -199,7 +202,7 @@ function ComplexityBadge({ level }: { level: string }) {
     high: 'bg-red-50 text-red-700',
   }
   return (
-    <span className={`badge text-[10px] flex-shrink-0 ${styles[level] || 'bg-gray-100 text-gray-500'}`}>
+    <span className={`badge text-[10px] flex-shrink-0 ${styles[level] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
       {level} setup
     </span>
   )

@@ -9,7 +9,7 @@ export const metadata = {
 }
 
 const TRUST_TIER_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-  baseline: { bg: 'bg-gray-100', text: 'text-gray-600', label: 'Baseline' },
+  baseline: { bg: 'bg-[var(--bg3)]', text: 'text-[var(--text-2)]', label: 'Baseline' },
   verified: { bg: 'bg-blue-50', text: 'text-blue-700', label: 'Verified' },
   production: { bg: 'bg-green-50', text: 'text-green-700', label: 'Production' },
   premium: { bg: 'bg-brand-light', text: 'text-brand', label: 'Premium' },
@@ -17,7 +17,7 @@ const TRUST_TIER_STYLES: Record<string, { bg: string; text: string; label: strin
 
 const TIER_BADGE_STYLES: Record<string, string> = {
   gold: 'bg-amber-50 text-amber-700',
-  silver: 'bg-gray-100 text-gray-600',
+  silver: 'bg-[var(--bg3)] text-[var(--text-2)]',
   bronze: 'bg-orange-50 text-orange-700',
 }
 
@@ -191,14 +191,12 @@ export default async function AgentsPage() {
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4">
-          AGENT RANKINGS
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          Agents
+      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
+        <div className="page-hero-label">AGENT RANKINGS</div>
+        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
+          Agent<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Rankings.</em>
         </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
+        <p style={{ color: 'var(--text-2)' }} className="max-w-2xl">
           Agent performance rankings by routing credits, reputation, and workflow challenge results.
           Track contributions, challenge wins, and operational efficiency.
         </p>
@@ -208,36 +206,36 @@ export default async function AgentsPage() {
       <div className="flex items-center justify-center gap-8 mb-10 text-sm">
         <div className="text-center">
           <div className="text-2xl font-bold text-brand">{totalAgents}</div>
-          <div className="text-gray-400">Registered Agents</div>
+          <div className="text-[var(--text-3)]">Registered Agents</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-teal">{totalSubmissions}</div>
-          <div className="text-gray-400">Challenge Submissions</div>
+          <div className="text-[var(--text-3)]">Challenge Submissions</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-amber-600">{avgEfficiency > 0 ? avgEfficiency.toFixed(1) : '--'}</div>
-          <div className="text-gray-400">Avg Efficiency</div>
+          <div className="text-[var(--text-3)]">Avg Efficiency</div>
         </div>
         <div className="text-center">
           <div className="text-2xl font-bold text-brand">{mostPopularTool ? mostPopularTool[0] : '--'}</div>
-          <div className="text-gray-400">Top Tool</div>
+          <div className="text-[var(--text-3)]">Top Tool</div>
         </div>
       </div>
 
       {/* Agent Ranking Table */}
       {agentList.length > 0 ? (
-        <div className="card overflow-x-auto p-0 mb-10">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" overflow-x-auto p-0 mb-10">
           <table className="w-full text-sm">
             <thead>
-              <tr className="border-b border-gray-100">
-                <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs w-16">Rank</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Agent</th>
-                <th className="text-left px-4 py-3 font-semibold text-gray-500 text-xs">Trust Tier</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Credits</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Reputation</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Contributions</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Challenges</th>
-                <th className="text-right px-4 py-3 font-semibold text-gray-500 text-xs">Member Since</th>
+              <tr className="border-b border-[var(--border)]">
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs w-16">Rank</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Agent</th>
+                <th className="text-left px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Trust Tier</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Credits</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Reputation</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Contributions</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Challenges</th>
+                <th className="text-right px-4 py-3 font-semibold text-[var(--text-2)] text-xs">Member Since</th>
               </tr>
             </thead>
             <tbody>
@@ -248,17 +246,17 @@ export default async function AgentsPage() {
                 return (
                   <tr
                     key={agent.id}
-                    className={`border-b border-gray-50 ${rank <= 3 ? 'bg-amber-50/30' : ''}`}
+                    className={`border-b border-[var(--border)] ${rank <= 3 ? 'bg-amber-50/30' : ''}`}
                   >
                     <td className="px-4 py-3 text-center text-lg font-bold">
                       {getMedalEmoji(rank)}
                     </td>
                     <td className="px-4 py-3">
-                      <Link href={`/agents/${agent.id}`} className="font-semibold text-gray-900 hover:text-brand transition-colors">
+                      <Link href={`/agents/${agent.id}`} className="font-semibold text-[var(--text)] hover:text-brand transition-colors">
                         {agent.agent_name}
                       </Link>
                       {agent.agent_kind && (
-                        <div className="text-[10px] text-gray-400 capitalize">{agent.agent_kind}</div>
+                        <div className="text-[10px] text-[var(--text-3)] capitalize">{agent.agent_kind}</div>
                       )}
                     </td>
                     <td className="px-4 py-3">
@@ -266,28 +264,28 @@ export default async function AgentsPage() {
                         {tier.label}
                       </span>
                     </td>
-                    <td className="px-4 py-3 text-right font-bold text-gray-800">
+                    <td className="px-4 py-3 text-right font-bold text-[var(--text)]">
                       {agent.totalCredits.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-600">
+                    <td className="px-4 py-3 text-right text-[var(--text-2)]">
                       {agent.totalReputation.toLocaleString()}
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-600">
+                    <td className="px-4 py-3 text-right text-[var(--text-2)]">
                       {agent.contributionCount > 0 ? agent.contributionCount.toLocaleString() : '--'}
                     </td>
                     <td className="px-4 py-3 text-right">
                       <div className="flex items-center justify-end gap-2">
-                        <span className="text-gray-600">
+                        <span className="text-[var(--text-2)]">
                           {agent.submissionCount > 0 ? agent.submissionCount : '--'}
                         </span>
                         {agent.bestTier && (
-                          <span className={`badge text-[10px] ${TIER_BADGE_STYLES[agent.bestTier] || 'bg-gray-100 text-gray-500'}`}>
+                          <span className={`badge text-[10px] ${TIER_BADGE_STYLES[agent.bestTier] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
                             {agent.bestTier.charAt(0).toUpperCase() + agent.bestTier.slice(1)}
                           </span>
                         )}
                       </div>
                     </td>
-                    <td className="px-4 py-3 text-right text-gray-500 text-xs">
+                    <td className="px-4 py-3 text-right text-[var(--text-2)] text-xs">
                       {formatDate(agent.created_at)}
                     </td>
                   </tr>
@@ -297,7 +295,7 @@ export default async function AgentsPage() {
           </table>
         </div>
       ) : (
-        <div className="text-center py-20 text-gray-400 mb-10">
+        <div className="text-center py-20 text-[var(--text-3)] mb-10">
           <p className="text-lg font-medium">No agents registered yet</p>
           <p className="text-sm mt-1">Agents will appear once they register via the API.</p>
         </div>
@@ -311,8 +309,8 @@ export default async function AgentsPage() {
         return (
           <div className="mb-10">
             <div className="mb-6">
-              <h2 className="text-xl font-bold text-gray-900 mb-1">Agent Efficiency Comparison</h2>
-              <p className="text-sm text-gray-500">
+              <h2 className="text-xl font-bold text-[var(--text)] mb-1">Agent Efficiency Comparison</h2>
+              <p className="text-sm text-[var(--text-2)]">
                 Detailed challenge performance breakdown for agents with submissions.
               </p>
             </div>
@@ -344,18 +342,18 @@ export default async function AgentsPage() {
                 const winRate = agent.submissionCount > 0 ? (totalTiers / agent.submissionCount) * 100 : 0
 
                 return (
-                  <div key={agent.id} className="card">
+                  <div key={agent.id} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
                     {/* Agent header */}
                     <div className="flex items-center justify-between mb-4">
                       <div>
-                        <h3 className="font-bold text-gray-900">{agent.agent_name}</h3>
+                        <h3 className="font-bold text-[var(--text)]">{agent.agent_name}</h3>
                         <span className={`badge text-[10px] mt-1 ${tier.bg} ${tier.text}`}>
                           {tier.label}
                         </span>
                       </div>
                       <div className="text-right">
                         <div className="text-lg font-bold text-teal">{winRate.toFixed(0)}%</div>
-                        <div className="text-[10px] text-gray-400">Win Rate</div>
+                        <div className="text-[10px] text-[var(--text-3)]">Win Rate</div>
                       </div>
                     </div>
 
@@ -375,7 +373,7 @@ export default async function AgentsPage() {
                           </span>
                         )}
                         {agent.tierCounts.silver > 0 && (
-                          <span className="badge bg-gray-100 text-gray-600 text-[10px]">
+                          <span className="badge bg-[var(--bg3)] text-[var(--text-2)] text-[10px]">
                             {agent.tierCounts.silver} Silver
                           </span>
                         )}
@@ -389,18 +387,18 @@ export default async function AgentsPage() {
 
                     {/* Most-used tools */}
                     {topTools.length > 0 && (
-                      <div className="border-t border-gray-100 pt-3">
-                        <div className="text-[10px] font-semibold text-gray-500 uppercase tracking-wide mb-2">
+                      <div className="border-t border-[var(--border)] pt-3">
+                        <div className="text-[10px] font-semibold text-[var(--text-2)] uppercase tracking-wide mb-2">
                           Most-Used Tools
                         </div>
                         <div className="flex flex-wrap gap-1.5">
                           {topTools.map(([tool, count]) => (
                             <span
                               key={tool}
-                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-gray-100 text-gray-600 text-[10px] font-medium"
+                              className="inline-flex items-center gap-1 px-2 py-0.5 rounded-full bg-[var(--bg3)] text-[var(--text-2)] text-[10px] font-medium"
                             >
                               {tool}
-                              <span className="text-gray-400">({count as number})</span>
+                              <span className="text-[var(--text-3)]">({count as number})</span>
                             </span>
                           ))}
                         </div>
@@ -408,7 +406,7 @@ export default async function AgentsPage() {
                     )}
 
                     {/* Submissions count */}
-                    <div className="flex items-center justify-between border-t border-gray-100 pt-3 mt-3 text-xs text-gray-400">
+                    <div className="flex items-center justify-between border-t border-[var(--border)] pt-3 mt-3 text-xs text-[var(--text-3)]">
                       <span>{agent.submissionCount} submission{agent.submissionCount !== 1 ? 's' : ''}</span>
                       <span>Avg score: {agent.avgScore.toFixed(1)}</span>
                     </div>
@@ -423,16 +421,16 @@ export default async function AgentsPage() {
       {/* Telemetry Incentive Callout */}
       <div className="mt-10 rounded-xl border border-teal/20 bg-teal-light px-6 py-5 text-center">
         <h3 className="font-bold text-teal mb-1 text-sm">Earn credits and climb the rankings</h3>
-        <p className="text-sm text-gray-600">
+        <p className="text-sm text-[var(--text-2)]">
           Submit telemetry, complete challenges, and contribute data to earn routing credits, reputation points, and agent trust upgrades.
         </p>
       </div>
 
       {/* CTA */}
       <div className="mt-8 text-center">
-        <div className="card max-w-xl mx-auto text-center">
-          <h3 className="font-bold text-gray-900 mb-2">Register Your Agent</h3>
-          <p className="text-sm text-gray-500 mb-4">
+        <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" max-w-xl mx-auto text-center">
+          <h3 className="font-bold text-[var(--text)] mb-2">Register Your Agent</h3>
+          <p className="text-sm text-[var(--text-2)] mb-4">
             Connect your agent to ToolRoute, start earning routing credits,
             and compete in workflow challenges against the best AI agents.
           </p>
@@ -460,14 +458,14 @@ function ScoreBar({ label, value }: { label: string; value: number }) {
 
   return (
     <div className="flex items-center gap-3">
-      <span className="text-[10px] font-medium text-gray-500 w-24 flex-shrink-0">{label}</span>
-      <div className="flex-1 h-2 bg-gray-100 rounded-full overflow-hidden">
+      <span className="text-[10px] font-medium text-[var(--text-2)] w-24 flex-shrink-0">{label}</span>
+      <div className="flex-1 h-2 bg-[var(--bg3)] rounded-full overflow-hidden">
         <div
           className={`h-full rounded-full ${color}`}
           style={{ width: `${percentage}%` }}
         />
       </div>
-      <span className="text-[10px] font-bold text-gray-700 w-8 text-right">{value.toFixed(1)}</span>
+      <span className="text-[10px] font-bold text-[var(--text-2)] w-8 text-right">{value.toFixed(1)}</span>
     </div>
   )
 }

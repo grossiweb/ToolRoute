@@ -35,7 +35,7 @@ function ComplexityBadge({ level }: { level: string }) {
     high: 'bg-red-50 text-red-700',
   }
   return (
-    <span className={`badge text-[10px] flex-shrink-0 ${styles[level] || 'bg-gray-100 text-gray-500'}`}>
+    <span className={`badge text-[10px] flex-shrink-0 ${styles[level] || 'bg-[var(--bg3)] text-[var(--text-2)]'}`}>
       {level} setup
     </span>
   )
@@ -82,10 +82,10 @@ export default async function CombinationDetailPage({
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
       {/* Breadcrumb */}
-      <div className="flex items-center gap-2 text-sm text-gray-400 mb-6">
+      <div className="flex items-center gap-2 text-sm text-[var(--text-3)] mb-6">
         <Link href="/combinations" className="hover:text-brand transition-colors">Stacks</Link>
         <span>/</span>
-        <span className="text-gray-600">{combo.name}</span>
+        <span className="text-[var(--text-2)]">{combo.name}</span>
       </div>
 
       {/* Header */}
@@ -99,51 +99,51 @@ export default async function CombinationDetailPage({
             <span className="badge bg-amber-50 text-amber-700 text-[10px]">Featured</span>
           )}
         </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
+        <h1 className="text-3xl md:text-4xl font-black text-[var(--text)] mb-3">
           {combo.name}
         </h1>
         {combo.headline && (
           <p className="text-brand font-medium mb-2">{combo.headline}</p>
         )}
         {combo.description && (
-          <p className="text-gray-500 max-w-3xl text-lg">
+          <p className="text-[var(--text-2)] max-w-3xl text-lg">
             {combo.description}
           </p>
         )}
         <div className="flex items-center gap-6 mt-6 text-sm">
           <div>
             <span className="text-2xl font-bold text-brand">{skills.length}</span>
-            <span className="text-gray-400 ml-2">server{skills.length !== 1 ? 's' : ''}</span>
+            <span className="text-[var(--text-3)] ml-2">server{skills.length !== 1 ? 's' : ''}</span>
           </div>
           {avgOverall != null && (
             <div>
               <span className="text-2xl font-bold text-teal">{avgOverall.toFixed(1)}</span>
-              <span className="text-gray-400 ml-2">avg score</span>
+              <span className="text-[var(--text-3)] ml-2">avg score</span>
             </div>
           )}
           <div>
-            <span className="text-gray-400">Confidence:</span>
-            <span className="font-bold text-gray-700 ml-1">{combo.confidence_level}</span>
+            <span className="text-[var(--text-3)]">Confidence:</span>
+            <span className="font-bold text-[var(--text-2)] ml-1">{combo.confidence_level}</span>
           </div>
           {(combo.workflows as any)?.name && (
             <div>
-              <span className="text-gray-400">Workflow:</span>
-              <span className="font-bold text-gray-700 ml-1">{(combo.workflows as any).name}</span>
+              <span className="text-[var(--text-3)]">Workflow:</span>
+              <span className="font-bold text-[var(--text-2)] ml-1">{(combo.workflows as any).name}</span>
             </div>
           )}
         </div>
       </div>
 
       {/* Execution Pipeline */}
-      <div className="card mb-8 p-0 overflow-hidden">
-        <div className="px-5 py-4 border-b border-gray-100">
-          <h2 className="font-bold text-gray-900">Execution Pipeline</h2>
-          <p className="text-xs text-gray-400 mt-0.5">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-8 p-0 overflow-hidden">
+        <div className="px-5 py-4 border-b border-[var(--border)]">
+          <h2 className="font-bold text-[var(--text)]">Execution Pipeline</h2>
+          <p className="text-xs text-[var(--text-3)] mt-0.5">
             Servers execute in this order to complete the workflow
           </p>
         </div>
 
-        <div className="divide-y divide-gray-100">
+        <div className="divide-y divide-[var(--border)]">
           {skills.map((cs: any, idx: number) => {
             const skill = cs.skills
             const scores = skill?.skill_scores
@@ -162,7 +162,7 @@ export default async function CombinationDetailPage({
                   <div className="flex items-center gap-2 mb-1 flex-wrap">
                     <Link
                       href={`/mcp-servers/${skill?.slug}`}
-                      className="font-bold text-gray-900 hover:text-brand transition-colors"
+                      className="font-bold text-[var(--text)] hover:text-brand transition-colors"
                     >
                       {skill?.canonical_name || 'Unknown'}
                     </Link>
@@ -170,29 +170,29 @@ export default async function CombinationDetailPage({
                       <span className="badge bg-teal-light text-teal text-[10px]">Official</span>
                     )}
                     {cs.role_in_combo && (
-                      <span className="badge bg-gray-100 text-gray-600 text-[10px]">
+                      <span className="badge bg-[var(--bg3)] text-[var(--text-2)] text-[10px]">
                         {cs.role_in_combo}
                       </span>
                     )}
                   </div>
                   {skill?.short_description && (
-                    <p className="text-sm text-gray-500 mb-2">{skill.short_description}</p>
+                    <p className="text-sm text-[var(--text-2)] mb-2">{skill.short_description}</p>
                   )}
 
                   {/* Score breakdown */}
                   {scores && (
                     <div className="flex items-center gap-4 text-xs">
                       {scores.output_score != null && (
-                        <span className="text-gray-500">Output: <strong className={overallScore >= 8 ? 'text-teal' : 'text-gray-700'}>{formatScore(scores.output_score)}</strong></span>
+                        <span className="text-[var(--text-2)]">Output: <strong className={overallScore >= 8 ? 'text-teal' : 'text-[var(--text-2)]'}>{formatScore(scores.output_score)}</strong></span>
                       )}
                       {scores.reliability_score != null && (
-                        <span className="text-gray-500">Reliability: <strong className={scores.reliability_score >= 8 ? 'text-teal' : 'text-gray-700'}>{formatScore(scores.reliability_score)}</strong></span>
+                        <span className="text-[var(--text-2)]">Reliability: <strong className={scores.reliability_score >= 8 ? 'text-teal' : 'text-[var(--text-2)]'}>{formatScore(scores.reliability_score)}</strong></span>
                       )}
                       {scores.cost_score != null && (
-                        <span className="text-gray-500">Cost: <strong className={scores.cost_score >= 8 ? 'text-teal' : 'text-gray-700'}>{formatScore(scores.cost_score)}</strong></span>
+                        <span className="text-[var(--text-2)]">Cost: <strong className={scores.cost_score >= 8 ? 'text-teal' : 'text-[var(--text-2)]'}>{formatScore(scores.cost_score)}</strong></span>
                       )}
                       {stars != null && (
-                        <span className="text-gray-400">⭐ {stars.toLocaleString()}</span>
+                        <span className="text-[var(--text-3)]">⭐ {stars.toLocaleString()}</span>
                       )}
                     </div>
                   )}
@@ -211,26 +211,26 @@ export default async function CombinationDetailPage({
       </div>
 
       {/* Use this stack */}
-      <div className="card mb-8">
-        <h3 className="font-bold text-gray-900 mb-3">Use This Stack</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-8">
+        <h3 className="font-bold text-[var(--text)] mb-3">Use This Stack</h3>
+        <p className="text-sm text-[var(--text-2)] mb-4">
           Request this combination through the routing API by specifying the workflow:
         </p>
         <div className="bg-gray-900 rounded-lg p-4 font-mono text-sm overflow-x-auto">
-          <span className="text-gray-400">POST /api/route</span>{'\n'}
-          <span className="text-gray-300">{'{'}</span>{'\n'}
-          <span className="text-gray-300">{'  '}&quot;task&quot;: </span>
+          <span className="text-[var(--text-3)]">POST /api/route</span>{'\n'}
+          <span className="text-[var(--text-3)]">{'{'}</span>{'\n'}
+          <span className="text-[var(--text-3)]">{'  '}&quot;task&quot;: </span>
           <span className="text-green-400">&quot;{combo.description?.slice(0, 50) || combo.name}&quot;</span>{'\n'}
-          <span className="text-gray-300">{'  '}&quot;workflow_slug&quot;: </span>
+          <span className="text-[var(--text-3)]">{'  '}&quot;workflow_slug&quot;: </span>
           <span className="text-green-400">&quot;{(combo.workflows as any)?.slug || 'general'}&quot;</span>{'\n'}
-          <span className="text-gray-300">{'}'}</span>
+          <span className="text-[var(--text-3)]">{'}'}</span>
         </div>
       </div>
 
       {/* CTA */}
-      <div className="card max-w-xl mx-auto text-center">
-        <h3 className="font-bold text-gray-900 mb-2">Benchmark This Stack</h3>
-        <p className="text-sm text-gray-500 mb-4">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" max-w-xl mx-auto text-center">
+        <h3 className="font-bold text-[var(--text)] mb-2">Benchmark This Stack</h3>
+        <p className="text-sm text-[var(--text-2)] mb-4">
           Run this server stack on real tasks and report outcomes. Earn routing credits for every data point.
         </p>
         <div className="flex items-center justify-center gap-3">
