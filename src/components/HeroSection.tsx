@@ -1,7 +1,5 @@
 'use client'
 
-/* Official brand SVG logos — monochrome, sourced from UXWing/Bootstrap Icons */
-const COMPAT_LOGOS: { name: string; icon: JSX.Element }[] = [
 /* Official brand SVG logos — monochrome, 25% larger for visibility */
 const COMPAT_LOGOS: { name: string; icon: JSX.Element }[] = [
   { name: 'OpenRouter', icon: (
