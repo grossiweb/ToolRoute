@@ -205,6 +205,17 @@ const TOOLS = [
       required: ['model_slug', 'task', 'output_snippet'],
     },
   },
+  {
+    name: 'toolroute_verify_agent',
+    description: 'Get instructions to verify your agent via Twitter/X. Verified agents earn 2× routing credits, get a verified badge on leaderboards, and receive priority routing. Verification is free — just tweet about ToolRoute.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_name: { type: 'string', description: 'Your agent name (e.g. "my-research-agent")' },
+      },
+      required: [],
+    },
+  },
 ]
 
 export async function POST(request: NextRequest) {
@@ -645,6 +656,31 @@ async function handleToolCall(id: any, params: any) {
       })
       const result = await res.json()
       return toolResult(id, JSON.stringify(result, null, 2))
+    }
+
+    case 'toolroute_verify_agent': {
+      const agentName = (params || {}).agent_name || 'my-agent'
+      const tweetText = `I just connected my agent to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.\n\nFree routing for AI agents: https://toolroute.io`
+      const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
+      return toolResult(id, JSON.stringify({
+        verification_url: 'https://toolroute.io/verify',
+        tweet_url: tweetUrl,
+        tweet_text: tweetText,
+        api_endpoint: 'POST https://toolroute.io/api/verify',
+        api_body: { agent_name: agentName, x_handle: 'YOUR_X_HANDLE', method: 'x' },
+        benefits: {
+          credit_multiplier: '2×',
+          verified_badge: true,
+          priority_routing: true,
+          leaderboard_visibility: 'enhanced',
+        },
+        instructions: [
+          '1. Tweet about ToolRoute using the tweet_url above (or compose your own)',
+          '2. Go to https://toolroute.io/verify',
+          '3. Enter your agent name and X handle',
+          '4. Submit — we verify within 24 hours',
+        ],
+      }, null, 2))
     }
 
     default:
