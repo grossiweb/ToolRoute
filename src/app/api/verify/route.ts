@@ -1,23 +1,24 @@
 import { NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 
+/**
+ * POST /api/verify
+ * Submit a verification request via X (Twitter).
+ * Agent tweets about ToolRoute → submits details → manual review → upgrade to verified.
+ */
 export async function POST(req: Request) {
   try {
     const body = await req.json()
-    const { agent_name, x_handle, github_username, method } = body
+    const { agent_name, x_handle } = body
 
     if (!agent_name) {
       return NextResponse.json({ error: 'agent_name is required' }, { status: 400 })
     }
-
-    const verifyMethod = method || (github_username ? 'github' : 'x')
-
-    if (verifyMethod === 'x' && !x_handle) {
-      return NextResponse.json({ error: 'x_handle is required for X verification' }, { status: 400 })
+    if (!x_handle) {
+      return NextResponse.json({ error: 'x_handle is required' }, { status: 400 })
     }
-    if (verifyMethod === 'github' && !github_username) {
-      return NextResponse.json({ error: 'github_username is required for GitHub verification' }, { status: 400 })
-    }
+
+    const cleanHandle = x_handle.trim().replace('@', '')
 
     const supabaseUrl = process.env.NEXT_PUBLIC_SUPABASE_URL
     const supabaseKey = process.env.SUPABASE_SERVICE_ROLE_KEY
@@ -29,29 +30,21 @@ export async function POST(req: Request) {
         .from('verification_requests')
         .insert({
           agent_name: agent_name.trim(),
-          method: verifyMethod,
-          x_handle: x_handle ? x_handle.trim().replace('@', '') : null,
-          github_username: github_username ? github_username.trim() : null,
+          method: 'x',
+          x_handle: cleanHandle,
           status: 'pending',
           submitted_at: new Date().toISOString(),
         })
         .select()
     }
 
-    const handle = verifyMethod === 'x'
-      ? x_handle.replace('@', '')
-      : github_username
-
-    console.log(`[VERIFY] New ${verifyMethod} verification: agent=${agent_name}, handle=${handle}`)
+    console.log(`[VERIFY] New X verification: agent=${agent_name}, handle=@${cleanHandle}`)
 
     return NextResponse.json({
       status: 'submitted',
-      message: `Verification request submitted via ${verifyMethod}. We will review within 24 hours.`,
-      agent_name,
-      method: verifyMethod,
-      ...(verifyMethod === 'x'
-        ? { x_handle: x_handle.replace('@', '') }
-        : { github_username }),
+      message: 'Verification request submitted. We will review your tweet within 24 hours.',
+      agent_name: agent_name.trim(),
+      x_handle: cleanHandle,
     })
   } catch {
     return NextResponse.json(
@@ -61,26 +54,24 @@ export async function POST(req: Request) {
   }
 }
 
+/**
+ * GET /api/verify
+ * Documentation for the verification endpoint.
+ */
 export async function GET() {
   return NextResponse.json({
     name: 'Agent Verification',
-    description: 'Verify your agent via X (tweet) or GitHub (star the repo). Get 2x credits, verified badge, and priority routing.',
-    methods: {
-      x: {
-        description: 'Tweet about ToolRoute',
-        body: { agent_name: 'string', x_handle: 'string (without @)', method: 'x' },
-      },
-      github: {
-        description: 'Star the ToolRoute repo on GitHub',
-        body: { agent_name: 'string', github_username: 'string', method: 'github' },
-      },
+    description: 'Verify your agent by tweeting about ToolRoute. Get 2x credits, verified badge, and priority routing.',
+    endpoint: 'POST /api/verify',
+    required_fields: {
+      agent_name: 'string — your registered agent name',
+      x_handle: 'string — your X/Twitter handle (without @)',
     },
     benefits: [
       '2x credit multiplier on all telemetry reports',
       'Verified badge on leaderboards and agent profiles',
       'Priority routing and higher confidence scores',
     ],
-    endpoint: 'POST /api/verify',
     verify_page: 'https://toolroute.io/verify',
   })
 }

@@ -29,6 +29,9 @@ export function NavBar() {
 
         {/* CTA */}
         <div className="hidden md:flex items-center gap-3">
+          <Link href="/verify" className="text-sm font-medium text-teal hover:text-teal/80 transition-colors">
+            Verify
+          </Link>
           <Link href="/submit" className="btn-secondary">
             Submit
           </Link>
@@ -67,7 +70,10 @@ export function NavBar() {
             <Link href="/tasks" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Tasks</Link>
             <Link href="/dashboard" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Dashboard</Link>
           </div>
-          <Link href="/submit" className="text-brand font-semibold mt-2 pt-2 border-t border-gray-100" onClick={() => setMenuOpen(false)}>Submit a server &rarr;</Link>
+          <div className="flex flex-col gap-1.5 mt-2 pt-2 border-t border-gray-100">
+            <Link href="/verify" className="text-teal font-semibold" onClick={() => setMenuOpen(false)}>Verify your agent &rarr;</Link>
+            <Link href="/submit" className="text-brand font-semibold" onClick={() => setMenuOpen(false)}>Submit a server &rarr;</Link>
+          </div>
         </div>
       )}
     </nav>

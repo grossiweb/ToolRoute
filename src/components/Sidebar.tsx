@@ -5,7 +5,7 @@ import { useState } from 'react'
 import { usePathname, useSearchParams } from 'next/navigation'
 
 interface SidebarProps {
-  context?: 'default' | 'leaderboards' | 'tasks'
+  context?: 'default' | 'leaderboards' | 'tasks' | 'challenges'
 }
 
 const WORKFLOWS = [
@@ -121,6 +121,12 @@ export function Sidebar({ context = 'default' }: SidebarProps) {
       <aside className={`${mobileOpen ? 'block' : 'hidden'} md:block w-full md:w-52 shrink-0`}>
         {context === 'leaderboards' && <LeaderboardsSidebar pathname={pathname} />}
         {context === 'tasks' && <TasksSidebar pathname={pathname} />}
+        {context === 'challenges' && (
+          <ChallengesSidebar
+            activeCategory={searchParams.get('category')}
+            activeDifficulty={searchParams.get('difficulty')}
+          />
+        )}
         {context === 'default' && (
           <DefaultSidebar
             activeWorkflow={searchParams.get('workflow')}
@@ -200,6 +206,75 @@ function TasksSidebar({ pathname }: { pathname: string }) {
         )
       })}
     </SidebarSection>
+  )
+}
+
+const CHALLENGE_CATEGORIES = [
+  { label: 'All Categories', slug: '' },
+  { label: 'Research', slug: 'research' },
+  { label: 'Dev-Ops', slug: 'dev-ops' },
+  { label: 'Content', slug: 'content' },
+  { label: 'Sales', slug: 'sales' },
+  { label: 'Data', slug: 'data' },
+]
+
+const CHALLENGE_DIFFICULTIES = [
+  { label: 'All Difficulties', slug: '' },
+  { label: 'Beginner', slug: 'beginner' },
+  { label: 'Intermediate', slug: 'intermediate' },
+  { label: 'Advanced', slug: 'advanced' },
+  { label: 'Expert', slug: 'expert' },
+]
+
+function ChallengesSidebar({
+  activeCategory,
+  activeDifficulty,
+}: {
+  activeCategory: string | null
+  activeDifficulty: string | null
+}) {
+  return (
+    <>
+      <SidebarSection title="Category">
+        {CHALLENGE_CATEGORIES.map((cat) => {
+          const params = new URLSearchParams()
+          if (cat.slug) params.set('category', cat.slug)
+          if (activeDifficulty) params.set('difficulty', activeDifficulty)
+          const href = params.toString() ? `/challenges?${params.toString()}` : '/challenges'
+          const active = cat.slug
+            ? activeCategory === cat.slug
+            : !activeCategory
+          return (
+            <SidebarItem
+              key={cat.slug || '_all'}
+              href={href}
+              label={cat.label}
+              active={active}
+            />
+          )
+        })}
+      </SidebarSection>
+
+      <SidebarSection title="Difficulty">
+        {CHALLENGE_DIFFICULTIES.map((diff) => {
+          const params = new URLSearchParams()
+          if (activeCategory) params.set('category', activeCategory)
+          if (diff.slug) params.set('difficulty', diff.slug)
+          const href = params.toString() ? `/challenges?${params.toString()}` : '/challenges'
+          const active = diff.slug
+            ? activeDifficulty === diff.slug
+            : !activeDifficulty
+          return (
+            <SidebarItem
+              key={diff.slug || '_all'}
+              href={href}
+              label={diff.label}
+              active={active}
+            />
+          )
+        })}
+      </SidebarSection>
+    </>
   )
 }
 

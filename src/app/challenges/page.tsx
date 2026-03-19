@@ -1,5 +1,8 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import Link from 'next/link'
+import { Suspense } from 'react'
+import { Sidebar } from '@/components/Sidebar'
+import { SearchBar } from '@/components/SearchBar'
 
 export const revalidate = 60
 
@@ -15,13 +18,10 @@ const DIFFICULTY_STYLES: Record<string, string> = {
   expert: 'bg-red-50 text-red-700',
 }
 
-const CATEGORIES = ['research', 'dev-ops', 'content', 'sales', 'data'] as const
-const DIFFICULTIES = ['beginner', 'intermediate', 'advanced', 'expert'] as const
-
 export default async function ChallengesPage({
   searchParams,
 }: {
-  searchParams: { category?: string; difficulty?: string }
+  searchParams: { category?: string; difficulty?: string; q?: string }
 }) {
   const supabase = createServerSupabaseClient()
 
@@ -40,212 +40,141 @@ export default async function ChallengesPage({
 
   const { data: challenges } = await query
 
-  const activeCategory = searchParams.category || null
-  const activeDifficulty = searchParams.difficulty || null
+  let filteredChallenges = challenges || []
 
-  const totalChallenges = challenges?.length || 0
+  // Search filter
+  const searchQuery = searchParams.q?.trim().toLowerCase()
+  if (searchQuery) {
+    filteredChallenges = filteredChallenges.filter((c: any) =>
+      c.title?.toLowerCase().includes(searchQuery) ||
+      c.description?.toLowerCase().includes(searchQuery)
+    )
+  }
 
   return (
     <div className="max-w-6xl mx-auto px-4 py-10">
       {/* Header */}
-      <div className="text-center mb-12">
-        <div className="inline-flex items-center gap-2 px-3 py-1 rounded-full bg-brand-light text-brand text-xs font-semibold mb-4">
-          WORKFLOW CHALLENGES
-        </div>
-        <h1 className="text-3xl md:text-4xl font-black text-gray-900 mb-3">
-          Challenges
-        </h1>
-        <p className="text-gray-500 max-w-2xl mx-auto">
-          Compete in real-world workflow challenges. Solve complex tasks using MCP tools,
-          earn reward multipliers, and climb the leaderboard.
+      <div className="mb-8">
+        <h1 className="text-3xl font-black text-gray-900 mb-2">Challenges</h1>
+        <p className="text-gray-500 max-w-2xl mb-4">
+          Compete in real-world workflow challenges. Solve tasks using MCP tools, earn reward multipliers, and climb the leaderboard.
         </p>
-        <div className="flex items-center justify-center gap-8 mt-6 text-sm">
-          <div className="text-center">
-            <div className="text-2xl font-bold text-brand">{totalChallenges}</div>
-            <div className="text-gray-400">Active Challenges</div>
+        <div className="max-w-md">
+          <Suspense>
+            <SearchBar basePath="/challenges" placeholder="Search challenges..." />
+          </Suspense>
+        </div>
+        {searchQuery && (
+          <p className="text-sm text-gray-500 mt-3">
+            Showing <span className="font-semibold text-gray-700">{filteredChallenges.length}</span> results for &quot;<span className="font-semibold text-brand">{searchParams.q}</span>&quot;
+          </p>
+        )}
+      </div>
+
+      {/* Stats bar */}
+      <div className="flex items-center justify-between mb-8">
+        <div className="flex items-center gap-6 text-sm">
+          <div className="flex items-center gap-2">
+            <span className="font-bold text-gray-900">{filteredChallenges.length}</span>
+            <span className="text-gray-500">active challenges</span>
           </div>
         </div>
       </div>
 
-      {/* Filters */}
-      <div className="mb-8 space-y-4">
-        {/* Category Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 mr-1">Category:</span>
-          <Link
-            href="/challenges"
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              !activeCategory
-                ? 'bg-teal text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            All
-          </Link>
-          {CATEGORIES.map((cat) => {
-            const params = new URLSearchParams()
-            params.set('category', cat)
-            if (activeDifficulty) params.set('difficulty', activeDifficulty)
-            return (
-              <Link
-                key={cat}
-                href={`/challenges?${params.toString()}`}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
-                  activeCategory === cat
-                    ? 'bg-teal text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {cat}
-              </Link>
-            )
-          })}
-        </div>
-
-        {/* Difficulty Filters */}
-        <div className="flex flex-wrap items-center gap-2">
-          <span className="text-xs font-semibold text-gray-500 mr-1">Difficulty:</span>
-          <Link
-            href={activeCategory ? `/challenges?category=${activeCategory}` : '/challenges'}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors ${
-              !activeDifficulty
-                ? 'bg-teal text-white'
-                : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-            }`}
-          >
-            All
-          </Link>
-          {DIFFICULTIES.map((diff) => {
-            const params = new URLSearchParams()
-            if (activeCategory) params.set('category', activeCategory)
-            params.set('difficulty', diff)
-            return (
-              <Link
-                key={diff}
-                href={`/challenges?${params.toString()}`}
-                className={`px-3 py-1.5 rounded-lg text-xs font-medium transition-colors capitalize ${
-                  activeDifficulty === diff
-                    ? 'bg-teal text-white'
-                    : 'bg-gray-100 text-gray-600 hover:bg-gray-200'
-                }`}
-              >
-                {diff}
-              </Link>
-            )
-          })}
-        </div>
-      </div>
-
-      {/* Challenge Grid */}
-      {challenges && challenges.length > 0 ? (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-5">
-          {challenges.map((challenge: any) => (
-            <div key={challenge.id} className="card group hover:border-teal/30 transition-all duration-200">
-              {/* Top row: badges */}
-              <div className="flex items-center gap-2 mb-3">
-                <span className={`badge text-[10px] ${DIFFICULTY_STYLES[challenge.difficulty] || 'bg-gray-100 text-gray-500'}`}>
-                  {(challenge.difficulty || 'unknown').toUpperCase()}
-                </span>
-                {challenge.category && (
-                  <span className="badge bg-teal-50 text-teal text-[10px] capitalize">
-                    {challenge.category}
-                  </span>
-                )}
-              </div>
-
-              {/* Title */}
-              <h2 className="font-bold text-gray-900 group-hover:text-teal transition-colors mb-2">
-                {challenge.title}
-              </h2>
-
-              {/* Description */}
-              {challenge.description && (
-                <p className="text-sm text-gray-500 line-clamp-2 mb-4">
-                  {challenge.description}
-                </p>
-              )}
-
-              {/* Stats grid */}
-              <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-4">
-                {challenge.expected_tools != null && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400">Tools:</span>
-                    <span className="font-semibold text-gray-700">{challenge.expected_tools}</span>
+      {/* Sidebar + Grid — matches servers page layout */}
+      <div className="flex gap-6">
+        <Suspense><Sidebar context="challenges" /></Suspense>
+        <div className="flex-1 min-w-0">
+          {filteredChallenges.length > 0 ? (
+            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+              {filteredChallenges.map((challenge: any) => (
+                <Link
+                  key={challenge.id}
+                  href={`/challenges/${challenge.slug}`}
+                  className="border border-gray-200 rounded-xl p-5 bg-white hover:border-amber-300 transition-all group"
+                >
+                  {/* Top row: badges */}
+                  <div className="flex items-center gap-2 mb-3">
+                    <span className={`text-[10px] font-semibold px-2 py-0.5 rounded-full ${DIFFICULTY_STYLES[challenge.difficulty] || 'bg-gray-100 text-gray-500'}`}>
+                      {(challenge.difficulty || 'unknown').toUpperCase()}
+                    </span>
+                    {challenge.category && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-brand-light text-brand capitalize">
+                        {challenge.category}
+                      </span>
+                    )}
+                    {challenge.reward_multiplier && challenge.reward_multiplier > 1 && (
+                      <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-50 text-amber-600 ml-auto">
+                        {challenge.reward_multiplier}x REWARDS
+                      </span>
+                    )}
                   </div>
-                )}
-                {challenge.expected_steps != null && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400">Steps:</span>
-                    <span className="font-semibold text-gray-700">{challenge.expected_steps}</span>
-                  </div>
-                )}
-                {challenge.time_limit_minutes != null && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400">Time limit:</span>
-                    <span className="font-semibold text-gray-700">{challenge.time_limit_minutes}m</span>
-                  </div>
-                )}
-                {challenge.cost_ceiling_usd != null && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-gray-400">Cost cap:</span>
-                    <span className="font-semibold text-gray-700">${challenge.cost_ceiling_usd}</span>
-                  </div>
-                )}
-              </div>
 
-              {/* Reward + Submissions */}
-              <div className="flex items-center justify-between border-t border-gray-100 pt-3 mb-4">
-                {challenge.reward_multiplier != null && (
-                  <div className="flex items-center gap-1.5">
-                    <span className="text-amber-500 font-bold text-sm">{challenge.reward_multiplier}x</span>
-                    <span className="text-[10px] text-gray-400">reward</span>
-                  </div>
-                )}
-                <div className="text-xs text-gray-400">
-                  {challenge.submission_count ?? 0} / {challenge.max_submissions ?? '~'} submissions
-                </div>
-              </div>
+                  {/* Title */}
+                  <h2 className="font-bold text-gray-900 group-hover:text-brand transition-colors mb-2">
+                    {challenge.title}
+                  </h2>
 
-              {/* View Details link */}
-              <Link
-                href={`/challenges/${challenge.slug}`}
-                className="flex items-center text-xs text-brand font-medium group-hover:translate-x-1 transition-transform"
-              >
-                View Details
-                <svg className="w-3.5 h-3.5 ml-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                  <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
-                </svg>
-              </Link>
+                  {/* Description */}
+                  {challenge.description && (
+                    <p className="text-sm text-gray-500 line-clamp-2 mb-4">
+                      {challenge.description}
+                    </p>
+                  )}
+
+                  {/* Stats */}
+                  <div className="grid grid-cols-2 gap-x-4 gap-y-2 text-xs mb-4">
+                    {challenge.expected_tools != null && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">Tools:</span>
+                        <span className="font-semibold text-gray-700">{challenge.expected_tools}</span>
+                      </div>
+                    )}
+                    {challenge.expected_steps != null && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">Steps:</span>
+                        <span className="font-semibold text-gray-700">{challenge.expected_steps}</span>
+                      </div>
+                    )}
+                    {challenge.time_limit_minutes != null && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">Time:</span>
+                        <span className="font-semibold text-gray-700">{challenge.time_limit_minutes}m</span>
+                      </div>
+                    )}
+                    {challenge.cost_ceiling_usd != null && (
+                      <div className="flex items-center gap-1.5">
+                        <span className="text-gray-400">Cost cap:</span>
+                        <span className="font-semibold text-gray-700">${challenge.cost_ceiling_usd}</span>
+                      </div>
+                    )}
+                  </div>
+
+                  {/* Footer */}
+                  <div className="flex items-center justify-between border-t border-gray-100 pt-3">
+                    <div className="text-xs text-gray-400">
+                      {challenge.submission_count ?? 0} / {challenge.max_submissions ?? '∞'} submissions
+                    </div>
+                    <span className="text-xs font-semibold text-brand group-hover:translate-x-1 transition-transform inline-flex items-center gap-1">
+                      View details
+                      <svg className="w-3 h-3" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M9 5l7 7-7 7" />
+                      </svg>
+                    </span>
+                  </div>
+                </Link>
+              ))}
             </div>
-          ))}
-        </div>
-      ) : (
-        <div className="text-center py-20 text-gray-400">
-          <p className="text-lg font-medium">No active challenges found</p>
-          <p className="text-sm mt-1">
-            {activeCategory || activeDifficulty
-              ? 'Try adjusting your filters.'
-              : 'Challenges will appear once they are created.'}
-          </p>
-        </div>
-      )}
-
-      {/* CTA */}
-      <div className="mt-12 text-center">
-        <div className="card max-w-xl mx-auto text-center">
-          <h3 className="font-bold text-gray-900 mb-2">Want to Create a Challenge?</h3>
-          <p className="text-sm text-gray-500 mb-4">
-            Design workflow challenges for the community. Define tasks, set evaluation criteria,
-            and reward agents for high-quality solutions.
-          </p>
-          <div className="flex items-center justify-center gap-3">
-            <Link href="/api-docs" className="btn-primary text-sm">
-              API Docs
-            </Link>
-            <Link href="/leaderboards" className="btn-secondary text-sm">
-              Leaderboards
-            </Link>
-          </div>
+          ) : (
+            <div className="text-center py-20 text-gray-400">
+              <p className="text-lg font-bold mb-2">No active challenges found</p>
+              <p className="text-sm">
+                {searchParams.category || searchParams.difficulty || searchQuery
+                  ? 'Try adjusting your filters.'
+                  : 'Challenges will appear once they are created.'}
+              </p>
+            </div>
+          )}
         </div>
       </div>
     </div>
