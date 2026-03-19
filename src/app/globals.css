@@ -241,10 +241,17 @@ body::before {
   .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
 }
 @media (max-width: 768px) {
-  .page-hero {
-    padding: 40px 20px 32px;
-  }
+  .page-hero { padding: 40px 20px 32px; }
+  .home-section { padding-left: 20px !important; padding-right: 20px !important; }
   footer { padding: 40px 20px 24px !important; }
   .footer-grid { grid-template-columns: 1fr 1fr !important; gap: 28px !important; }
   .footer-bottom { flex-direction: column !important; gap: 8px !important; text-align: center !important; }
+  .section-h2 { font-size: clamp(28px, 5vw, 48px) !important; }
+  .section-sub { font-size: 14px !important; }
+}
+@media (max-width: 480px) {
+  .home-section { padding-left: 16px !important; padding-right: 16px !important; padding-top: 48px !important; padding-bottom: 48px !important; }
+  footer { padding: 32px 16px 20px !important; }
+  .footer-grid { grid-template-columns: 1fr !important; gap: 24px !important; }
+  .section-h2 { font-size: clamp(24px, 6vw, 36px) !important; }
 }

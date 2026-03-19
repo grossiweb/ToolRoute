@@ -13,8 +13,8 @@ export default function HomePage() {
       <HeroSection />
 
       {/* Stats bar */}
-      <div style={{ padding: '0 40px', maxWidth: 1240, margin: '0 auto' }}>
-        <div style={{
+      <div className="home-section" style={{ padding: '0 40px', maxWidth: 1240, margin: '0 auto' }}>
+        <div className="stats-bar" style={{
           border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
           background: 'var(--bg2)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', overflow: 'hidden',
         }}>
@@ -46,7 +46,7 @@ export default function HomePage() {
       </div>
 
       {/* Try It + Code section */}
-      <div style={{
+      <div className="home-section" style={{
         padding: '80px 40px',
         borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)',
@@ -84,7 +84,7 @@ export default function HomePage() {
       </div>
 
       {/* Bento features */}
-      <div style={{ padding: '88px 40px', maxWidth: 1240, margin: '0 auto' }}>
+      <div className="home-section" style={{ padding: '88px 40px', maxWidth: 1240, margin: '0 auto' }}>
         <div className="section-lbl">What ToolRoute does</div>
         <h2 className="section-h2">Routing intelligence that <em>compounds.</em></h2>
         <p className="section-sub">
@@ -322,7 +322,7 @@ export default function HomePage() {
       </div>
 
       {/* Scoring Dimensions */}
-      <div style={{ padding: '88px 40px', maxWidth: 1240, margin: '0 auto', borderTop: '1px solid var(--border)' }}>
+      <div className="home-section" style={{ padding: '88px 40px', maxWidth: 1240, margin: '0 auto', borderTop: '1px solid var(--border)' }}>
         <div className="section-lbl">Outcome intelligence</div>
         <h2 className="section-h2">Five dimensions. One <em>value score.</em></h2>
         <p className="section-sub">We normalize every run into five core scores. Not popularity. Not stars. Actual outcomes.</p>
@@ -367,7 +367,7 @@ export default function HomePage() {
       </div>
 
       {/* How it works — split layout with terminal */}
-      <div style={{ padding: '88px 40px', maxWidth: 1240, margin: '0 auto' }}>
+      <div className="home-section" style={{ padding: '88px 40px', maxWidth: 1240, margin: '0 auto' }}>
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 64, alignItems: 'start' }} className="how-grid">
           <div>
             <div className="section-lbl">How it works</div>
@@ -434,7 +434,7 @@ $ `}<span style={{ color: '#e5c07b' }}>toolroute report</span>{` `}<span style={
       </div>
 
       {/* Contribution Economy */}
-      <div style={{ padding: '0 40px 88px', maxWidth: 1240, margin: '0 auto' }}>
+      <div className="home-section" style={{ padding: '0 40px 88px', maxWidth: 1240, margin: '0 auto' }}>
         <div className="section-lbl">Contribution economy</div>
         <h2 className="section-h2">Don&apos;t ask for reviews.<br /><em>Make contribution rational.</em></h2>
         <div style={{
@@ -476,7 +476,7 @@ $ `}<span style={{ color: '#e5c07b' }}>toolroute report</span>{` `}<span style={
 
       {/* CTA */}
       <div style={{ paddingBottom: 80 }}>
-        <div style={{
+        <div className="cta-box" style={{
           margin: '0 40px',
           padding: '60px 56px',
           background: 'var(--bg2)',
@@ -520,6 +520,9 @@ $ `}<span style={{ color: '#e5c07b' }}>toolroute report</span>{` `}<span style={
 
       {/* Responsive overrides */}
       <style>{`
+        @media (max-width: 1024px) {
+          .stats-bar { grid-template-columns: repeat(2, 1fr) !important; }
+        }
         @media (max-width: 900px) {
           .tryit-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
           .bento-grid { grid-template-columns: 1fr !important; }
@@ -527,11 +530,25 @@ $ `}<span style={{ color: '#e5c07b' }}>toolroute report</span>{` `}<span style={
           .how-grid { grid-template-columns: 1fr !important; gap: 40px !important; }
           .scoring-grid { grid-template-columns: repeat(3, 1fr) !important; }
           .contrib-grid { grid-template-columns: 1fr 1fr !important; }
-          .aha-flow { flex-wrap: wrap !important; justify-content: center !important; }
+          .aha-flow { flex-wrap: wrap !important; justify-content: center !important; gap: 16px !important; }
+        }
+        @media (max-width: 768px) {
+          .home-section { padding-left: 20px !important; padding-right: 20px !important; }
+          .home-section-inner { padding-left: 20px !important; padding-right: 20px !important; }
+          .stats-bar { grid-template-columns: repeat(2, 1fr) !important; }
+          .stats-bar > div { padding: 20px 16px !important; }
+          .scoring-grid { grid-template-columns: 1fr 1fr !important; }
+          .cta-box { margin-left: 16px !important; margin-right: 16px !important; padding: 40px 24px !important; }
+          .aha-flow > div { min-width: 70px !important; }
         }
         @media (max-width: 600px) {
-          .scoring-grid { grid-template-columns: 1fr 1fr !important; }
+          .scoring-grid { grid-template-columns: 1fr !important; }
           .contrib-grid { grid-template-columns: 1fr !important; }
+          .stats-bar { grid-template-columns: 1fr 1fr !important; }
+        }
+        @media (max-width: 480px) {
+          .stats-bar { grid-template-columns: 1fr 1fr !important; }
+          .stats-bar > div { padding: 16px 12px !important; font-size: 32px !important; }
         }
       `}</style>
     </div>

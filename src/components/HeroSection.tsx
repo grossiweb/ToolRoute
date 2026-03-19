@@ -52,7 +52,7 @@ const COMPAT_LOGOS: { name: string; icon: JSX.Element }[] = [
 
 export function HeroSection() {
   return (
-    <section style={{
+    <section className="home-section" style={{
       minHeight: '100vh',
       display: 'flex',
       flexDirection: 'column',
