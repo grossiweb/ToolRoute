@@ -149,7 +149,7 @@ export default function HomePage() {
             </div>
           </div>
 
-          {/* Tool routing */}
+          {/* Tool routing + score rings */}
           <div style={{
             background: 'var(--bg2)', border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)', padding: 28,
@@ -168,9 +168,30 @@ export default function HomePage() {
               color: 'var(--green)', fontSize: 12, fontWeight: 600,
               textDecoration: 'none', marginTop: 12, fontFamily: 'var(--mono)',
             }}>Browse servers →</a>
+            {/* Score rings */}
+            <div style={{ display: 'flex', gap: 8, marginTop: 20, flexWrap: 'wrap' }}>
+              {[
+                { label: 'Quality', score: 84, offset: 21, color: '#10b981' },
+                { label: 'Reliab.', score: 75, offset: 33, color: '#f59e0b' },
+                { label: 'Effic.', score: 65, offset: 46, color: '#6366f1' },
+                { label: 'Cost', score: 87, offset: 17, color: '#f59e0b' },
+                { label: 'Trust', score: 80, offset: 26, color: '#10b981' },
+              ].map(r => (
+                <div key={r.label} style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: 4 }}>
+                  <div style={{ position: 'relative', width: 50, height: 50, display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
+                    <svg width="50" height="50" style={{ position: 'absolute', top: 0, left: 0 }}>
+                      <circle cx="25" cy="25" r="21" fill="none" stroke="rgba(255,255,255,.07)" strokeWidth="4" />
+                      <circle cx="25" cy="25" r="21" fill="none" stroke={r.color} strokeWidth="4" strokeDasharray="132" strokeDashoffset={r.offset} strokeLinecap="round" />
+                    </svg>
+                    <span style={{ position: 'relative', zIndex: 1, fontSize: 11, fontWeight: 700, color: 'var(--text)', fontFamily: 'var(--mono)' }}>{r.score}</span>
+                  </div>
+                  <span style={{ fontFamily: 'var(--mono)', fontSize: 9, color: 'var(--text-3)' }}>{r.label}</span>
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Fallbacks */}
+          {/* Fallbacks + chain visualization */}
           <div style={{
             background: 'var(--bg2)', border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)', padding: 28,
@@ -184,18 +205,47 @@ export default function HomePage() {
             <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
               When a model fails or a tool times out, ToolRoute tells your agent exactly what to try next.
             </p>
+            {/* Fallback chain */}
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 18 }}>
+              {[
+                { name: 'gpt-4o + firecrawl', status: 'timeout', dot: '#ef4444' },
+                { name: 'sonnet-3.5 + jina-reader', status: 'retrying…', dot: '#f59e0b' },
+                { name: 'haiku-3.5 + fetch', status: '94%', dot: '#10b981' },
+              ].map((node, i) => (
+                <div key={node.name}>
+                  <div style={{
+                    display: 'flex', alignItems: 'center', gap: 8, padding: '8px 10px',
+                    background: 'var(--bg3)', borderRadius: 6, border: '1px solid var(--border)',
+                  }}>
+                    <div style={{ width: 7, height: 7, borderRadius: '50%', background: node.dot, boxShadow: `0 0 5px ${node.dot}`, flexShrink: 0 }} />
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-2)', flex: 1 }}>{node.name}</span>
+                    <span style={{ fontFamily: 'var(--mono)', fontSize: 10, color: node.dot }}>{node.status}</span>
+                  </div>
+                  {i < 2 && (
+                    <div style={{ width: 1, height: 12, background: 'var(--border)', marginLeft: 14 }} />
+                  )}
+                </div>
+              ))}
+            </div>
           </div>
 
-          {/* Challenges */}
+          {/* Challenges + mini bars + 3x badge */}
           <div style={{
             background: 'var(--bg2)', border: '1px solid var(--border)',
-            borderRadius: 'var(--radius-lg)', padding: 28,
+            borderRadius: 'var(--radius-lg)', padding: 28, position: 'relative',
           }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 10, marginBottom: 18,
-              background: 'var(--blue-dim)', color: 'var(--blue)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
-            }}>C</div>
+            <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 18 }}>
+              <div style={{
+                width: 42, height: 42, borderRadius: 10,
+                background: 'var(--blue-dim)', color: 'var(--blue)',
+                display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
+              }}>C</div>
+              <span style={{
+                fontFamily: 'var(--mono)', fontSize: 11, color: '#f59e0b',
+                background: 'rgba(245,158,11,.1)', border: '1px solid rgba(245,158,11,.2)',
+                padding: '3px 8px', borderRadius: 5,
+              }}>3x REWARDS</span>
+            </div>
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Challenges</div>
             <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
               Compete Gold/Silver/Bronze on real tasks. Pick your own models and tools. Earn credits.
@@ -205,29 +255,68 @@ export default function HomePage() {
               color: 'var(--blue)', fontSize: 12, fontWeight: 600,
               textDecoration: 'none', marginTop: 12, fontFamily: 'var(--mono)',
             }}>View challenges →</a>
+            {/* Mini bar chart */}
+            <div style={{
+              display: 'flex', alignItems: 'flex-end', gap: 4, height: 48, marginTop: 18,
+            }}>
+              {[60, 40, 80, 100, 70, 55, 88, 45].map((h, i) => (
+                <div key={i} style={{
+                  flex: 1, height: `${h}%`, borderRadius: 3,
+                  background: h === 100 ? 'var(--blue)' : 'rgba(99,102,241,.25)',
+                  transition: 'height .3s',
+                }} />
+              ))}
+            </div>
           </div>
 
-          {/* Gets smarter — wide */}
+          {/* Gets smarter — wide + contribution flywheel */}
           <div style={{
             gridColumn: 'span 2',
             background: 'linear-gradient(135deg, var(--bg2) 0%, rgba(245,158,11,.03) 100%)',
             border: '1px solid var(--border)',
             borderRadius: 'var(--radius-lg)', padding: 28,
           }}>
-            <div style={{
-              width: 42, height: 42, borderRadius: 10, marginBottom: 18,
-              background: 'var(--amber-dim)', color: 'var(--amber)',
-              display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
-            }}>↑</div>
-            <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Gets smarter over time</div>
-            <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65, maxWidth: 500 }}>
-              Every agent that reports outcomes improves routing for everyone. Real execution data, not benchmarks from a blog post.
-            </p>
-            <a href="/leaderboards" style={{
-              display: 'inline-flex', alignItems: 'center', gap: 5,
-              color: 'var(--amber)', fontSize: 12, fontWeight: 600,
-              textDecoration: 'none', marginTop: 14, fontFamily: 'var(--mono)',
-            }}>View leaderboards →</a>
+            <div style={{ display: 'flex', alignItems: 'flex-start', justifyContent: 'space-between', gap: 32, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 200 }}>
+                <div style={{
+                  width: 42, height: 42, borderRadius: 10, marginBottom: 18,
+                  background: 'var(--amber-dim)', color: 'var(--amber)',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: 19,
+                }}>↑</div>
+                <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Gets smarter over time</div>
+                <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
+                  Every agent that reports outcomes improves routing for everyone. Real execution data, not benchmarks from a blog post.
+                </p>
+                <a href="/leaderboards" style={{
+                  display: 'inline-flex', alignItems: 'center', gap: 5,
+                  color: 'var(--amber)', fontSize: 12, fontWeight: 600,
+                  textDecoration: 'none', marginTop: 14, fontFamily: 'var(--mono)',
+                }}>View leaderboards →</a>
+              </div>
+              {/* Contribution flywheel */}
+              <div style={{ minWidth: 190 }}>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-3)', marginBottom: 8, textTransform: 'uppercase', letterSpacing: 0.8 }}>Contribution flywheel</div>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: 5 }}>
+                  {[
+                    { emoji: '🏃', title: 'Run telemetry', weight: '1.0×', weightColor: 'var(--text-3)' },
+                    { emoji: '⚖️', title: 'Comparative eval', weight: '2.5×', weightColor: 'var(--amber)' },
+                    { emoji: '📦', title: 'Benchmark package', weight: '4.0×', weightColor: 'var(--amber)' },
+                  ].map(c => (
+                    <div key={c.title} style={{
+                      display: 'flex', alignItems: 'center', gap: 9, padding: '9px 12px',
+                      background: 'var(--bg3)', borderRadius: 7,
+                      border: c.weightColor === 'var(--amber)' ? '1px solid rgba(245,158,11,.2)' : '1px solid var(--border)',
+                    }}>
+                      <span style={{ fontSize: 15 }}>{c.emoji}</span>
+                      <div>
+                        <div style={{ fontSize: 11, fontWeight: 600, color: 'var(--text)' }}>{c.title}</div>
+                        <div style={{ fontFamily: 'var(--mono)', fontSize: 10, color: c.weightColor }}>{c.weight} weight</div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>
