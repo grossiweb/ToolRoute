@@ -30,19 +30,25 @@ export function VerticalPills({
 
   return (
     <div>
-      <h2 className="text-xs font-semibold text-gray-400 uppercase tracking-wider mb-3">
+      <h2 style={{
+        fontSize: 11, fontWeight: 600, color: 'var(--text-3)',
+        textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12,
+        fontFamily: 'var(--mono)',
+      }}>
         Browse by industry
       </h2>
-      <div className="flex flex-wrap gap-2">
+      <div style={{ display: 'flex', flexWrap: 'wrap', gap: 6 }}>
         {verticals.map(v => (
           <button
             key={v.slug}
             onClick={() => setVertical(activeVertical === v.slug ? null : v.slug)}
-            className={`px-3 py-1.5 rounded-lg text-xs font-medium border transition-colors ${
-              activeVertical === v.slug
-                ? 'bg-teal text-white border-teal'
-                : 'bg-white text-gray-600 border-gray-200 hover:border-teal hover:text-teal'
-            }`}
+            style={{
+              padding: '5px 12px', borderRadius: 8, fontSize: 12, fontWeight: 500, cursor: 'pointer',
+              transition: 'all .2s',
+              ...(activeVertical === v.slug
+                ? { background: 'var(--green-dim)', border: '1px solid rgba(16,185,129,.3)', color: 'var(--green)' }
+                : { background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text-2)' }),
+            }}
           >
             {v.name}
           </button>

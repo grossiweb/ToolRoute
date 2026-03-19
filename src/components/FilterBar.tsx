@@ -30,14 +30,16 @@ export function FilterBar() {
   }
 
   return (
-    <div className="flex flex-wrap gap-2">
+    <div style={{ display: 'flex', flexWrap: 'wrap', gap: 8 }}>
       <button
         onClick={() => setFilter('workflow', null)}
-        className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-          !activeWorkflow
-            ? 'bg-brand text-white border-brand'
-            : 'bg-white text-gray-600 border-gray-200 hover:border-brand hover:text-brand'
-        }`}
+        style={{
+          padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+          transition: 'all .2s',
+          ...(activeWorkflow
+            ? { background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text-2)' }
+            : { background: 'var(--amber-dim)', border: '1px solid rgba(245,158,11,.4)', color: 'var(--amber)' }),
+        }}
       >
         All workflows
       </button>
@@ -45,11 +47,13 @@ export function FilterBar() {
         <button
           key={w.slug}
           onClick={() => setFilter('workflow', w.slug === activeWorkflow ? null : w.slug)}
-          className={`px-3 py-1.5 rounded-full text-xs font-semibold border transition-colors ${
-            activeWorkflow === w.slug
-              ? 'bg-brand text-white border-brand'
-              : 'bg-white text-gray-600 border-gray-200 hover:border-brand hover:text-brand'
-          }`}
+          style={{
+            padding: '7px 14px', borderRadius: 8, fontSize: 13, fontWeight: 500, cursor: 'pointer',
+            transition: 'all .2s',
+            ...(activeWorkflow === w.slug
+              ? { background: 'var(--amber-dim)', border: '1px solid rgba(245,158,11,.4)', color: 'var(--amber)' }
+              : { background: 'var(--bg2)', border: '1px solid var(--border)', color: 'var(--text-2)' }),
+          }}
         >
           {w.label}
         </button>
