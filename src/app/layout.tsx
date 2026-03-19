@@ -48,7 +48,7 @@ export default function RootLayout({
             </div>
             <div className="flex items-center gap-4 md:gap-6 text-xs md:text-sm">
               <a href="/submit" className="hover:text-brand transition-colors">Submit</a>
-              <a href="/privacy-architecture" className="hover:text-brand transition-colors">Privacy</a>
+              <a href="/privacy" className="hover:text-brand transition-colors">Privacy</a>
               <a href="https://github.com/grossiweb/ToolRoute" className="hover:text-brand transition-colors">GitHub</a>
             </div>
           </div>

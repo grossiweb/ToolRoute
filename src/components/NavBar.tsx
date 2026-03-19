@@ -63,7 +63,7 @@ export function NavBar() {
           <Link href="/leaderboards" className="text-gray-700 hover:text-brand py-2.5" onClick={() => setMenuOpen(false)}>Leaderboards</Link>
           <div className="border-t border-gray-100 mt-1 pt-2 flex flex-wrap gap-x-4 gap-y-1.5">
             <Link href="/compare" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Compare</Link>
-            <Link href="/stacks" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Stacks</Link>
+            <Link href="/combinations" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Stacks</Link>
             <Link href="/tasks" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Tasks</Link>
             <Link href="/dashboard" className="text-gray-500 hover:text-brand text-xs py-1" onClick={() => setMenuOpen(false)}>Dashboard</Link>
           </div>
