@@ -43,6 +43,7 @@ const TOOLS = [
         },
         host_client_slug: { type: 'string', description: 'Where this agent runs: cursor, claude-desktop, vscode, custom' },
         model_family: { type: 'string', description: 'LLM family: claude, gpt, gemini, llama, etc.' },
+        webhook_url: { type: 'string', description: 'URL to receive notifications when credits change, verification approved, etc. (optional)' },
       },
       required: ['agent_name'],
     },
@@ -401,7 +402,7 @@ async function handleToolCall(id: any, params: any) {
   switch (name) {
     /* ── toolroute_register ── */
     case 'toolroute_register': {
-      const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family } = args || {}
+      const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family, webhook_url } = args || {}
       if (!agent_name) return toolResult(id, 'Error: agent_name is required.')
 
       // Check for existing agent
@@ -442,6 +443,7 @@ async function handleToolCall(id: any, params: any) {
           agent_kind,
           host_client_slug: host_client_slug || null,
           model_family: model_family || null,
+          webhook_url: webhook_url || null,
           trust_tier: 'baseline',
           is_active: true,
         })
@@ -1027,16 +1029,80 @@ async function handleToolCall(id: any, params: any) {
   }
 }
 
+const CORS_HEADERS = {
+  'Access-Control-Allow-Origin': '*',
+  'Access-Control-Allow-Methods': 'GET, POST, OPTIONS',
+  'Access-Control-Allow-Headers': 'Content-Type, Authorization',
+}
+
 function jsonRpcResult(id: any, result: any) {
-  return NextResponse.json({ jsonrpc: '2.0', id, result })
+  return NextResponse.json({ jsonrpc: '2.0', id, result }, { headers: CORS_HEADERS })
 }
 
 function jsonRpcError(id: any, code: number, message: string) {
-  return NextResponse.json({ jsonrpc: '2.0', id, error: { code, message } })
+  return NextResponse.json({ jsonrpc: '2.0', id, error: { code, message } }, { headers: CORS_HEADERS })
 }
 
 function toolResult(id: any, text: string) {
   return jsonRpcResult(id, {
     content: [{ type: 'text', text }],
+  })
+}
+
+/**
+ * SSE Transport — GET handler
+ *
+ * MCP clients (like Claude Desktop) connect via GET to establish an SSE stream.
+ * The server sends an `endpoint` event telling the client where to POST JSON-RPC messages.
+ * Keeps the connection alive with periodic pings within Vercel's serverless timeout.
+ */
+export async function GET(request: NextRequest) {
+  const encoder = new TextEncoder()
+  const baseUrl =
+    process.env.NEXT_PUBLIC_SITE_URL ||
+    `${request.nextUrl.protocol}//${request.nextUrl.host}`
+  const stream = new ReadableStream({
+    start(controller) {
+      // Send endpoint event — client should POST JSON-RPC messages to this URL
+      controller.enqueue(
+        encoder.encode(`event: endpoint\ndata: ${baseUrl}/api/mcp\n\n`)
+      )
+      // Send a ping every 15s to keep the connection alive
+      const interval = setInterval(() => {
+        try {
+          controller.enqueue(encoder.encode(`: ping\n\n`))
+        } catch {
+          clearInterval(interval)
+        }
+      }, 15000)
+      // Clean up before Vercel's 30s serverless timeout
+      setTimeout(() => {
+        clearInterval(interval)
+        try {
+          controller.close()
+        } catch {
+          // stream may already be closed
+        }
+      }, 25000)
+    },
+  })
+
+  return new Response(stream, {
+    headers: {
+      'Content-Type': 'text/event-stream',
+      'Cache-Control': 'no-cache, no-transform',
+      Connection: 'keep-alive',
+      ...CORS_HEADERS,
+    },
+  })
+}
+
+/**
+ * CORS Preflight — OPTIONS handler
+ */
+export async function OPTIONS() {
+  return new Response(null, {
+    status: 204,
+    headers: CORS_HEADERS,
   })
 }

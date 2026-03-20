@@ -20,9 +20,13 @@ export async function GET(request: NextRequest) {
       return await manualRecalculation(supabase)
     }
 
+    // Also run mission/challenge expiry cleanup
+    const expiryResult = await cleanupExpired(supabase)
+
     return NextResponse.json({
       message: 'Score recalculation complete',
       result: data,
+      expiry_cleanup: expiryResult,
       next_run: 'In 6 hours',
     })
   } catch (err: any) {
@@ -346,4 +350,45 @@ function round2(value: number): number {
 
 function round4(value: number): number {
   return Math.round(value * 10000) / 10000
+}
+
+// ---------------------------------------------------------------------------
+// Mission & Challenge Expiry Cleanup
+// ---------------------------------------------------------------------------
+
+async function cleanupExpired(supabase: ReturnType<typeof createServerSupabaseClient>) {
+  const now = new Date().toISOString()
+  let missionsExpired = 0
+  let claimsAbandoned = 0
+
+  try {
+    // Expire missions past their expires_at date
+    const { data: expiredMissions } = await supabase
+      .from('benchmark_missions')
+      .update({ status: 'expired' })
+      .eq('status', 'available')
+      .lt('expires_at', now)
+      .not('expires_at', 'is', null)
+      .select('id')
+
+    missionsExpired = expiredMissions?.length ?? 0
+
+    // Abandon claims that have been "claimed" for over 7 days without completion
+    const sevenDaysAgo = new Date(Date.now() - 7 * 24 * 60 * 60 * 1000).toISOString()
+    const { data: abandonedClaims } = await supabase
+      .from('mission_claims')
+      .update({ status: 'abandoned' })
+      .eq('status', 'claimed')
+      .lt('claimed_at', sevenDaysAgo)
+      .select('id')
+
+    claimsAbandoned = abandonedClaims?.length ?? 0
+  } catch (err: any) {
+    return { error: err.message }
+  }
+
+  return {
+    missions_expired: missionsExpired,
+    claims_abandoned: claimsAbandoned,
+  }
 }

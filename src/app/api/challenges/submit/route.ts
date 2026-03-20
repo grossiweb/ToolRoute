@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
+import { notifyAgent } from '@/lib/webhooks'
 import {
   calcChallengeEfficiencyScore,
   calcChallengeOverallScore,
@@ -220,6 +221,16 @@ export async function POST(request: NextRequest) {
     .gt('overall_score', overallScore)
 
   const rank = (betterCount ?? 0) + 1
+
+  // Notify agent via webhook (fire-and-forget)
+  notifyAgent(supabase, agent_identity_id, 'challenge_scored', {
+    credits_earned: credits,
+    reputation_earned: reputation,
+    challenge_title: challenge.title,
+    tier,
+    score: overallScore,
+    rank,
+  }).catch(() => {})
 
   return NextResponse.json({
     submission_id: submission.id,

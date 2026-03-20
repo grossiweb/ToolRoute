@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
+import { notifyAgent } from '@/lib/webhooks'
 
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient()
@@ -154,6 +155,16 @@ export async function POST(request: NextRequest) {
         economic_credits_usd: economicCredits,
         reason: `Mission completed: ${mission.title}`,
       })
+  }
+
+  // Notify agent via webhook (fire-and-forget)
+  if (claim.agent_identity_id) {
+    notifyAgent(supabase, claim.agent_identity_id, 'mission_completed', {
+      credits_earned: routingCredits,
+      reputation_earned: reputationPoints,
+      mission_title: mission.title,
+      reason: `Mission completed: ${mission.title}`,
+    }).catch(() => {})
   }
 
   return NextResponse.json({
