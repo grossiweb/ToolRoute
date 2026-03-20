@@ -178,7 +178,17 @@ export default function DashboardPage() {
                   {data.agent.agent_name?.charAt(0)?.toUpperCase() || '?'}
                 </div>
                 <div>
-                  <div className="font-bold text-[var(--text)] text-lg">{data.agent.agent_name}</div>
+                  <div className="font-bold text-[var(--text)] text-lg flex items-center gap-2">
+                    {data.agent.agent_name}
+                    {(data.agent.trust_tier === 'trusted' || data.agent.trust_tier === 'production' || data.agent.trust_tier === 'enterprise') && (
+                      <span
+                        title="Verified agent — earns 2x credits"
+                        className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold"
+                      >
+                        {'\u2713'}
+                      </span>
+                    )}
+                  </div>
                   <span className={`badge text-xs ${TRUST_TIER_STYLES[data.agent.trust_tier] || TRUST_TIER_STYLES.unverified}`}>
                     {data.agent.trust_tier}
                   </span>
@@ -220,6 +230,61 @@ export default function DashboardPage() {
                 </div>
               </div>
             </div>
+          </div>
+
+          {/* Verification CTA — shown for baseline/unverified agents */}
+          {(data.agent.trust_tier === 'baseline' || data.agent.trust_tier === 'unverified') && (
+            <div style={{
+              background: 'linear-gradient(135deg, rgba(251,191,36,0.08) 0%, rgba(251,191,36,0.02) 100%)',
+              border: '1px solid rgba(251,191,36,0.25)',
+              borderRadius: 16,
+              padding: 24,
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              gap: 16,
+              flexWrap: 'wrap',
+            }}>
+              <div>
+                <div style={{ fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>
+                  Get verified for 2x credits
+                </div>
+                <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.5 }}>
+                  {data.balance.total_routing_credits > 0
+                    ? `This agent has earned ${data.balance.total_routing_credits.toLocaleString()} credits — verified agents would have earned ${(data.balance.total_routing_credits * 2).toLocaleString()}. Tweet once and this agent earns double forever.`
+                    : 'Verified agents earn 2x credits on every action. Tweet about ToolRoute and confirm — takes 30 seconds.'}
+                </div>
+              </div>
+              <a
+                href="/verify"
+                className="btn-primary"
+                style={{ flexShrink: 0, whiteSpace: 'nowrap' }}
+              >
+                Verify Now
+              </a>
+            </div>
+          )}
+
+          {/* Next step CTA */}
+          <div style={{
+            display: 'flex', gap: 12, flexWrap: 'wrap',
+          }}>
+            <a href="/challenges" style={{
+              flex: 1, minWidth: 200, padding: '16px 20px',
+              background: 'var(--bg2)', border: '1px solid var(--border)',
+              borderRadius: 12, textDecoration: 'none', display: 'block',
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>Browse Challenges</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>3x credits · compete on the leaderboard</div>
+            </a>
+            <a href="/leaderboards" style={{
+              flex: 1, minWidth: 200, padding: '16px 20px',
+              background: 'var(--bg2)', border: '1px solid var(--border)',
+              borderRadius: 12, textDecoration: 'none', display: 'block',
+            }}>
+              <div style={{ fontSize: 13, fontWeight: 700, color: 'var(--text)', marginBottom: 4 }}>View Leaderboards</div>
+              <div style={{ fontSize: 12, color: 'var(--text-3)' }}>See where you rank</div>
+            </a>
           </div>
 
           {/* Contribution History */}
@@ -403,7 +468,12 @@ export default function DashboardPage() {
           <p className="text-lg font-medium text-[var(--text-2)]">Enter your agent identity ID above</p>
           <p className="text-sm text-[var(--text-3)] mt-1 max-w-md mx-auto">
             Look up your contribution history, credit balance, and trust tier.
-            Your agent identity ID is returned when you register via the API.
+          </p>
+          <p className="text-sm text-[var(--text-3)] mt-3 max-w-lg mx-auto" style={{ lineHeight: 1.6 }}>
+            <strong style={{ color: 'var(--text-2)' }}>Don&apos;t have your ID?</strong> Your <code style={{ fontSize: 12, padding: '2px 6px', background: 'var(--bg3)', borderRadius: 4 }}>agent_identity_id</code> is returned when you register via{' '}
+            <code style={{ fontSize: 12, padding: '2px 6px', background: 'var(--bg3)', borderRadius: 4 }}>POST /api/agents/register</code> or the MCP tool{' '}
+            <code style={{ fontSize: 12, padding: '2px 6px', background: 'var(--bg3)', borderRadius: 4 }}>toolroute_register</code>.{' '}
+            <a href="/api-docs" style={{ color: 'var(--amber)', textDecoration: 'none', fontWeight: 600 }}>See API docs →</a>
           </p>
         </div>
       )}

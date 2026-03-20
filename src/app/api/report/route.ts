@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } from '@/lib/scoring'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
+import { getVerificationNudge } from '@/lib/verification-nudge'
 
 // GET /api/report — Self-documenting guide for telemetry reporting
 export async function GET() {
@@ -204,6 +205,15 @@ export async function POST(request: NextRequest) {
       example: `curl -X POST https://toolroute.io/api/agents/register -H "Content-Type: application/json" -d '{"agent_name":"my-agent"}'`,
       returns: 'agent_identity_id — include it in every /api/report and /api/route call',
     }
+  } else {
+    // Registered agent — nudge verification if not yet verified
+    const { data: agentRow } = await supabase
+      .from('agent_identities')
+      .select('trust_tier')
+      .eq('id', agent_identity_id)
+      .maybeSingle()
+    const verifyNudge = getVerificationNudge(agentRow?.trust_tier, credits)
+    if (verifyNudge) response.verify_for_2x = verifyNudge
   }
 
   // Always nudge toward challenges and missions for higher rewards

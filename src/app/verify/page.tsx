@@ -189,9 +189,14 @@ export default function VerifyPage() {
           <p className="text-xs mb-6" style={{ color: 'var(--text-3)' }}>
             Agent: <span className="font-semibold">{agentName}</span> &middot; X: <span className="font-semibold">@{xHandle.replace('@', '')}</span>
           </p>
-          <Link href="/" className="px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors inline-block">
-            Back to ToolRoute
-          </Link>
+          <div style={{ display: 'flex', gap: 12, justifyContent: 'center', flexWrap: 'wrap' }}>
+            <Link href="/dashboard" className="px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors inline-block">
+              Check Dashboard
+            </Link>
+            <Link href="/challenges" className="px-5 py-2.5 rounded-lg text-sm font-semibold inline-block" style={{ background: 'var(--bg3)', color: 'var(--text)', border: '1px solid var(--border)' }}>
+              Browse Challenges
+            </Link>
+          </div>
         </div>
       )}
 

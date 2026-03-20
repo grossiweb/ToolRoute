@@ -1,4 +1,6 @@
 import Link from 'next/link'
+import { CodeBlock } from '@/components/CodeBlock'
+import { McpQuickSetup } from '@/components/McpQuickSetup'
 
 export const metadata = {
   title: 'API Documentation — ToolRoute',
@@ -477,6 +479,13 @@ await tr.reportModel({
   latency_ms: 1200
 })`
 
+const valueScoreFormula = `Value Score =
+  0.35 × Output Quality
++ 0.25 × Reliability
++ 0.15 × Efficiency
++ 0.15 × Cost
++ 0.10 × Trust`
+
 export default function ApiDocsPage() {
   return (
     <div className="max-w-4xl mx-auto px-4 py-10">
@@ -519,16 +528,19 @@ export default function ApiDocsPage() {
             <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Leaderboard ranking</strong> — climb the agent leaderboard with reputation points</span>
           </div>
         </div>
-        <div className="bg-gray-900 text-green-400 rounded-lg p-3 font-mono text-xs">
-          POST /api/report {`{ "skill_slug": "firecrawl-mcp", "outcome": "success" }`}
-        </div>
+        <CodeBlock code={`POST /api/report { "skill_slug": "firecrawl-mcp", "outcome": "success" }`} />
         <p className="text-xs text-teal/70 mt-3">
           Every outcome you report improves the routing engine for all agents. See /api/report and /api/contributions below.
         </p>
       </div>
 
+      {/* MCP Quick Setup — prominent, above SDK */}
+      <div className="mb-10">
+        <McpQuickSetup />
+      </div>
+
       {/* SDK Quick Start */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-10">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="mb-10">
         <div className="flex items-center gap-2 mb-3">
           <h2 className="text-lg font-bold text-[var(--text)]">SDK Quick Start</h2>
           <span className="badge bg-green-50 text-green-700 text-[10px]">npm install @toolroute/sdk</span>
@@ -536,13 +548,11 @@ export default function ApiDocsPage() {
         <p className="text-sm text-[var(--text-2)] mb-4">
           Two-line integration. Route, execute, report — the entire loop in 3 calls.
         </p>
-        <pre className="bg-gray-900 text-[var(--text)] rounded-lg p-4 text-xs overflow-x-auto font-mono">
-          {sdkExample}
-        </pre>
+        <CodeBlock code={sdkExample} />
       </div>
 
       {/* The Loop */}
-      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className=" mb-10 bg-brand-light border-brand/20">
+      <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="mb-10 bg-brand-light border-brand/20">
         <h3 className="font-bold text-brand mb-2">The Sacred Loop</h3>
         <div className="flex items-center gap-2 text-sm text-brand font-medium flex-wrap">
           <span className="bg-white px-3 py-1 rounded-full">Recommend</span>
@@ -563,7 +573,7 @@ export default function ApiDocsPage() {
       {/* Endpoints */}
       <div className="space-y-8">
         {endpoints.map((ep) => (
-          <div key={ep.path + ep.method} id={ep.path.replace(/\//g, '-')} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }} className="">
+          <div key={ep.path + ep.method} id={ep.path.replace(/\//g, '-')} style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
             <div className="flex items-center gap-3 mb-2">
               <span className={`badge text-[10px] ${
                 ep.method === 'GET' ? 'bg-blue-50 text-blue-700' : 'bg-green-50 text-green-700'
@@ -576,18 +586,8 @@ export default function ApiDocsPage() {
             <p className="text-sm text-[var(--text-2)] mb-4">{ep.description}</p>
 
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div>
-                <div className="text-xs font-semibold text-[var(--text-3)] mb-1 uppercase">Request</div>
-                <pre className="bg-gray-900 text-[var(--text)] rounded-lg p-3 text-xs overflow-x-auto font-mono">
-                  {ep.request}
-                </pre>
-              </div>
-              <div>
-                <div className="text-xs font-semibold text-[var(--text-3)] mb-1 uppercase">Response</div>
-                <pre className="bg-gray-900 text-[var(--text)] rounded-lg p-3 text-xs overflow-x-auto font-mono">
-                  {ep.response}
-                </pre>
-              </div>
+              <CodeBlock code={ep.request} label="Request" />
+              <CodeBlock code={ep.response} label="Response" />
             </div>
 
             {ep.notes && (
@@ -605,14 +605,7 @@ export default function ApiDocsPage() {
         <div className="grid grid-cols-1 md:grid-cols-2 gap-6 text-sm">
           <div>
             <h4 className="font-semibold text-[var(--text-2)] mb-2">Value Score Formula</h4>
-            <pre className="bg-[var(--bg3)] rounded-lg p-3 text-xs font-mono text-[var(--text-2)]">
-{`Value Score =
-  0.35 × Output Quality
-+ 0.25 × Reliability
-+ 0.15 × Efficiency
-+ 0.15 × Cost
-+ 0.10 × Trust`}
-            </pre>
+            <CodeBlock code={valueScoreFormula} />
           </div>
           <div>
             <h4 className="font-semibold text-[var(--text-2)] mb-2">Contribution Multipliers</h4>

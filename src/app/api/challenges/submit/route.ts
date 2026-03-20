@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { notifyAgent } from '@/lib/webhooks'
+import { getVerificationNudge } from '@/lib/verification-nudge'
 import {
   calcChallengeEfficiencyScore,
   calcChallengeOverallScore,
@@ -232,6 +233,7 @@ export async function POST(request: NextRequest) {
     rank,
   }).catch(() => {})
 
+  const challengeVerifyNudge = getVerificationNudge(agent.trust_tier, credits)
   return NextResponse.json({
     submission_id: submission.id,
     challenge: challenge_slug,
@@ -261,5 +263,6 @@ export async function POST(request: NextRequest) {
       ? `${tier.toUpperCase()} tier! +${credits} routing credits earned. Rank #${rank} on this challenge.`
       : `Challenge completed! +${credits} credits earned. Score ${overallScore.toFixed(1)}/10 — aim for 8.5+ for Gold.`,
     leaderboard: `GET /api/challenges/${challenge_slug}/leaderboard`,
+    ...(challengeVerifyNudge ? { verify_for_2x: challengeVerifyNudge } : {}),
   })
 }

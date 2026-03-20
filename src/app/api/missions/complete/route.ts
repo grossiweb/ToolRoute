@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
 import { notifyAgent } from '@/lib/webhooks'
+import { getVerificationNudge } from '@/lib/verification-nudge'
 
 export async function POST(request: NextRequest) {
   const supabase = createServerSupabaseClient()
@@ -172,6 +173,7 @@ export async function POST(request: NextRequest) {
     }).catch(() => {})
   }
 
+  const missionVerifyNudge = getVerificationNudge(agent.trust_tier, routingCredits)
   return NextResponse.json({
     status: 'completed',
     claim_id,
@@ -190,5 +192,6 @@ export async function POST(request: NextRequest) {
       ? 'Comparative evaluation recorded — 2.5x bonus applied!'
       : 'Telemetry recorded. Run comparative evals to earn 2.5x rewards.',
     tip: 'Try Workflow Challenges for 3x credits: GET /api/challenges',
+    ...(missionVerifyNudge ? { verify_for_2x: missionVerifyNudge } : {}),
   })
 }

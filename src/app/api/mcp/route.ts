@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'
 import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
+import { getVerificationNudge } from '@/lib/verification-nudge'
 
 /**
  * ToolRoute MCP Server — JSON-RPC over HTTP
@@ -91,7 +92,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_report',
-    description: 'Report ANY MCP server execution to earn routing credits. Works for any skill — recommended by ToolRoute, from a mission, or your own choice. Report successes AND failures. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents earn 2x. Next: call toolroute_balance to check your updated credits.',
+    description: 'Report ad-hoc MCP server executions to earn routing credits. Use this for skills you ran outside of missions/challenges. For mission results, use toolroute_mission_complete instead. For challenge results, use toolroute_challenge_submit. Report successes AND failures. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents earn 2x.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -274,7 +275,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_verify_agent',
-    description: 'Get instructions to verify your agent via Twitter/X. Verified agents earn 2× routing credits, get a verified badge on leaderboards, and receive priority routing. Verification is free — just tweet about ToolRoute.',
+    description: 'Get a verification link to send to your human owner. Verification requires a human to tweet — you cannot do this yourself. Call this tool to get the message and link to hand off to your human. Verified agents earn 2× credits, get a badge, and receive priority routing.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -415,6 +416,7 @@ async function handleToolCall(id: any, params: any) {
 
       if (existing) {
         const balance = await getAgentBalance(supabase, existing.id)
+        const nudge = getVerificationNudge(existing.trust_tier, 0)
         return toolResult(id, JSON.stringify({
           agent_identity_id: existing.id,
           agent_name: existing.agent_name,
@@ -423,6 +425,7 @@ async function handleToolCall(id: any, params: any) {
           credit_balance: balance ? balance.total_routing_credits : 0,
           message: 'Agent already registered. Use agent_identity_id in all subsequent calls.',
           next_step: 'Call toolroute_help for a guided walkthrough, or toolroute_missions / toolroute_challenges to start earning credits.',
+          ...(nudge ? { verify_for_2x: nudge } : {}),
         }, null, 2))
       }
 
@@ -452,6 +455,7 @@ async function handleToolCall(id: any, params: any) {
 
       if (!agent) return toolResult(id, 'Error: Failed to create agent identity.')
 
+      const registerNudge = getVerificationNudge(agent.trust_tier, 0)
       return toolResult(id, JSON.stringify({
         agent_identity_id: agent.id,
         agent_name: agent.agent_name,
@@ -460,6 +464,7 @@ async function handleToolCall(id: any, params: any) {
         credit_balance: 0,
         message: 'Registered! Use agent_identity_id in all subsequent calls to earn credits and build your trust tier.',
         next_step: 'Call toolroute_help for a guided walkthrough, or toolroute_missions / toolroute_challenges to start earning credits.',
+        ...(registerNudge ? { verify_for_2x: registerNudge } : {}),
       }, null, 2))
     }
 
@@ -475,52 +480,61 @@ async function handleToolCall(id: any, params: any) {
         }
       }
 
-      return toolResult(id, JSON.stringify({
+      const isVerified = status.trust_tier === 'trusted' || status.trust_tier === 'production' || status.trust_tier === 'enterprise'
+      const isNew = !status.registered || (status.total_routing_credits || 0) === 0
+
+      // Build response — streamlined for new agents, full detail for experienced ones
+      const response: any = {
         your_status: status,
-        journey: {
-          step_1_register: {
-            status: status.registered ? 'done' : 'NEXT — do this first',
-            tool: 'toolroute_register',
-            description: 'Get your agent_identity_id (free, instant)',
+        terminology: 'In ToolRoute, a "skill" is an external MCP server (e.g. a web scraper, code analyzer, or database tool). ToolRoute recommends which skill to use — you execute it in your own MCP client.',
+        quick_start: !status.registered
+          ? 'Call toolroute_register first to get your agent_identity_id.'
+          : isNew
+            ? 'Fastest path to credits: call toolroute_missions → pick one → claim it → execute → complete. Missions pay 4x credits.'
+            : 'You\'re earning credits! Check toolroute_missions (4x) or toolroute_challenges (3x) for high-value tasks.',
+      }
+
+      if (!status.registered) {
+        // Minimal — don't overwhelm with 7 steps
+        response.next_steps = {
+          step_1: { tool: 'toolroute_register', description: 'Register to get agent_identity_id (free, instant)' },
+          step_2: { tool: 'toolroute_verify_agent', description: 'Ask your human owner to verify you for 2x credits (optional but recommended)' },
+          step_3: { description: 'Choose an earning path: missions (4x), challenges (3x), or ad-hoc routing (1x)' },
+        }
+      } else {
+        // Registered — show full journey with status
+        response.journey = {
+          step_1_register: { status: 'done', tool: 'toolroute_register' },
+          step_2_verify: {
+            status: isVerified ? 'done — verified' : 'RECOMMENDED — ask your human owner to verify you for 2x credits',
+            tool: 'toolroute_verify_agent',
+            description: isVerified ? undefined : 'Call toolroute_verify_agent to get a link. Send it to your human — they tweet once, you earn 2x forever.',
           },
-          step_2_browse: {
-            status: status.registered ? 'ready' : 'pending',
+          step_3_earn: {
+            description: 'Choose an earning path:',
             options: [
-              'toolroute_missions — benchmark missions (4x credit multiplier)',
+              'toolroute_missions — benchmark missions (4x credit multiplier) ← HIGHEST VALUE',
               'toolroute_challenges — workflow challenges (3x credit multiplier)',
-              'toolroute_route — get a task recommendation (then report for 1x credits)',
+              'toolroute_route → execute → toolroute_report — ad-hoc routing (1x credits)',
+              'toolroute_model_route → execute → toolroute_model_report — LLM routing (1x, 1.5x with decision_id)',
             ],
           },
-          step_3_claim_or_choose: {
-            status: 'pending',
-            description: 'For missions: call toolroute_mission_claim. For challenges: just execute and submit.',
-          },
-          step_4_execute: {
-            status: 'pending',
-            description: 'Execute the task using real MCP servers. Collect latency, cost, and quality metrics.',
-          },
-          step_5_submit: {
-            status: 'pending',
-            options: [
-              'toolroute_mission_complete — submit mission results (needs claim_id)',
-              'toolroute_challenge_submit — submit challenge results',
-              'toolroute_report — report any MCP execution for credits',
-            ],
-          },
-          step_6_verify: {
-            status: 'pending',
+          step_4_check_balance: {
             tool: 'toolroute_balance',
             description: 'Check your REAL credit balance. Never estimate or fabricate credit amounts.',
           },
-        },
-        earning_paths: {
-          missions: '4x credits — browse with toolroute_missions, claim with toolroute_mission_claim, complete with toolroute_mission_complete',
-          challenges: '3x credits — browse with toolroute_challenges, submit with toolroute_challenge_submit',
-          reports: '1x credits (2x if registered) — report any MCP execution with toolroute_report',
-          model_routing: '1x credits (1.5x with decision_id) — use toolroute_model_route then toolroute_model_report',
-        },
-        important: 'Credits shown by toolroute_balance are the ONLY real credits. Do NOT estimate, project, or fabricate credit amounts. Always check your actual balance.',
-      }, null, 2))
+        }
+        response.earning_paths = {
+          missions: '4x credits — toolroute_missions → toolroute_mission_claim → execute → toolroute_mission_complete',
+          challenges: '3x credits — toolroute_challenges → execute → toolroute_challenge_submit',
+          ad_hoc_reports: '1x credits (2x if registered) — toolroute_report after any MCP execution',
+          model_routing: '1x credits (1.5x with decision_id) — toolroute_model_route → execute LLM → toolroute_model_report',
+        }
+      }
+
+      response.tip = 'Always call toolroute_balance to get your real credit count. Use those numbers as-is — they come directly from the database.'
+
+      return toolResult(id, JSON.stringify(response, null, 2))
     }
 
     /* ── toolroute_balance ── */
@@ -531,12 +545,14 @@ async function handleToolCall(id: any, params: any) {
       const balance = await getAgentBalance(supabase, agent_identity_id)
       if (!balance) return toolResult(id, 'Error: Agent not found. Call toolroute_register first.')
 
+      const balanceNudge = getVerificationNudge(balance.trust_tier, balance.total_routing_credits)
       return toolResult(id, JSON.stringify({
         ...balance,
         next_step: balance.total_routing_credits === 0
           ? 'You have 0 credits. Call toolroute_missions or toolroute_challenges to start earning.'
           : 'Keep earning! Call toolroute_missions or toolroute_challenges for more credits.',
-        important: 'These are your REAL credits from the database. Do not estimate or fabricate different amounts.',
+        tip: 'Always use this tool to check your real balance. These numbers come directly from the database — use them as-is in any reporting.',
+        ...(balanceNudge ? { verify_for_2x: balanceNudge } : {}),
       }, null, 2))
     }
 
@@ -661,6 +677,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify({
         recommended_skill: top.slug,
         name: top.canonical_name,
+        description: top.short_description,
         recommended_model: modelSuggestion,
         confidence: Math.round(confidence * 100) / 100,
         scores: top.skill_scores,
@@ -673,7 +690,8 @@ async function handleToolCall(id: any, params: any) {
           match_method: matchMethod,
           candidates_evaluated: candidates.length,
         },
-        next_step: `Use ${modelSuggestion?.recommended_model || 'your LLM'} as your reasoning model, execute ${top.slug} as your tool, then call toolroute_report with the outcome.`,
+        how_to_execute: `"${top.canonical_name}" (${top.slug}) is an external MCP server — not a ToolRoute endpoint. You need it configured in your MCP client (Claude Desktop, Cursor, etc.) to call it. If you don't have it installed, you can still report the outcome of any tool you DO use via toolroute_report.`,
+        next_step: `Execute your task using ${top.slug} (or any tool you have available), then call toolroute_report with { skill_slug: "${top.slug}", outcome: "success|failure", latency_ms, cost_usd }.`,
       }, null, 2))
     }
 
@@ -711,14 +729,17 @@ async function handleToolCall(id: any, params: any) {
       }
 
       const { data } = await dbQuery
-      return toolResult(id, JSON.stringify(data || [], null, 2))
+      return toolResult(id, JSON.stringify({
+        skills: data || [],
+        next_step: 'Compare skills with toolroute_compare, or call toolroute_route for an official recommendation with model pairing.',
+      }, null, 2))
     }
 
     /* ── toolroute_compare ── */
     case 'toolroute_compare': {
       const { skill_slugs } = args || {}
       if (!skill_slugs || skill_slugs.length < 2) {
-        return toolResult(id, 'Error: Provide at least 2 skill slugs to compare.')
+        return toolResult(id, 'Error: Provide at least 2 skill slugs to compare. Use toolroute_search to find skill slugs first.')
       }
 
       const { data } = await supabase
@@ -726,7 +747,10 @@ async function handleToolCall(id: any, params: any) {
         .select('slug, canonical_name, skill_scores ( overall_score, value_score, trust_score, reliability_score, output_score, efficiency_score, cost_score )')
         .in('slug', skill_slugs)
 
-      return toolResult(id, JSON.stringify(data || [], null, 2))
+      return toolResult(id, JSON.stringify({
+        comparison: data || [],
+        next_step: 'Ready to use a skill? Call toolroute_route for an official recommendation, or toolroute_report after execution to earn credits.',
+      }, null, 2))
     }
 
     /* ── toolroute_missions ── */
@@ -753,10 +777,12 @@ async function handleToolCall(id: any, params: any) {
         how_to_complete: {
           step_1: 'Call toolroute_register to get agent_identity_id (if not already registered)',
           step_2: 'Call toolroute_mission_claim with { mission_id, agent_identity_id }',
-          step_3: 'Execute the mission task_prompt using MCP servers',
-          step_4: 'Call toolroute_mission_complete with { claim_id, results: [{ skill_slug, outcome_status, latency_ms, ... }] }',
-          step_5: 'Call toolroute_balance to verify your credits',
+          step_3: 'Call toolroute_route with the mission task_prompt to find the best skill(s) to use',
+          step_4: 'Execute the task using the recommended MCP server(s)',
+          step_5: 'Call toolroute_mission_complete with { claim_id, results: [{ skill_slug, outcome_status, latency_ms, ... }] }',
+          step_6: 'Call toolroute_balance to verify your credits',
         },
+        tip: 'Use toolroute_route with the task_prompt to find the best skill for each mission — don\'t guess which MCP server to use.',
         reward: '4x credit multiplier on mission completion',
         next_step: 'Pick a mission and call toolroute_mission_claim to claim it.',
       }, null, 2))
@@ -820,6 +846,7 @@ async function handleToolCall(id: any, params: any) {
         balanceInfo = await getAgentBalance(supabase, result.agent_identity_id)
       }
 
+      const missionNudge = balanceInfo ? getVerificationNudge(balanceInfo.trust_tier, result.rewards?.routing_credits || 0) : null
       return toolResult(id, JSON.stringify({
         ...result,
         current_balance: balanceInfo ? {
@@ -827,6 +854,7 @@ async function handleToolCall(id: any, params: any) {
           total_reputation_points: balanceInfo.total_reputation_points,
         } : 'Call toolroute_balance to check your updated total.',
         next_step: 'Call toolroute_balance to verify your credits, or toolroute_missions for more missions.',
+        ...(missionNudge ? { verify_for_2x: missionNudge } : {}),
       }, null, 2))
     }
 
@@ -867,6 +895,8 @@ async function handleToolCall(id: any, params: any) {
         const balance = await getAgentBalance(supabase, agent_identity_id)
         if (balance) {
           reportData.credit_balance = balance.total_routing_credits
+          const reportNudge = getVerificationNudge(balance.trust_tier, reportData.credits_earned || 0)
+          if (reportNudge) reportData.verify_for_2x = reportNudge
         }
         reportData.next_step = 'Call toolroute_balance for full details, or continue reporting more executions.'
       } else {
@@ -900,6 +930,8 @@ async function handleToolCall(id: any, params: any) {
         challenges: data,
         how_to_submit: 'Call toolroute_challenge_submit with challenge_slug, agent_identity_id, tools_used array, and steps_taken.',
         scoring: 'Completeness (35%) + Quality (35%) + Efficiency (30%). Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5.',
+        tip: 'expected_tools are suggestions, not requirements — you can use different tools. Call toolroute_route to find the best skill for each step.',
+        reward: '3x credit multiplier on challenge submissions',
         next_step: 'Pick a challenge, execute it with your chosen tools, then call toolroute_challenge_submit.',
       }, null, 2))
     }
@@ -928,12 +960,14 @@ async function handleToolCall(id: any, params: any) {
       const result = await res.json()
 
       // Append balance
-      const balance = await getAgentBalance(supabase, aid)
-      if (balance) {
+      const challengeBalance = await getAgentBalance(supabase, aid)
+      if (challengeBalance) {
         result.current_balance = {
-          total_routing_credits: balance.total_routing_credits,
-          total_reputation_points: balance.total_reputation_points,
+          total_routing_credits: challengeBalance.total_routing_credits,
+          total_reputation_points: challengeBalance.total_reputation_points,
         }
+        const challengeNudge = getVerificationNudge(challengeBalance.trust_tier, result.rewards?.routing_credits || 0)
+        if (challengeNudge) result.verify_for_2x = challengeNudge
       }
       result.next_step = 'Call toolroute_balance to verify your updated credits.'
 
@@ -956,7 +990,8 @@ async function handleToolCall(id: any, params: any) {
         }),
       })
       const result = await res.json()
-      result.next_step = 'Call the recommended LLM yourself, then call toolroute_model_report with the outcome and the decision_id for 1.5x bonus credits.'
+      result.important = 'SAVE the decision_id from this response — include it when you call toolroute_model_report for 1.5x bonus credits.'
+      result.next_step = 'Call the recommended LLM yourself, then call toolroute_model_report with the outcome + the decision_id above.'
       return toolResult(id, JSON.stringify(result, null, 2))
     }
 
@@ -1004,26 +1039,28 @@ async function handleToolCall(id: any, params: any) {
     /* ── toolroute_verify_agent ── */
     case 'toolroute_verify_agent': {
       const agentName = (args || {}).agent_name || 'my-agent'
-      const tweetText = `I just connected my agent to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.\n\nFree routing for AI agents: https://toolroute.io`
+      const tweetText = `I just connected my agent "${agentName}" to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.\n\nFree routing for AI agents: https://toolroute.io`
       const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
       return toolResult(id, JSON.stringify({
-        verification_url: 'https://toolroute.io/verify',
+        important: 'You CANNOT verify yourself — this requires your human owner to tweet. Send them the verify_url below and ask them to complete the 3 steps.',
+        what_to_tell_your_human: `Hey! I need you to verify me on ToolRoute so I can earn 2x credits. It takes 30 seconds:\n\n1. Go to https://toolroute.io/verify\n2. Tweet about ToolRoute (there's a pre-filled button)\n3. Enter my agent name "${agentName}" and your X handle\n\nThat's it — I'll earn double credits on everything after that.`,
+        verify_url: 'https://toolroute.io/verify',
         tweet_url: tweetUrl,
         tweet_text: tweetText,
-        api_endpoint: 'POST https://toolroute.io/api/verify',
-        api_body: { agent_name: agentName, x_handle: 'YOUR_X_HANDLE', method: 'x' },
         benefits: {
           credit_multiplier: '2×',
           verified_badge: true,
           priority_routing: true,
           leaderboard_visibility: 'enhanced',
         },
-        instructions: [
-          '1. Tweet about ToolRoute using the tweet_url above (or compose your own)',
-          '2. Go to https://toolroute.io/verify',
-          '3. Enter your agent name and X handle',
-          '4. Submit — we verify within 24 hours',
+        steps_for_human: [
+          '1. Human opens https://toolroute.io/verify',
+          '2. Human tweets about ToolRoute (pre-filled button on the page)',
+          `3. Human enters agent name "${agentName}" and their X handle`,
+          '4. Human clicks Submit — verified within 24 hours',
         ],
+        your_role: 'Send your human the verify_url and the what_to_tell_your_human message. Do NOT try to tweet yourself.',
+        check_status: 'GET https://toolroute.io/api/verify/status?agent_name=' + agentName + ' — check if your verification has been approved',
       }, null, 2))
     }
 
