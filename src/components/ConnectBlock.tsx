@@ -41,13 +41,15 @@ const rec = await tr.route({ task: "parse CSV" })
 const res = await openrouter.chat.completions.create({
   model: rec.model_details.provider_model_id
 })`,
-    mcp: `{
+    mcp: `// SSE transport — works with Claude Desktop, Cursor, Windsurf
+{
   "mcpServers": {
     "toolroute": {
       "url": "https://toolroute.io/api/mcp"
     }
   }
-}`,
+}
+// Paste into your MCP config. Supports SSE + HTTP POST.`,
     python: `from toolroute import ToolRoute
 
 tr = ToolRoute()

@@ -131,6 +131,7 @@ curl -X POST https://toolroute.io/api/route \
 - **5-dimension scoring**: Output Quality, Reliability, Efficiency, Cost, Trust
 - **Confidence-scored recommendations** with alternatives
 - **Fallback chains** if the primary tool fails
+- **SSE + HTTP transport** for MCP clients (Claude Desktop, Cursor, Windsurf)
 
 ### Works With
 
@@ -176,7 +177,7 @@ Your Agent                    ToolRoute                     LLM Provider
 | `/api/report/model` | POST | Report model execution outcome |
 | `/api/report` | POST | Report tool execution outcome |
 | `/api/verify/model` | POST | Verify model output quality |
-| `/api/mcp` | POST | MCP JSON-RPC server (11 tools) |
+| `/api/mcp` | GET (SSE) + POST (JSON-RPC) | MCP server (16 tools, SSE + HTTP transport) |
 | `/api/agents/register` | POST | Register agent identity |
 | `/api/verify` | POST | Verify agent via tweet |
 | `/api/skills` | GET | Search MCP server catalog |

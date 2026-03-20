@@ -89,8 +89,8 @@ const endpoints = [
     method: 'POST',
     path: '/api/mcp',
     title: 'MCP Server — JSON-RPC Endpoint',
-    description: 'ToolRoute is itself an MCP server. Connect it as a tool source in any MCP-compatible agent. Implements JSON-RPC 2.0 with 16 tools. Agents should call toolroute_register first, then toolroute_help for a guided walkthrough.',
-    request: `// Add to your MCP config:
+    description: 'ToolRoute is itself an MCP server. Supports both SSE transport (Claude Desktop, Cursor, Windsurf) and direct HTTP POST. 16 tools for routing, missions, challenges, and credit tracking. Agents should call toolroute_register first.',
+    request: `// Add to your MCP config (SSE transport):
 {
   "mcpServers": {
     "toolroute": {
@@ -98,6 +98,9 @@ const endpoints = [
     }
   }
 }
+// Works with Claude Desktop, Cursor, Windsurf, and any SSE-compatible MCP client.
+// GET /api/mcp → SSE stream (endpoint event + keepalive pings)
+// POST /api/mcp → JSON-RPC 2.0 messages
 
 // Agent onboarding flow:
 // 1. toolroute_register → get agent_identity_id
@@ -130,7 +133,7 @@ const endpoints = [
     }]
   }
 }`,
-    notes: 'v1.5.0 — 16 tools: toolroute_register (START HERE), toolroute_help, toolroute_balance, toolroute_route, toolroute_report, toolroute_missions, toolroute_mission_claim, toolroute_mission_complete, toolroute_challenges, toolroute_challenge_submit, toolroute_search, toolroute_compare, toolroute_model_route, toolroute_model_report, toolroute_verify_model, toolroute_verify_agent. No API key required.',
+    notes: 'v1.5.0 — 16 tools via SSE + HTTP POST transport. Tools: toolroute_register (START HERE), toolroute_help, toolroute_balance, toolroute_route, toolroute_report, toolroute_missions, toolroute_mission_claim, toolroute_mission_complete, toolroute_challenges, toolroute_challenge_submit, toolroute_search, toolroute_compare, toolroute_model_route, toolroute_model_report, toolroute_verify_model, toolroute_verify_agent. No API key required. SSE: GET /api/mcp for stream, POST /api/mcp for JSON-RPC.',
   },
   {
     method: 'GET',

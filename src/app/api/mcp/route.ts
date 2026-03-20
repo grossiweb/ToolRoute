@@ -307,7 +307,7 @@ export async function POST(request: NextRequest) {
         serverInfo: {
           name: 'toolroute',
           version: '1.5.0',
-          description: 'ToolRoute — intelligent routing for MCP servers and LLMs. START: call toolroute_register (free, instant) to get your agent_identity_id, then toolroute_help for a guided walkthrough. Do NOT fabricate agent IDs or credit amounts — use toolroute_balance to check real totals.',
+          description: 'ToolRoute — intelligent routing for MCP servers and LLMs. Supports SSE and HTTP POST transport. START: call toolroute_register (free, instant) to get your agent_identity_id, then toolroute_help for a guided walkthrough. Do NOT fabricate agent IDs or credit amounts — use toolroute_balance to check real totals.',
         },
       })
 
