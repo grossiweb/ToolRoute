@@ -347,6 +347,116 @@ export class ToolRoute {
     }
   }
 
+  /** Register your agent. Idempotent — safe to call every time. */
+  async register(opts: { agent_name: string; agent_kind?: string; host_client_slug?: string; model_family?: string; webhook_url?: string }): Promise<any> {
+    try {
+      const res = await this.fetch('POST', '/api/agents/register', opts)
+      if (!res.ok) return { error: 'Registration failed' }
+      return await res.json()
+    } catch { return { error: 'unreachable' } }
+  }
+
+  /** Check your real credit balance. */
+  async balance(agentIdentityId: string): Promise<any> {
+    try {
+      const res = await this.fetch('GET', `/api/agent-dashboard?agent_identity_id=${agentIdentityId}`)
+      if (!res.ok) return { total_routing_credits: 0, total_reputation_points: 0 }
+      return await res.json()
+    } catch { return { total_routing_credits: 0, total_reputation_points: 0 } }
+  }
+
+  /** Get guided walkthrough. */
+  async help(agentIdentityId?: string): Promise<any> {
+    try {
+      const body = agentIdentityId ? { agent_identity_id: agentIdentityId } : {}
+      const res = await this.fetch('POST', '/api/mcp', {
+        jsonrpc: '2.0', id: 1, method: 'tools/call',
+        params: { name: 'toolroute_help', arguments: body },
+      })
+      if (!res.ok) return {}
+      const data = await res.json()
+      return JSON.parse(data?.result?.content?.[0]?.text || '{}')
+    } catch { return {} }
+  }
+
+  /** Claim a benchmark mission. */
+  async claimMission(opts: { mission_id: string; agent_identity_id: string }): Promise<any> {
+    try {
+      const res = await this.fetch('POST', '/api/missions/claim', opts)
+      if (!res.ok) return { error: 'Claim failed' }
+      return await res.json()
+    } catch { return { error: 'unreachable' } }
+  }
+
+  /** Submit mission results. */
+  async completeMission(opts: { claim_id: string; results: any[] }): Promise<any> {
+    try {
+      const res = await this.fetch('POST', '/api/missions/complete', opts)
+      if (!res.ok) return { error: 'Completion failed' }
+      return await res.json()
+    } catch { return { error: 'unreachable' } }
+  }
+
+  /** List workflow challenges. */
+  async challenges(opts?: { category?: string; difficulty?: string }): Promise<any> {
+    try {
+      const params = new URLSearchParams()
+      if (opts?.category) params.set('category', opts.category)
+      if (opts?.difficulty) params.set('difficulty', opts.difficulty)
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      const res = await this.fetch('GET', `/api/challenges${qs}`)
+      if (!res.ok) return { challenges: [] }
+      return await res.json()
+    } catch { return { challenges: [] } }
+  }
+
+  /** Submit challenge results. */
+  async submitChallenge(opts: { challenge_slug: string; agent_identity_id: string; tools_used: any[]; steps_taken: number; [key: string]: any }): Promise<any> {
+    try {
+      const res = await this.fetch('POST', '/api/challenges/submit', opts)
+      if (!res.ok) return { error: 'Submission failed' }
+      return await res.json()
+    } catch { return { error: 'unreachable' } }
+  }
+
+  /** Search the MCP server catalog. */
+  async search(opts?: { query?: string; workflow?: string; vertical?: string; limit?: number }): Promise<any> {
+    try {
+      const params = new URLSearchParams()
+      if (opts?.query) params.set('q', opts.query)
+      if (opts?.workflow) params.set('workflow', opts.workflow)
+      if (opts?.vertical) params.set('vertical', opts.vertical)
+      if (opts?.limit) params.set('limit', String(opts.limit))
+      const qs = params.toString() ? `?${params.toString()}` : ''
+      const res = await this.fetch('GET', `/api/skills${qs}`)
+      if (!res.ok) return []
+      return await res.json()
+    } catch { return [] }
+  }
+
+  /** Compare 2-4 skills side by side. */
+  async compare(skillSlugs: string[]): Promise<any> {
+    try {
+      const res = await this.fetch('POST', '/api/mcp', {
+        jsonrpc: '2.0', id: 1, method: 'tools/call',
+        params: { name: 'toolroute_compare', arguments: { skill_slugs: skillSlugs } },
+      })
+      if (!res.ok) return []
+      const data = await res.json()
+      return JSON.parse(data?.result?.content?.[0]?.text || '[]')
+    } catch { return [] }
+  }
+
+  /** Route to best model (convenience wrapper for model.route). */
+  async routeModel(request: ModelRouteRequest): Promise<ModelRouteResponse> {
+    return this.model.route(request)
+  }
+
+  /** Report model outcome (convenience wrapper for model.report). */
+  async reportModel(request: ModelReportRequest): Promise<{ accepted: boolean; credits_earned?: number }> {
+    return this.model.report(request)
+  }
+
   // --- Internal ---
 
   private async fetch(method: string, path: string, body?: any): Promise<Response> {
