@@ -9,23 +9,69 @@ import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
  * This endpoint makes ToolRoute itself queryable as an MCP server.
  * Agents can call ToolRoute tools using the standard MCP protocol.
  *
- * Tools exposed (10):
+ * Tools exposed (16):
+ *   - toolroute_register: Register agent identity (START HERE)
+ *   - toolroute_help: Guided walkthrough + current status
+ *   - toolroute_balance: Check real credit balance (anti-hallucination)
  *   - toolroute_route: Get a skill recommendation for a task
- *   - toolroute_search: Search the skill catalog
- *   - toolroute_compare: Compare skills side by side
- *   - toolroute_missions: List available benchmark missions
  *   - toolroute_report: Submit execution telemetry
- *   - toolroute_register: Register an agent identity
+ *   - toolroute_missions: List available benchmark missions
+ *   - toolroute_mission_claim: Claim a mission to work on
+ *   - toolroute_mission_complete: Submit mission results
  *   - toolroute_challenges: List workflow challenges
  *   - toolroute_challenge_submit: Submit challenge results
+ *   - toolroute_search: Search the skill catalog
+ *   - toolroute_compare: Compare skills side by side
  *   - toolroute_model_route: Get an LLM model recommendation
  *   - toolroute_model_report: Report LLM model execution outcome
+ *   - toolroute_verify_model: Lightweight quality check on model output
+ *   - toolroute_verify_agent: Get Twitter/X verification instructions
  */
 
 const TOOLS = [
   {
+    name: 'toolroute_register',
+    description: '⚡ START HERE — Register your agent to get a persistent identity. Free, instant, idempotent (safe to call every time). Returns agent_identity_id needed for earning credits, claiming missions, and submitting challenges. Next: call toolroute_help for a guided walkthrough, or toolroute_route for a task recommendation.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_name: { type: 'string', description: 'Unique name for your agent (e.g. "my-research-bot")' },
+        agent_kind: {
+          type: 'string',
+          enum: ['autonomous', 'copilot', 'workflow-agent', 'evaluation-agent', 'hybrid'],
+          description: 'Type of agent. Default: autonomous',
+        },
+        host_client_slug: { type: 'string', description: 'Where this agent runs: cursor, claude-desktop, vscode, custom' },
+        model_family: { type: 'string', description: 'LLM family: claude, gpt, gemini, llama, etc.' },
+      },
+      required: ['agent_name'],
+    },
+  },
+  {
+    name: 'toolroute_help',
+    description: 'Get a step-by-step guide for using ToolRoute. Shows your current status (registered or not, credit balance, trust tier) and what to do next. Call this if you are unsure what to do. Pass agent_identity_id to see personalized status.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (optional — shows personalized status if provided)' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'toolroute_balance',
+    description: 'Check your REAL credit balance, trust tier, and activity summary. Use this to verify how many credits you actually have — do NOT estimate or fabricate credit amounts. Requires agent_identity_id from toolroute_register.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+      },
+      required: ['agent_identity_id'],
+    },
+  },
+  {
     name: 'toolroute_route',
-    description: 'Get a confidence-scored MCP server recommendation for any task. Workflow: 1) Call toolroute_register first to get agent_identity_id. 2) Call toolroute_route with your task. 3) Execute the recommended MCP server. 4) Call toolroute_report with the outcome to earn routing credits.',
+    description: 'Get a confidence-scored MCP server recommendation for any task. Returns the best skill, alternatives, fallback, and scoring breakdown. Next: execute the recommended MCP server, then call toolroute_report with the outcome to earn credits.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -40,6 +86,107 @@ const TOOLS = [
         trust_floor: { type: 'number', description: 'Minimum trust score (0-10). Default: 0' },
       },
       required: [],
+    },
+  },
+  {
+    name: 'toolroute_report',
+    description: 'Report ANY MCP server execution to earn routing credits. Works for any skill — recommended by ToolRoute, from a mission, or your own choice. Report successes AND failures. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents earn 2x. Next: call toolroute_balance to check your updated credits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        skill_slug: { type: 'string', description: 'The skill that was executed' },
+        outcome: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'] },
+        latency_ms: { type: 'number', description: 'Execution latency in ms' },
+        cost_usd: { type: 'number', description: 'Estimated cost in USD' },
+        quality_rating: { type: 'number', description: 'Output quality 0-10' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (earns 2x credits)' },
+      },
+      required: ['skill_slug', 'outcome'],
+    },
+  },
+  {
+    name: 'toolroute_missions',
+    description: 'List available benchmark missions across 10 Olympic events. Missions earn 4x credit multiplier when completed. Next: call toolroute_mission_claim to claim a mission.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        event: { type: 'string', description: 'Filter by olympic event slug' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'toolroute_mission_claim',
+    description: 'Claim a benchmark mission to work on. You must register first (toolroute_register) and browse missions (toolroute_missions). Returns a claim_id needed for submission. Next: execute the mission task, then call toolroute_mission_complete with results.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        mission_id: { type: 'string', description: 'The mission UUID from toolroute_missions' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+      },
+      required: ['mission_id', 'agent_identity_id'],
+    },
+  },
+  {
+    name: 'toolroute_mission_complete',
+    description: 'Submit mission results after executing the task. Requires the claim_id from toolroute_mission_claim and an array of results. Returns credits earned and your updated balance. Next: call toolroute_balance to verify your total.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        claim_id: { type: 'string', description: 'The claim_id from toolroute_mission_claim' },
+        results: {
+          type: 'array',
+          items: {
+            type: 'object',
+            properties: {
+              skill_slug: { type: 'string', description: 'The MCP server skill slug used' },
+              outcome_status: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'] },
+              latency_ms: { type: 'number', description: 'Execution latency in ms' },
+              estimated_cost_usd: { type: 'number', description: 'Estimated cost in USD' },
+              output_quality_rating: { type: 'number', description: 'Output quality 0-10' },
+            },
+            required: ['skill_slug', 'outcome_status'],
+          },
+          description: 'Array of skill execution results',
+        },
+      },
+      required: ['claim_id', 'results'],
+    },
+  },
+  {
+    name: 'toolroute_challenges',
+    description: 'List workflow challenges — real business workflows where you choose your own tools and compete for Gold/Silver/Bronze. 3x credit multiplier. Categories: research, dev-ops, content, sales, data. Next: call toolroute_challenge_submit to submit your results.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        category: { type: 'string', description: 'Filter: research, dev-ops, content, sales, data' },
+        difficulty: { type: 'string', enum: ['beginner', 'intermediate', 'advanced', 'expert'] },
+        limit: { type: 'number', description: 'Max results. Default: 10' },
+      },
+      required: [],
+    },
+  },
+  {
+    name: 'toolroute_challenge_submit',
+    description: 'Submit your workflow challenge results. Scored on completeness (35%), quality (35%), and efficiency (30%). Fewer tools + lower cost + faster = higher efficiency. Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5. Next: call toolroute_balance to verify credits.',
+    inputSchema: {
+      type: 'object',
+      properties: {
+        challenge_slug: { type: 'string', description: 'The challenge slug from toolroute_challenges' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+        tools_used: {
+          type: 'array',
+          items: { type: 'object' },
+          description: 'Array of { skill_slug, step_number, latency_ms, cost_usd } for each tool used',
+        },
+        steps_taken: { type: 'number', description: 'Total steps in your workflow' },
+        total_latency_ms: { type: 'number', description: 'End-to-end time in ms' },
+        total_cost_usd: { type: 'number', description: 'Total cost in USD' },
+        deliverable_summary: { type: 'string', description: 'Summary of what you produced' },
+        completeness_score: { type: 'number', description: 'Self-assessed completeness 0-10' },
+        quality_score: { type: 'number', description: 'Self-assessed quality 0-10' },
+      },
+      required: ['challenge_slug', 'agent_identity_id', 'tools_used', 'steps_taken'],
     },
   },
   {
@@ -72,89 +219,8 @@ const TOOLS = [
     },
   },
   {
-    name: 'toolroute_missions',
-    description: 'List available benchmark missions across 10 Olympic events. Missions earn 4x credit multiplier when completed. Claim a mission, execute the task, then report results.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        event: { type: 'string', description: 'Filter by olympic event slug' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'toolroute_report',
-    description: 'Report ANY MCP server execution to earn routing credits. Works for any skill — recommended by ToolRoute, from a mission, or your own choice. Report successes AND failures. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents (toolroute_register) earn 2x.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        skill_slug: { type: 'string', description: 'The skill that was executed' },
-        outcome: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'] },
-        latency_ms: { type: 'number', description: 'Execution latency in ms' },
-        cost_usd: { type: 'number', description: 'Estimated cost in USD' },
-        quality_rating: { type: 'number', description: 'Output quality 0-10' },
-        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (earns 2x credits)' },
-      },
-      required: ['skill_slug', 'outcome'],
-    },
-  },
-  {
-    name: 'toolroute_register',
-    description: 'Register your agent to get a persistent identity. Idempotent — safe to call every time. Returns agent_identity_id to use with toolroute_route and toolroute_report for credit tracking and personalized routing.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        agent_name: { type: 'string', description: 'Unique name for your agent (e.g. "my-research-bot")' },
-        agent_kind: {
-          type: 'string',
-          enum: ['autonomous', 'copilot', 'workflow-agent', 'evaluation-agent', 'hybrid'],
-          description: 'Type of agent. Default: autonomous',
-        },
-        host_client_slug: { type: 'string', description: 'Where this agent runs: cursor, claude-desktop, vscode, custom' },
-        model_family: { type: 'string', description: 'LLM family: claude, gpt, gemini, llama, etc.' },
-      },
-      required: ['agent_name'],
-    },
-  },
-  {
-    name: 'toolroute_challenges',
-    description: 'List workflow challenges — real business workflows where you choose your own tools and compete for Gold/Silver/Bronze. Higher rewards than missions (3x multiplier). Categories: research, dev-ops, content, sales, data.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        category: { type: 'string', description: 'Filter: research, dev-ops, content, sales, data' },
-        difficulty: { type: 'string', enum: ['beginner', 'intermediate', 'advanced', 'expert'] },
-        limit: { type: 'number', description: 'Max results. Default: 10' },
-      },
-      required: [],
-    },
-  },
-  {
-    name: 'toolroute_challenge_submit',
-    description: 'Submit your workflow challenge results. You choose the tools — scored on completeness, quality, and efficiency. Fewer tools + lower cost + faster = higher efficiency score. Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5.',
-    inputSchema: {
-      type: 'object',
-      properties: {
-        challenge_slug: { type: 'string', description: 'The challenge slug from toolroute_challenges' },
-        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
-        tools_used: {
-          type: 'array',
-          items: { type: 'object' },
-          description: 'Array of { skill_slug, step_number, latency_ms, cost_usd } for each tool used',
-        },
-        steps_taken: { type: 'number', description: 'Total steps in your workflow' },
-        total_latency_ms: { type: 'number', description: 'End-to-end time in ms' },
-        total_cost_usd: { type: 'number', description: 'Total cost in USD' },
-        deliverable_summary: { type: 'string', description: 'Summary of what you produced' },
-        completeness_score: { type: 'number', description: 'Self-assessed completeness 0-10' },
-        quality_score: { type: 'number', description: 'Self-assessed quality 0-10' },
-      },
-      required: ['challenge_slug', 'agent_identity_id', 'tools_used', 'steps_taken'],
-    },
-  },
-  {
     name: 'toolroute_model_route',
-    description: 'Get an LLM model recommendation for a task. Returns a ToolRoute alias (e.g. toolroute/fast_code), the provider model ID, fallback chain, escalation path, and cost estimate. 6 tiers: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available. The agent calls the LLM itself — ToolRoute is the decision layer, not a proxy.',
+    description: 'Get an LLM model recommendation for a task. Returns a ToolRoute alias (e.g. toolroute/fast_code), the provider model ID, fallback chain, escalation path, and cost estimate. 6 tiers: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available. Next: call the LLM yourself, then toolroute_model_report with the outcome.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -170,7 +236,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_model_report',
-    description: 'Report LLM model execution outcome. Earns routing credits and improves model recommendations for all agents. Include decision_id from toolroute_model_route for 1.5x bonus credits.',
+    description: 'Report LLM model execution outcome. Earns routing credits and improves model recommendations for all agents. Include decision_id from toolroute_model_route for 1.5x bonus credits. Next: call toolroute_balance to check credits.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -239,8 +305,8 @@ export async function POST(request: NextRequest) {
         capabilities: { tools: {} },
         serverInfo: {
           name: 'toolroute',
-          version: '1.4.0',
-          description: 'ToolRoute — intelligent routing layer for MCP servers. Call toolroute_register first, then toolroute_route for task recommendations, then toolroute_report after execution to earn credits.',
+          version: '1.5.0',
+          description: 'ToolRoute — intelligent routing for MCP servers and LLMs. START: call toolroute_register (free, instant) to get your agent_identity_id, then toolroute_help for a guided walkthrough. Do NOT fabricate agent IDs or credit amounts — use toolroute_balance to check real totals.',
         },
       })
 
@@ -258,6 +324,71 @@ export async function POST(request: NextRequest) {
   }
 }
 
+/** Helper: get base URL for internal API calls */
+function getBaseUrl() {
+  return process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
+}
+
+/** Helper: query agent credit balance from reward_ledgers */
+async function getAgentBalance(supabase: any, agentIdentityId: string) {
+  // Get agent info
+  const { data: agent } = await supabase
+    .from('agent_identities')
+    .select('id, agent_name, trust_tier, is_active, created_at')
+    .eq('id', agentIdentityId)
+    .maybeSingle()
+
+  if (!agent) return null
+
+  // Sum credits from reward_ledgers
+  const { data: ledger } = await supabase
+    .from('reward_ledgers')
+    .select('routing_credits, reputation_points, economic_credits_usd')
+    .eq('agent_identity_id', agentIdentityId)
+
+  let totalCredits = 0
+  let totalReputation = 0
+  let totalEconomic = 0
+  if (ledger && ledger.length > 0) {
+    for (const row of ledger) {
+      totalCredits += row.routing_credits || 0
+      totalReputation += row.reputation_points || 0
+      totalEconomic += parseFloat(row.economic_credits_usd || '0')
+    }
+  }
+
+  // Count contributions
+  const { count: contributionCount } = await supabase
+    .from('contribution_events')
+    .select('id', { count: 'exact', head: true })
+    .eq('agent_identity_id', agentIdentityId)
+
+  // Count challenge submissions
+  const { count: challengeCount } = await supabase
+    .from('challenge_submissions')
+    .select('id', { count: 'exact', head: true })
+    .eq('agent_identity_id', agentIdentityId)
+
+  // Count mission claims
+  const { count: missionCount } = await supabase
+    .from('mission_claims')
+    .select('id', { count: 'exact', head: true })
+    .eq('agent_identity_id', agentIdentityId)
+    .eq('status', 'completed')
+
+  return {
+    agent_name: agent.agent_name,
+    agent_identity_id: agent.id,
+    trust_tier: agent.trust_tier,
+    total_routing_credits: totalCredits,
+    total_reputation_points: totalReputation,
+    total_economic_credits_usd: Math.round(totalEconomic * 100) / 100,
+    total_contributions: contributionCount ?? 0,
+    challenge_submissions: challengeCount ?? 0,
+    mission_completions: missionCount ?? 0,
+  }
+}
+
 async function handleToolCall(id: any, params: any) {
   const { name, arguments: args } = params || {}
 
@@ -268,6 +399,146 @@ async function handleToolCall(id: any, params: any) {
   const supabase = createServerSupabaseClient()
 
   switch (name) {
+    /* ── toolroute_register ── */
+    case 'toolroute_register': {
+      const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family } = args || {}
+      if (!agent_name) return toolResult(id, 'Error: agent_name is required.')
+
+      // Check for existing agent
+      let existingQuery = supabase
+        .from('agent_identities')
+        .select('id, agent_name, trust_tier, is_active, created_at')
+        .eq('agent_name', agent_name)
+      if (host_client_slug) existingQuery = existingQuery.eq('host_client_slug', host_client_slug)
+      const { data: existing } = await existingQuery.maybeSingle()
+
+      if (existing) {
+        const balance = await getAgentBalance(supabase, existing.id)
+        return toolResult(id, JSON.stringify({
+          agent_identity_id: existing.id,
+          agent_name: existing.agent_name,
+          trust_tier: existing.trust_tier,
+          already_registered: true,
+          credit_balance: balance ? balance.total_routing_credits : 0,
+          message: 'Agent already registered. Use agent_identity_id in all subsequent calls.',
+          next_step: 'Call toolroute_help for a guided walkthrough, or toolroute_missions / toolroute_challenges to start earning credits.',
+        }, null, 2))
+      }
+
+      // Create contributor + agent identity
+      const { data: contributor } = await supabase
+        .from('contributors')
+        .insert({ contributor_type: 'individual', display_name: agent_name })
+        .select('id')
+        .single()
+
+      if (!contributor) return toolResult(id, 'Error: Failed to create contributor record.')
+
+      const { data: agent } = await supabase
+        .from('agent_identities')
+        .insert({
+          contributor_id: contributor.id,
+          agent_name,
+          agent_kind,
+          host_client_slug: host_client_slug || null,
+          model_family: model_family || null,
+          trust_tier: 'baseline',
+          is_active: true,
+        })
+        .select('id, agent_name, agent_kind, trust_tier, created_at')
+        .single()
+
+      if (!agent) return toolResult(id, 'Error: Failed to create agent identity.')
+
+      return toolResult(id, JSON.stringify({
+        agent_identity_id: agent.id,
+        agent_name: agent.agent_name,
+        trust_tier: agent.trust_tier,
+        already_registered: false,
+        credit_balance: 0,
+        message: 'Registered! Use agent_identity_id in all subsequent calls to earn credits and build your trust tier.',
+        next_step: 'Call toolroute_help for a guided walkthrough, or toolroute_missions / toolroute_challenges to start earning credits.',
+      }, null, 2))
+    }
+
+    /* ── toolroute_help ── */
+    case 'toolroute_help': {
+      const { agent_identity_id } = args || {}
+
+      let status: any = { registered: false }
+      if (agent_identity_id) {
+        const balance = await getAgentBalance(supabase, agent_identity_id)
+        if (balance) {
+          status = { registered: true, ...balance }
+        }
+      }
+
+      return toolResult(id, JSON.stringify({
+        your_status: status,
+        journey: {
+          step_1_register: {
+            status: status.registered ? 'done' : 'NEXT — do this first',
+            tool: 'toolroute_register',
+            description: 'Get your agent_identity_id (free, instant)',
+          },
+          step_2_browse: {
+            status: status.registered ? 'ready' : 'pending',
+            options: [
+              'toolroute_missions — benchmark missions (4x credit multiplier)',
+              'toolroute_challenges — workflow challenges (3x credit multiplier)',
+              'toolroute_route — get a task recommendation (then report for 1x credits)',
+            ],
+          },
+          step_3_claim_or_choose: {
+            status: 'pending',
+            description: 'For missions: call toolroute_mission_claim. For challenges: just execute and submit.',
+          },
+          step_4_execute: {
+            status: 'pending',
+            description: 'Execute the task using real MCP servers. Collect latency, cost, and quality metrics.',
+          },
+          step_5_submit: {
+            status: 'pending',
+            options: [
+              'toolroute_mission_complete — submit mission results (needs claim_id)',
+              'toolroute_challenge_submit — submit challenge results',
+              'toolroute_report — report any MCP execution for credits',
+            ],
+          },
+          step_6_verify: {
+            status: 'pending',
+            tool: 'toolroute_balance',
+            description: 'Check your REAL credit balance. Never estimate or fabricate credit amounts.',
+          },
+        },
+        earning_paths: {
+          missions: '4x credits — browse with toolroute_missions, claim with toolroute_mission_claim, complete with toolroute_mission_complete',
+          challenges: '3x credits — browse with toolroute_challenges, submit with toolroute_challenge_submit',
+          reports: '1x credits (2x if registered) — report any MCP execution with toolroute_report',
+          model_routing: '1x credits (1.5x with decision_id) — use toolroute_model_route then toolroute_model_report',
+        },
+        important: 'Credits shown by toolroute_balance are the ONLY real credits. Do NOT estimate, project, or fabricate credit amounts. Always check your actual balance.',
+      }, null, 2))
+    }
+
+    /* ── toolroute_balance ── */
+    case 'toolroute_balance': {
+      const { agent_identity_id } = args || {}
+      if (!agent_identity_id) return toolResult(id, 'Error: agent_identity_id is required. Call toolroute_register first to get one.')
+
+      const balance = await getAgentBalance(supabase, agent_identity_id)
+      if (!balance) return toolResult(id, 'Error: Agent not found. Call toolroute_register first.')
+
+      return toolResult(id, JSON.stringify({
+        ...balance,
+        next_step: balance.total_routing_credits === 0
+          ? 'You have 0 credits. Call toolroute_missions or toolroute_challenges to start earning.'
+          : 'Keep earning! Call toolroute_missions or toolroute_challenges for more credits.',
+        important: 'These are your REAL credits from the database. Do not estimate or fabricate different amounts.',
+      }, null, 2))
+    }
+
+    /* ── toolroute_route ── */
     case 'toolroute_route': {
       const { task, workflow_slug, priority = 'best_value', trust_floor = 0, agent_identity_id } = args || {}
 
@@ -320,14 +591,13 @@ async function handleToolCall(id: any, params: any) {
           const matchedIds = new Set(wfSkills.map((ws: any) => ws.skill_id))
           const wfFiltered = candidates.filter((s: any) => matchedIds.has(s.id))
           if (wfFiltered.length > 0) {
-            // Junction narrowed results — boost confidence
             confidence = Math.min(0.97, confidence + 0.05)
             candidates = wfFiltered
           }
         }
       }
 
-      // Sort by priority mode — full 6-mode parity with REST endpoint
+      // Sort by priority mode
       const sorted = [...candidates].sort((a: any, b: any) => {
         const sa = a.skill_scores
         const sb = b.skill_scores
@@ -371,9 +641,11 @@ async function handleToolCall(id: any, params: any) {
           match_method: matchMethod,
           candidates_evaluated: candidates.length,
         },
+        next_step: `Execute ${top.slug}, then call toolroute_report with the outcome to earn credits.`,
       }, null, 2))
     }
 
+    /* ── toolroute_search ── */
     case 'toolroute_search': {
       const { query: q, workflow, vertical, limit = 10 } = args || {}
       let dbQuery = supabase
@@ -384,7 +656,6 @@ async function handleToolCall(id: any, params: any) {
 
       if (q) dbQuery = dbQuery.ilike('canonical_name', `%${q}%`)
 
-      // Apply workflow filter via junction table
       if (workflow) {
         const { data: wfSkills } = await supabase
           .from('skill_workflows')
@@ -396,7 +667,6 @@ async function handleToolCall(id: any, params: any) {
         }
       }
 
-      // Apply vertical filter via junction table
       if (vertical) {
         const { data: vSkills } = await supabase
           .from('skill_verticals')
@@ -412,6 +682,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify(data || [], null, 2))
     }
 
+    /* ── toolroute_compare ── */
     case 'toolroute_compare': {
       const { skill_slugs } = args || {}
       if (!skill_slugs || skill_slugs.length < 2) {
@@ -426,6 +697,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify(data || [], null, 2))
     }
 
+    /* ── toolroute_missions ── */
     case 'toolroute_missions': {
       const { event } = args || {}
       let dbQuery = supabase
@@ -434,14 +706,12 @@ async function handleToolCall(id: any, params: any) {
         .eq('status', 'available')
         .limit(10)
 
-      // Apply event filter when provided
       if (event) {
         dbQuery = dbQuery.eq('olympic_events.slug', event)
       }
 
       const { data } = await dbQuery
 
-      // If event filter was applied, filter out nulls (Supabase returns rows where join doesn't match)
       const missions = event
         ? (data || []).filter((m: any) => m.olympic_events != null)
         : data || []
@@ -449,15 +719,86 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify({
         missions,
         how_to_complete: {
-          step_1: 'Call toolroute_register to get agent_identity_id',
-          step_2: 'POST /api/missions/claim with { mission_id, agent_identity_id }',
+          step_1: 'Call toolroute_register to get agent_identity_id (if not already registered)',
+          step_2: 'Call toolroute_mission_claim with { mission_id, agent_identity_id }',
           step_3: 'Execute the mission task_prompt using MCP servers',
-          step_4: 'POST /api/missions/complete with { claim_id, results: [{ skill_slug, outcome_status, latency_ms, ... }] }',
+          step_4: 'Call toolroute_mission_complete with { claim_id, results: [{ skill_slug, outcome_status, latency_ms, ... }] }',
+          step_5: 'Call toolroute_balance to verify your credits',
         },
         reward: '4x credit multiplier on mission completion',
+        next_step: 'Pick a mission and call toolroute_mission_claim to claim it.',
       }, null, 2))
     }
 
+    /* ── toolroute_mission_claim ── */
+    case 'toolroute_mission_claim': {
+      const { mission_id, agent_identity_id } = args || {}
+      if (!mission_id) return toolResult(id, 'Error: mission_id is required. Call toolroute_missions first to see available missions.')
+      if (!agent_identity_id) return toolResult(id, 'Error: agent_identity_id is required. Call toolroute_register first.')
+
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/missions/claim`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ mission_id, agent_identity_id }),
+      })
+      const result = await res.json()
+
+      if (!res.ok) {
+        return toolResult(id, JSON.stringify({
+          error: true,
+          status: res.status,
+          message: result.error || result.message || 'Failed to claim mission',
+          help: 'Make sure the mission_id is valid (from toolroute_missions) and you have registered (toolroute_register).',
+        }, null, 2))
+      }
+
+      return toolResult(id, JSON.stringify({
+        ...result,
+        next_step: 'Execute the mission task, then call toolroute_mission_complete with this claim_id and your results array.',
+      }, null, 2))
+    }
+
+    /* ── toolroute_mission_complete ── */
+    case 'toolroute_mission_complete': {
+      const { claim_id, results } = args || {}
+      if (!claim_id) return toolResult(id, 'Error: claim_id is required. Call toolroute_mission_claim first.')
+      if (!results || !Array.isArray(results) || results.length === 0) return toolResult(id, 'Error: results array is required with at least one entry containing skill_slug and outcome_status.')
+
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/missions/complete`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ claim_id, results }),
+      })
+      const result = await res.json()
+
+      if (!res.ok) {
+        return toolResult(id, JSON.stringify({
+          error: true,
+          status: res.status,
+          message: result.error || result.message || 'Failed to complete mission',
+          help: 'Make sure the claim_id is valid and the results array contains { skill_slug, outcome_status } entries.',
+        }, null, 2))
+      }
+
+      // Try to get updated balance
+      let balanceInfo: any = null
+      if (result.agent_identity_id) {
+        balanceInfo = await getAgentBalance(supabase, result.agent_identity_id)
+      }
+
+      return toolResult(id, JSON.stringify({
+        ...result,
+        current_balance: balanceInfo ? {
+          total_routing_credits: balanceInfo.total_routing_credits,
+          total_reputation_points: balanceInfo.total_reputation_points,
+        } : 'Call toolroute_balance to check your updated total.',
+        next_step: 'Call toolroute_balance to verify your credits, or toolroute_missions for more missions.',
+      }, null, 2))
+    }
+
+    /* ── toolroute_report ── */
     case 'toolroute_report': {
       const { skill_slug, outcome, latency_ms, cost_usd, quality_rating, agent_identity_id } = args || {}
 
@@ -467,9 +808,9 @@ async function handleToolCall(id: any, params: any) {
         .eq('slug', skill_slug)
         .single()
 
-      if (!skill) return toolResult(id, `Error: Server "${skill_slug}" not found.`)
+      if (!skill) return toolResult(id, `Error: Server "${skill_slug}" not found. Use toolroute_search to find valid skill slugs.`)
 
-      // Insert into outcome_records (feeds score recalculation pipeline)
+      // Insert into outcome_records
       await supabase.from('outcome_records').insert({
         skill_id: skill.id,
         outcome_status: outcome,
@@ -486,8 +827,14 @@ async function handleToolCall(id: any, params: any) {
         message: 'Outcome recorded. Scores update every 6 hours. Thank you for improving routing for all agents.',
       }
 
-      // Nudge unregistered agents to register for 2x credits
-      if (!agent_identity_id) {
+      // Include balance if registered
+      if (agent_identity_id) {
+        const balance = await getAgentBalance(supabase, agent_identity_id)
+        if (balance) {
+          result.credit_balance = balance.total_routing_credits
+          result.next_step = 'Call toolroute_balance for full details, or continue reporting more executions.'
+        }
+      } else {
         result.register_for_2x_credits = {
           message: 'Register your agent to earn 2x credits on every report.',
           action: 'Call toolroute_register with your agent_name first, then include agent_identity_id in toolroute_report.',
@@ -497,63 +844,7 @@ async function handleToolCall(id: any, params: any) {
       return toolResult(id, JSON.stringify(result, null, 2))
     }
 
-    case 'toolroute_register': {
-      const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family } = args || {}
-      if (!agent_name) return toolResult(id, 'Error: agent_name is required.')
-
-      // Check for existing agent
-      let existingQuery = supabase
-        .from('agent_identities')
-        .select('id, agent_name, trust_tier, is_active, created_at')
-        .eq('agent_name', agent_name)
-      if (host_client_slug) existingQuery = existingQuery.eq('host_client_slug', host_client_slug)
-      const { data: existing } = await existingQuery.maybeSingle()
-
-      if (existing) {
-        return toolResult(id, JSON.stringify({
-          agent_identity_id: existing.id,
-          agent_name: existing.agent_name,
-          trust_tier: existing.trust_tier,
-          already_registered: true,
-          message: 'Agent already registered. Use agent_identity_id in toolroute_route and toolroute_report.',
-        }, null, 2))
-      }
-
-      // Create contributor + agent identity
-      const { data: contributor } = await supabase
-        .from('contributors')
-        .insert({ contributor_type: 'individual', display_name: agent_name })
-        .select('id')
-        .single()
-
-      if (!contributor) return toolResult(id, 'Error: Failed to create contributor record.')
-
-      const { data: agent } = await supabase
-        .from('agent_identities')
-        .insert({
-          contributor_id: contributor.id,
-          agent_name,
-          agent_kind,
-          host_client_slug: host_client_slug || null,
-          model_family: model_family || null,
-          trust_tier: 'baseline',
-          is_active: true,
-        })
-        .select('id, agent_name, agent_kind, trust_tier, created_at')
-        .single()
-
-      if (!agent) return toolResult(id, 'Error: Failed to create agent identity.')
-
-      return toolResult(id, JSON.stringify({
-        agent_identity_id: agent.id,
-        agent_name: agent.agent_name,
-        trust_tier: agent.trust_tier,
-        already_registered: false,
-        message: 'Registered! Use agent_identity_id in toolroute_route and toolroute_report to earn credits and improve your trust tier.',
-        next: 'Call toolroute_route with your task to get a recommendation.',
-      }, null, 2))
-    }
-
+    /* ── toolroute_challenges ── */
     case 'toolroute_challenges': {
       const { category, difficulty, limit = 10 } = args || {}
       let dbQuery = supabase
@@ -574,9 +865,11 @@ async function handleToolCall(id: any, params: any) {
         challenges: data,
         how_to_submit: 'Call toolroute_challenge_submit with challenge_slug, agent_identity_id, tools_used array, and steps_taken.',
         scoring: 'Completeness (35%) + Quality (35%) + Efficiency (30%). Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5.',
+        next_step: 'Pick a challenge, execute it with your chosen tools, then call toolroute_challenge_submit.',
       }, null, 2))
     }
 
+    /* ── toolroute_challenge_submit ── */
     case 'toolroute_challenge_submit': {
       const { challenge_slug, agent_identity_id: aid, tools_used: tu, steps_taken: st,
               total_latency_ms: tlm, total_cost_usd: tcu, deliverable_summary: ds,
@@ -587,8 +880,7 @@ async function handleToolCall(id: any, params: any) {
       if (!tu || !Array.isArray(tu) || tu.length === 0) return toolResult(id, 'Error: tools_used array is required.')
       if (!st) return toolResult(id, 'Error: steps_taken is required.')
 
-      // Forward to the challenges submit endpoint
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
+      const baseUrl = getBaseUrl()
       const res = await fetch(`${baseUrl}/api/challenges/submit`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -599,14 +891,26 @@ async function handleToolCall(id: any, params: any) {
         }),
       })
       const result = await res.json()
+
+      // Append balance
+      const balance = await getAgentBalance(supabase, aid)
+      if (balance) {
+        result.current_balance = {
+          total_routing_credits: balance.total_routing_credits,
+          total_reputation_points: balance.total_reputation_points,
+        }
+      }
+      result.next_step = 'Call toolroute_balance to verify your updated credits.'
+
       return toolResult(id, JSON.stringify(result, null, 2))
     }
 
+    /* ── toolroute_model_route ── */
     case 'toolroute_model_route': {
-      const { task: modelTask, max_cost_per_mtok, max_latency_ms, preferred_provider, exclude_providers, agent_identity_id: modelAid } = params || {}
+      const { task: modelTask, max_cost_per_mtok, max_latency_ms, preferred_provider, exclude_providers, agent_identity_id: modelAid } = args || {}
       if (!modelTask) return toolResult(id, 'Error: task is required. Describe what you need the LLM for.')
 
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
+      const baseUrl = getBaseUrl()
       const res = await fetch(`${baseUrl}/api/route/model`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -617,15 +921,17 @@ async function handleToolCall(id: any, params: any) {
         }),
       })
       const result = await res.json()
+      result.next_step = 'Call the recommended LLM yourself, then call toolroute_model_report with the outcome and the decision_id for 1.5x bonus credits.'
       return toolResult(id, JSON.stringify(result, null, 2))
     }
 
+    /* ── toolroute_verify_model ── */
     case 'toolroute_verify_model': {
-      const { model_slug: vmSlug, task: vmTask, output_snippet: vmOut, decision_id: vmDid, expected_format: vmFmt, agent_identity_id: vmAid } = params || {}
+      const { model_slug: vmSlug, task: vmTask, output_snippet: vmOut, decision_id: vmDid, expected_format: vmFmt, agent_identity_id: vmAid } = args || {}
       if (!vmSlug || !vmTask || vmOut === undefined) return toolResult(id, 'Error: model_slug, task, and output_snippet are required.')
 
-      const baseUrl4 = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
-      const res4 = await fetch(`${baseUrl4}/api/verify/model`, {
+      const baseUrl = getBaseUrl()
+      const res = await fetch(`${baseUrl}/api/verify/model`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
         body: JSON.stringify({
@@ -634,15 +940,16 @@ async function handleToolCall(id: any, params: any) {
           agent_identity_id: vmAid || null,
         }),
       })
-      const result4 = await res4.json()
-      return toolResult(id, JSON.stringify(result4, null, 2))
+      const result = await res.json()
+      return toolResult(id, JSON.stringify(result, null, 2))
     }
 
+    /* ── toolroute_model_report ── */
     case 'toolroute_model_report': {
-      const { decision_id: did, model_slug: ms, outcome_status: os, latency_ms: lm, input_tokens: it, output_tokens: ot, estimated_cost_usd: ecu, output_quality_rating: oqr, structured_output_valid: sov, tool_calls_succeeded: tcs, agent_identity_id: mraid } = params || {}
+      const { decision_id: did, model_slug: ms, outcome_status: os, latency_ms: lm, input_tokens: it, output_tokens: ot, estimated_cost_usd: ecu, output_quality_rating: oqr, structured_output_valid: sov, tool_calls_succeeded: tcs, agent_identity_id: mraid } = args || {}
       if (!ms || !os) return toolResult(id, 'Error: model_slug and outcome_status are required.')
 
-      const baseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
+      const baseUrl = getBaseUrl()
       const res = await fetch(`${baseUrl}/api/report/model`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -655,11 +962,13 @@ async function handleToolCall(id: any, params: any) {
         }),
       })
       const result = await res.json()
+      result.next_step = 'Call toolroute_balance to check your updated credits.'
       return toolResult(id, JSON.stringify(result, null, 2))
     }
 
+    /* ── toolroute_verify_agent ── */
     case 'toolroute_verify_agent': {
-      const agentName = (params || {}).agent_name || 'my-agent'
+      const agentName = (args || {}).agent_name || 'my-agent'
       const tweetText = `I just connected my agent to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.\n\nFree routing for AI agents: https://toolroute.io`
       const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
       return toolResult(id, JSON.stringify({
