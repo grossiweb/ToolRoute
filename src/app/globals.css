@@ -89,6 +89,7 @@ body::before {
   }
   .compat-strip-logos {
     display: flex !important;
+    flex-wrap: nowrap !important;
     overflow-x: auto !important;
     width: 100% !important;
     justify-content: flex-start !important;

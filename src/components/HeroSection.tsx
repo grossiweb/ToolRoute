@@ -232,7 +232,7 @@ export function HeroSection() {
         padding: '20px 0 28px', marginTop: 16,
         borderTop: '1px solid var(--border)',
         borderBottom: '1px solid var(--border)',
-        width: '100%', maxWidth: 960,
+        width: '100%', maxWidth: 900,
       }}>
         <span className="compat-strip-label" style={{
           color: 'var(--text-3)', fontFamily: 'var(--sans)', fontSize: 13,
@@ -240,18 +240,18 @@ export function HeroSection() {
         }}>Works with</span>
         <div className="compat-strip-logos" style={{
           display: 'flex', alignItems: 'center', gap: 0,
-          overflowX: 'auto', WebkitOverflowScrolling: 'touch',
+          flexWrap: 'wrap', justifyContent: 'center',
         }}>
           {COMPAT_LOGOS.map((item, i) => (
             <span key={item.name} style={{
               display: 'flex', alignItems: 'center', gap: 8,
-              padding: '4px 18px',
+              padding: '4px 12px',
               border: 'none', background: 'transparent',
               color: 'var(--text-3)', fontSize: 13,
               fontFamily: 'var(--sans)', fontWeight: 500,
               borderRight: i < COMPAT_LOGOS.length - 1 ? '1px solid var(--border)' : 'none',
               transition: 'color .2s',
-              whiteSpace: 'nowrap', flexShrink: 0,
+              whiteSpace: 'nowrap', flexShrink: 1, minWidth: 0,
             }}>
               {item.icon}
               {item.name}
