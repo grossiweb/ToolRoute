@@ -22,7 +22,7 @@ const cp = { color: '#e5c07b' }  // properties/identifiers
 const co = { color: '#f59e0b' }  // output/result values
 
 export function ConnectBlock() {
-  const [tab, setTab] = useState<Tab>('claude-code')
+  const [tab, setTab] = useState<Tab>('openrouter')
   const [copied, setCopied] = useState(false)
 
   const plainCode: Record<Tab, string> = {
@@ -195,7 +195,7 @@ response = litellm.completion(
     ),
   }
 
-  const TAB_ORDER: Tab[] = ['claude-code', 'claude-desktop', 'cursor', 'openrouter', 'python', 'litellm', 'curl']
+  const TAB_ORDER: Tab[] = ['openrouter', 'claude-code', 'claude-desktop', 'cursor', 'python', 'litellm', 'curl']
 
   return (
     <div style={{
