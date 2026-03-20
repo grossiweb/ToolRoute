@@ -18,12 +18,12 @@ export const metadata: Metadata = {
 }
 
 const CATEGORIES = [
-  { label: 'All', value: '' },
-  { label: 'Web & Search', value: 'web-search' },
-  { label: 'Files & Code', value: 'files-code' },
-  { label: 'Databases', value: 'databases' },
-  { label: 'Communication', value: 'communication' },
-  { label: 'CRM', value: 'crm' },
+  { label: 'All', value: '', emoji: '' },
+  { label: 'Web & Search', value: 'web-search', emoji: '\uD83C\uDF10' },
+  { label: 'Files & Code', value: 'files-code', emoji: '\uD83D\uDCC1' },
+  { label: 'Databases', value: 'databases', emoji: '\uD83D\uDDC4\uFE0F' },
+  { label: 'Communication', value: 'communication', emoji: '\uD83D\uDCE7' },
+  { label: 'CRM & Sales', value: 'crm', emoji: '\uD83C\uDFE2' },
 ]
 
 export default async function ServersPage({
@@ -115,6 +115,9 @@ export default async function ServersPage({
     ? (Array.isArray(spotlight.skill_scores) ? spotlight.skill_scores[0] : spotlight.skill_scores)
     : null
 
+  // Top 4 for benchmark comparison table
+  const benchmarkServers = sortedServers.slice(0, 4)
+
   // Derive trust badge
   function getTrustBadge(vendorType: string): { label: string; color: string; bg: string } {
     if (vendorType === 'official') return { label: 'Verified', color: 'var(--green)', bg: 'rgba(52,211,153,0.12)' }
@@ -146,27 +149,18 @@ export default async function ServersPage({
 
   return (
     <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px' }}>
-      {/* ── Page Hero ── */}
-      <section style={{
-        padding: '72px 0 48px',
+      {/* ── Page Hero (left-aligned) ── */}
+      <div className="page-hero" style={{
+        paddingTop: 80,
+        paddingBottom: 56,
         borderBottom: '1px solid var(--border)',
-        textAlign: 'center',
       }}>
-        <div style={{
-          fontFamily: 'var(--mono)',
-          fontSize: 11,
-          textTransform: 'uppercase',
-          letterSpacing: 1.5,
-          color: 'var(--amber)',
-          marginBottom: 16,
-        }}>
-          MCP Server Directory
-        </div>
+        <div className="page-hero-label">MCP Servers</div>
         <h1 style={{
           fontFamily: 'var(--serif)',
-          fontSize: 'clamp(36px, 5vw, 56px)',
+          fontSize: 'clamp(36px, 5vw, 60px)',
           fontWeight: 400,
-          lineHeight: 1.1,
+          lineHeight: 1.05,
           color: 'var(--text)',
           marginBottom: 16,
         }}>
@@ -176,240 +170,215 @@ export default async function ServersPage({
         <p style={{
           fontSize: 16,
           color: 'var(--text-2)',
-          maxWidth: 520,
-          margin: '0 auto 32px',
+          maxWidth: 560,
           lineHeight: 1.65,
         }}>
           {servers.length}+ servers ranked by real execution data. Every score is outcome-backed across 5 dimensions.
         </p>
+      </div>
 
-        {/* ── Filter Bar ── */}
-        <div style={{
-          display: 'flex',
-          alignItems: 'center',
-          justifyContent: 'center',
-          gap: 8,
-          flexWrap: 'wrap',
-          marginBottom: 20,
-        }}>
-          {CATEGORIES.map((cat) => (
-            <Link
-              key={cat.value}
-              href={cat.value ? `/servers?workflow=${cat.value}` : '/servers'}
-              style={{
-                display: 'inline-flex',
-                alignItems: 'center',
-                padding: '8px 18px',
-                borderRadius: 100,
-                border: '1px solid ' + (activeCategory === cat.value ? 'var(--amber)' : 'var(--border)'),
-                background: activeCategory === cat.value ? 'rgba(251,191,36,0.1)' : 'var(--bg2)',
-                color: activeCategory === cat.value ? 'var(--amber)' : 'var(--text-2)',
-                fontFamily: 'var(--sans)',
-                fontSize: 13,
-                fontWeight: 500,
-                textDecoration: 'none',
-                transition: 'all .2s',
-                cursor: 'pointer',
-              }}
-            >
-              {cat.label}
-            </Link>
-          ))}
-        </div>
+      {/* ── Filter Bar ── */}
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        gap: 8,
+        padding: '24px 0',
+        borderBottom: '1px solid var(--border)',
+        flexWrap: 'wrap',
+      }}>
+        {CATEGORIES.map((cat) => (
+          <Link
+            key={cat.value}
+            href={cat.value ? `/servers?workflow=${cat.value}` : '/servers'}
+            className="filter-pill"
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: 6,
+              padding: '8px 18px',
+              borderRadius: 100,
+              border: '1px solid ' + (activeCategory === cat.value ? 'var(--amber)' : 'var(--border)'),
+              background: activeCategory === cat.value ? 'rgba(251,191,36,0.1)' : 'var(--bg2)',
+              color: activeCategory === cat.value ? 'var(--amber)' : 'var(--text-2)',
+              fontFamily: 'var(--sans)',
+              fontSize: 13,
+              fontWeight: 500,
+              textDecoration: 'none',
+              transition: 'all .2s',
+              cursor: 'pointer',
+            }}
+          >
+            {cat.emoji && <span>{cat.emoji}</span>}
+            {cat.label}
+          </Link>
+        ))}
 
-        {/* Search */}
-        <div style={{ maxWidth: 480, margin: '0 auto' }}>
+        {/* Search on the right */}
+        <div style={{ marginLeft: 'auto', minWidth: 220, maxWidth: 300 }}>
           <Suspense>
-            <SearchBar basePath="/servers" placeholder="Search servers by name or capability..." />
+            <SearchBar basePath="/servers" placeholder="Search servers..." />
           </Suspense>
         </div>
+      </div>
 
-        {searchQuery && (
-          <p style={{ fontSize: 14, color: 'var(--text-3)', marginTop: 16 }}>
-            Showing <span style={{ fontWeight: 600, color: 'var(--text)' }}>{filteredServers.length}</span> results
-            for &quot;<span style={{ fontWeight: 600, color: 'var(--amber)' }}>{searchParams.q}</span>&quot;
-          </p>
-        )}
-      </section>
+      {searchQuery && (
+        <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 16, fontFamily: 'var(--mono)' }}>
+          Showing <span style={{ fontWeight: 600, color: 'var(--text)' }}>{filteredServers.length}</span> results
+          for &quot;<span style={{ fontWeight: 600, color: 'var(--amber)' }}>{searchParams.q}</span>&quot;
+        </p>
+      )}
 
-      {/* ── Spotlight Card ── */}
+      {/* ── Spotlight Section (2-column grid) ── */}
       {spotlight && spotlightScores && (
-        <section style={{ padding: '40px 0 0' }}>
+        <section style={{ padding: '48px 0 0' }}>
           <div style={{
-            fontFamily: 'var(--mono)',
-            fontSize: 10,
-            textTransform: 'uppercase',
-            letterSpacing: 1.2,
-            color: 'var(--text-3)',
-            marginBottom: 12,
+            display: 'grid',
+            gridTemplateColumns: '1fr 1fr',
+            gap: 32,
+            alignItems: 'start',
           }}>
-            Top Rated
-          </div>
-          <Link
-            href={`/mcp-servers/${(spotlight as any).slug}`}
-            style={{
-              display: 'flex',
-              alignItems: 'stretch',
-              gap: 32,
+            {/* Left: Spotlight info */}
+            <div style={{
               background: 'var(--bg2)',
               border: '1px solid var(--border)',
               borderRadius: 'var(--radius-lg)',
               padding: 32,
-              textDecoration: 'none',
-              transition: 'border-color .3s',
-            }}
-          >
-            {/* Left: Icon + Info */}
-            <div style={{ flex: 1, minWidth: 0 }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
-                <div style={{
-                  width: 48, height: 48, borderRadius: 12,
-                  background: 'linear-gradient(135deg, var(--amber), var(--green))',
-                  display: 'flex', alignItems: 'center', justifyContent: 'center',
-                  fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 700, color: '#000',
-                  flexShrink: 0,
-                }}>
-                  {getIcon((spotlight as any).canonical_name)}
-                </div>
-                <div>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
-                    <h2 style={{
-                      fontFamily: 'var(--serif)',
-                      fontSize: 22,
-                      fontWeight: 600,
-                      color: 'var(--text)',
-                      lineHeight: 1.2,
-                    }}>
-                      {(spotlight as any).canonical_name}
-                    </h2>
-                    {(() => {
-                      const badge = getTrustBadge((spotlight as any).vendor_type)
-                      return (
-                        <span style={{
-                          display: 'inline-flex', alignItems: 'center', gap: 4,
-                          padding: '3px 10px', borderRadius: 6,
-                          background: badge.bg, color: badge.color,
-                          fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600,
-                        }}>
-                          <span style={{
-                            width: 6, height: 6, borderRadius: '50%',
-                            background: badge.color, display: 'inline-block',
-                          }} />
-                          {badge.label}
-                        </span>
-                      )
-                    })()}
-                  </div>
-                  <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.5, marginTop: 4 }}>
-                    {(spotlight as any).short_description}
-                  </p>
-                </div>
-              </div>
-
-              {/* Mini benchmark bars */}
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 16 }}>
-                {[
-                  { label: 'Output', value: normalizeScore(spotlightScores.output_score) },
-                  { label: 'Reliability', value: normalizeScore(spotlightScores.reliability_score) },
-                  { label: 'Efficiency', value: normalizeScore(spotlightScores.efficiency_score) },
-                  { label: 'Cost', value: normalizeScore(spotlightScores.cost_score) },
-                  { label: 'Trust', value: normalizeScore(spotlightScores.trust_score) },
-                ].map(({ label, value }) => (
-                  <div key={label}>
-                    <div style={{
-                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
-                      marginBottom: 4, fontSize: 11, fontFamily: 'var(--mono)',
-                    }}>
-                      <span style={{ color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
-                        {label}
-                      </span>
-                      <span style={{
-                        color: (value ?? 0) >= 8 ? 'var(--green)' : (value ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)',
-                        fontWeight: 600,
-                      }}>
-                        {value != null ? formatScore(value) : '--'}
-                      </span>
-                    </div>
-                    <div style={{
-                      height: 6, borderRadius: 3,
-                      background: 'var(--bg3)', overflow: 'hidden',
-                    }}>
-                      <div style={{
-                        height: '100%', borderRadius: 3,
-                        width: value != null ? `${(value / 10) * 100}%` : '0%',
-                        background: (value ?? 0) >= 8 ? 'var(--green)' : (value ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)',
-                        transition: 'width .4s ease',
-                      }} />
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </div>
-
-            {/* Right: Score ring */}
-            <div style={{
-              display: 'flex', flexDirection: 'column', alignItems: 'center',
-              justifyContent: 'center', flexShrink: 0, minWidth: 100,
             }}>
-              {(() => {
-                const vs = normalizeScore(spotlightScores.value_score ?? spotlightScores.overall_score)
-                const pct = vs != null ? (vs / 10) * 100 : 0
-                const radius = 42
-                const circumference = 2 * Math.PI * radius
-                const offset = circumference - (pct / 100) * circumference
-                const ringColor = (vs ?? 0) >= 8 ? 'var(--green)' : (vs ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)'
-                return (
-                  <div style={{ position: 'relative', width: 100, height: 100 }}>
-                    <svg viewBox="0 0 100 100" style={{ width: 100, height: 100, transform: 'rotate(-90deg)' }}>
-                      <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--bg3)" strokeWidth="6" />
-                      <circle
-                        cx="50" cy="50" r={radius} fill="none"
-                        stroke={ringColor} strokeWidth="6"
-                        strokeLinecap="round"
-                        strokeDasharray={circumference}
-                        strokeDashoffset={offset}
-                        style={{ transition: 'stroke-dashoffset .5s ease' }}
-                      />
-                    </svg>
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      display: 'flex', flexDirection: 'column',
-                      alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span style={{
-                        fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 700,
-                        color: 'var(--text)', lineHeight: 1,
-                      }}>
-                        {vs != null ? formatScore(vs) : '--'}
-                      </span>
-                      <span style={{
-                        fontFamily: 'var(--mono)', fontSize: 9,
-                        color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.5,
-                      }}>
-                        Score
-                      </span>
-                    </div>
-                  </div>
-                )
-              })()}
+              <div style={{
+                display: 'inline-flex', alignItems: 'center', gap: 6,
+                padding: '4px 12px', borderRadius: 100,
+                background: 'rgba(251,191,36,0.1)', border: '1px solid rgba(251,191,36,0.2)',
+                fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--amber)',
+                textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 20,
+              }}>
+                <span style={{ fontSize: 12 }}>&#11088;</span> Top Rated
+              </div>
+
+              <h2 style={{
+                fontFamily: 'var(--serif)',
+                fontSize: 28,
+                fontWeight: 400,
+                fontStyle: 'italic',
+                color: 'var(--text)',
+                lineHeight: 1.2,
+                marginBottom: 8,
+              }}>
+                {(spotlight as any).canonical_name}
+              </h2>
+
+              <p style={{
+                fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65,
+                marginBottom: 24, maxWidth: 400,
+              }}>
+                {(spotlight as any).short_description}
+              </p>
+
+              <div style={{ display: 'flex', gap: 12 }}>
+                <Link
+                  href={`/mcp-servers/${(spotlight as any).slug}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 24px', borderRadius: 100,
+                    background: 'var(--amber)', color: '#000',
+                    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 600,
+                    textDecoration: 'none', transition: 'opacity .2s',
+                  }}
+                >
+                  View details <span>&rarr;</span>
+                </Link>
+                <Link
+                  href={`/compare?skills=${(spotlight as any).slug}`}
+                  style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 8,
+                    padding: '10px 24px', borderRadius: 100,
+                    border: '1px solid var(--border)', background: 'transparent',
+                    color: 'var(--text-2)',
+                    fontFamily: 'var(--sans)', fontSize: 13, fontWeight: 500,
+                    textDecoration: 'none', transition: 'all .2s',
+                  }}
+                >
+                  Compare
+                </Link>
+              </div>
             </div>
-          </Link>
+
+            {/* Right: Mini benchmark comparison table */}
+            <div style={{
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: 24,
+            }}>
+              <div style={{
+                fontFamily: 'var(--mono)', fontSize: 10,
+                textTransform: 'uppercase', letterSpacing: 1.2,
+                color: 'var(--text-3)', marginBottom: 16,
+              }}>
+                Benchmark Comparison
+              </div>
+
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 14 }}>
+                {benchmarkServers.map((server: any, idx: number) => {
+                  const sc = Array.isArray(server.skill_scores) ? server.skill_scores[0] : server.skill_scores
+                  const vs = normalizeScore(sc?.value_score ?? sc?.overall_score)
+                  const pct = vs != null ? (vs / 10) * 100 : 0
+                  const barColor = (vs ?? 0) >= 8 ? 'var(--green)' : (vs ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)'
+
+                  return (
+                    <div key={server.id}>
+                      <div style={{
+                        display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                        marginBottom: 6,
+                      }}>
+                        <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                          <span style={{
+                            fontFamily: 'var(--mono)', fontSize: 10, color: 'var(--text-3)',
+                            width: 16,
+                          }}>
+                            {idx + 1}.
+                          </span>
+                          <span style={{
+                            fontSize: 13, fontWeight: 600, color: 'var(--text)',
+                            fontFamily: 'var(--sans)',
+                          }}>
+                            {server.canonical_name}
+                          </span>
+                        </div>
+                        <span style={{
+                          fontFamily: 'var(--mono)', fontSize: 12, fontWeight: 700,
+                          color: barColor,
+                        }}>
+                          {vs != null ? formatScore(vs) : '--'}
+                        </span>
+                      </div>
+                      <div style={{
+                        height: 6, borderRadius: 3,
+                        background: 'var(--bg3)', overflow: 'hidden',
+                      }}>
+                        <div style={{
+                          height: '100%', borderRadius: 3,
+                          width: `${pct}%`,
+                          background: barColor,
+                          transition: 'width .4s ease',
+                        }} />
+                      </div>
+                    </div>
+                  )
+                })}
+              </div>
+            </div>
+          </div>
         </section>
       )}
 
-      {/* ── Server Grid ── */}
-      <section style={{ padding: '40px 0 0' }}>
+      {/* ── Server Grid (3-column) ── */}
+      <section style={{ padding: '48px 0 0' }}>
         <div style={{
-          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
-          marginBottom: 20,
+          fontFamily: 'var(--mono)', fontSize: 10,
+          textTransform: 'uppercase', letterSpacing: 1.2,
+          color: 'var(--text-3)', marginBottom: 20,
         }}>
-          <span style={{
-            fontFamily: 'var(--mono)', fontSize: 10,
-            textTransform: 'uppercase', letterSpacing: 1.2,
-            color: 'var(--text-3)',
-          }}>
-            {sortedServers.length} Servers
-          </span>
+          {sortedServers.length} Servers
         </div>
 
         <div style={{
@@ -438,6 +407,7 @@ export default async function ServersPage({
               <Link
                 key={skill.id}
                 href={`/mcp-servers/${skill.slug}`}
+                className="server-card"
                 style={{
                   display: 'flex',
                   flexDirection: 'column',
@@ -450,64 +420,35 @@ export default async function ServersPage({
                   cursor: 'pointer',
                 }}
               >
-                {/* Top row: icon + badge + score ring */}
+                {/* Top row: emoji icon + trust badge */}
                 <div style={{
-                  display: 'flex', alignItems: 'flex-start',
+                  display: 'flex', alignItems: 'center',
                   justifyContent: 'space-between', marginBottom: 14,
                 }}>
-                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
-                    {/* Icon */}
-                    <div style={{
-                      width: 38, height: 38, borderRadius: 10,
-                      background: 'var(--bg3)',
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                      fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
-                      color: 'var(--text-2)', flexShrink: 0,
-                    }}>
-                      {getIcon(skill.canonical_name)}
-                    </div>
-                    {/* Trust badge */}
+                  <div style={{
+                    width: 38, height: 38, borderRadius: 10,
+                    background: 'var(--bg3)',
+                    display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
+                    color: 'var(--text-2)', flexShrink: 0,
+                  }}>
+                    {getIcon(skill.canonical_name)}
+                  </div>
+                  <span style={{
+                    display: 'inline-flex', alignItems: 'center', gap: 4,
+                    padding: '2px 8px', borderRadius: 5,
+                    background: badge.bg, color: badge.color,
+                    fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600,
+                  }}>
                     <span style={{
-                      display: 'inline-flex', alignItems: 'center', gap: 4,
-                      padding: '2px 8px', borderRadius: 5,
-                      background: badge.bg, color: badge.color,
-                      fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600,
-                    }}>
-                      <span style={{
-                        width: 5, height: 5, borderRadius: '50%',
-                        background: badge.color, display: 'inline-block',
-                      }} />
-                      {badge.label}
-                    </span>
-                  </div>
-
-                  {/* Score ring (SVG) */}
-                  <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
-                    <svg viewBox="0 0 44 44" style={{ width: 44, height: 44, transform: 'rotate(-90deg)' }}>
-                      <circle cx="22" cy="22" r={r} fill="none" stroke="var(--bg3)" strokeWidth="3" />
-                      <circle
-                        cx="22" cy="22" r={r} fill="none"
-                        stroke={ringColor} strokeWidth="3"
-                        strokeLinecap="round"
-                        strokeDasharray={circ}
-                        strokeDashoffset={ringOffset}
-                      />
-                    </svg>
-                    <div style={{
-                      position: 'absolute', inset: 0,
-                      display: 'flex', alignItems: 'center', justifyContent: 'center',
-                    }}>
-                      <span style={{
-                        fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
-                        color: 'var(--text)',
-                      }}>
-                        {valueScore != null ? formatScore(valueScore) : '--'}
-                      </span>
-                    </div>
-                  </div>
+                      width: 5, height: 5, borderRadius: '50%',
+                      background: badge.color, display: 'inline-block',
+                    }} />
+                    {badge.label}
+                  </span>
                 </div>
 
-                {/* Name */}
+                {/* Server name */}
                 <h3 style={{
                   fontWeight: 700, color: 'var(--text)',
                   fontSize: 15, letterSpacing: -0.2, marginBottom: 4,
@@ -539,9 +480,9 @@ export default async function ServersPage({
                   ))}
                 </div>
 
-                {/* Stats row */}
+                {/* Stats footer: Quality %, Uptime %, Per run cost, Score ring SVG */}
                 <div style={{
-                  display: 'flex', gap: 16, marginTop: 'auto',
+                  display: 'flex', alignItems: 'center', gap: 16, marginTop: 'auto',
                   paddingTop: 14, borderTop: '1px solid var(--border)',
                   fontSize: 11, fontFamily: 'var(--mono)',
                 }}>
@@ -573,13 +514,38 @@ export default async function ServersPage({
                     <span style={{
                       color: 'var(--text-3)', textTransform: 'uppercase',
                       letterSpacing: 0.5, fontSize: 9, marginBottom: 2,
-                    }}>Cost</span>
+                    }}>Per run</span>
                     <span style={{
                       fontWeight: 600,
                       color: (costScore ?? 0) >= 8 ? 'var(--green)' : (costScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
                     }}>
                       {costScore != null ? `${Math.round((costScore / 10) * 100)}%` : '--'}
                     </span>
+                  </div>
+
+                  {/* Score ring SVG */}
+                  <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0, marginLeft: 'auto' }}>
+                    <svg viewBox="0 0 44 44" style={{ width: 44, height: 44, transform: 'rotate(-90deg)' }}>
+                      <circle cx="22" cy="22" r={r} fill="none" stroke="var(--bg3)" strokeWidth="3" />
+                      <circle
+                        cx="22" cy="22" r={r} fill="none"
+                        stroke={ringColor} strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={ringOffset}
+                      />
+                    </svg>
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
+                        color: 'var(--text)',
+                      }}>
+                        {valueScore != null ? formatScore(valueScore) : '--'}
+                      </span>
+                    </div>
                   </div>
                 </div>
               </Link>
@@ -595,34 +561,37 @@ export default async function ServersPage({
         )}
       </section>
 
-      {/* ── CTA Banner ── */}
+      {/* ── CTA Banner (horizontal layout) ── */}
       <section style={{
         margin: '56px 0 64px',
-        padding: '48px 40px',
+        padding: '40px 40px',
         background: 'var(--bg2)',
         border: '1px solid var(--border)',
         borderRadius: 'var(--radius-lg)',
-        textAlign: 'center',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        gap: 32,
       }}>
-        <h2 style={{
-          fontFamily: 'var(--serif)',
-          fontSize: 28,
-          fontWeight: 400,
-          color: 'var(--text)',
-          marginBottom: 8,
-        }}>
-          Built an MCP server?
-        </h2>
-        <p style={{
-          fontSize: 15,
-          color: 'var(--text-2)',
-          marginBottom: 24,
-          maxWidth: 440,
-          margin: '0 auto 24px',
-          lineHeight: 1.6,
-        }}>
-          Submit your server to the directory. Get benchmarked, scored, and discovered by agents worldwide.
-        </p>
+        <div>
+          <h2 style={{
+            fontFamily: 'var(--serif)',
+            fontSize: 24,
+            fontWeight: 400,
+            color: 'var(--text)',
+            marginBottom: 6,
+          }}>
+            Built an MCP server?
+          </h2>
+          <p style={{
+            fontSize: 14,
+            color: 'var(--text-2)',
+            lineHeight: 1.6,
+            maxWidth: 480,
+          }}>
+            Submit your server to the directory. Get benchmarked, scored, and discovered by agents worldwide.
+          </p>
+        </div>
         <Link
           href="/submit"
           style={{
@@ -638,6 +607,7 @@ export default async function ServersPage({
             fontWeight: 600,
             textDecoration: 'none',
             transition: 'opacity .2s',
+            flexShrink: 0,
           }}
         >
           Submit your server
