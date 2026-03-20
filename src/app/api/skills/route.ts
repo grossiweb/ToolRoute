@@ -2,8 +2,31 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 
 export async function GET(request: NextRequest) {
-  const supabase = createServerSupabaseClient()
   const { searchParams } = new URL(request.url)
+
+  // Self-documenting: return docs when called without any params
+  if (!searchParams.has('q') && !searchParams.has('vertical') && !searchParams.has('workflow')) {
+    return NextResponse.json({
+      endpoint: 'GET /api/skills',
+      description: 'Search and filter MCP servers (skills) in the ToolRoute catalog. A "skill" is an MCP server that agents can use to complete tasks.',
+      params: {
+        q: '(optional) Search by name — e.g. ?q=scraper',
+        vertical: '(optional) Filter by vertical — e.g. ?vertical=finance',
+        workflow: '(optional) Filter by workflow — e.g. ?workflow=data-extraction',
+        sort: '(optional) Sort by: score (default), name',
+        limit: '(optional) Max results (default 30, max 100)',
+        offset: '(optional) Pagination offset',
+      },
+      examples: [
+        'GET /api/skills?q=web — find skills with "web" in the name',
+        'GET /api/skills?workflow=data-extraction — find data extraction tools',
+        'GET /api/skills?vertical=finance&limit=5 — top 5 finance skills',
+      ],
+      tip: 'For task-based recommendations, use POST /api/route or the MCP tool toolroute_route instead — it matches your task to the best skill automatically.',
+    })
+  }
+
+  const supabase = createServerSupabaseClient()
 
   const q = searchParams.get('q')
   const vertical = searchParams.get('vertical')

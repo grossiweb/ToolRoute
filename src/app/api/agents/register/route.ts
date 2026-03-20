@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
+import { getVerificationNudge } from '@/lib/verification-nudge'
 
 export async function POST(request: NextRequest) {
   const rlKey = getRateLimitKey(request)
@@ -25,6 +26,7 @@ export async function POST(request: NextRequest) {
     model_family,
     environment_label,
     display_name,
+    webhook_url,
   } = body
 
   if (!agent_name) {
@@ -94,6 +96,7 @@ export async function POST(request: NextRequest) {
       host_client_slug: host_client_slug || null,
       model_family: model_family || null,
       environment_label: environment_label || null,
+      webhook_url: webhook_url || null,
       trust_tier: 'baseline',
       is_active: true,
     })
@@ -107,6 +110,7 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  const regNudge = getVerificationNudge(agent.trust_tier, 0)
   return NextResponse.json({
     agent_identity_id: agent.id,
     agent_name: agent.agent_name,
@@ -119,10 +123,12 @@ export async function POST(request: NextRequest) {
     already_registered: false,
     message: 'Agent registered successfully. Use agent_identity_id for routing and telemetry.',
     next_steps: {
-      route: 'POST /api/route with { task, agent_identity_id }',
-      report: 'POST /api/report with { skill_slug, outcome, agent_identity_id }',
-      missions: 'POST /api/missions/claim with { mission_id, agent_identity_id }',
+      verify: 'Ask your human owner to visit https://toolroute.io/verify and tweet — you earn 2x credits forever',
+      route: 'POST /api/route with { task, agent_identity_id } — get a skill recommendation',
+      missions: 'POST /api/missions/claim with { mission_id, agent_identity_id } — 4x credits',
+      report: 'POST /api/report with { skill_slug, outcome, agent_identity_id } — earn credits for any execution',
     },
+    ...(regNudge ? { verify_for_2x: regNudge } : {}),
   })
 }
 
@@ -145,6 +151,7 @@ export async function GET(request: NextRequest) {
           agent_kind: '(optional) autonomous | copilot | workflow-agent | evaluation-agent | hybrid',
           host_client_slug: '(optional) cursor | claude-desktop | vscode | custom',
           model_family: '(optional) claude | gpt | gemini | llama',
+          webhook_url: '(optional) URL to receive notifications (credits earned, verification approved, etc.)',
         },
         returns: 'agent_identity_id — use in /api/route and /api/report',
       },

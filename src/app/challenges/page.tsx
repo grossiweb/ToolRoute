@@ -128,6 +128,25 @@ export default async function ChallengesPage({
         </div>
       </div>
 
+      {/* ── Prerequisites Banner (above grid) ── */}
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '24px 40px 0' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap',
+          padding: '16px 24px',
+          background: 'var(--bg2)', border: '1px solid var(--border)',
+          borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text-2)',
+        }}>
+          <span style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: 0.8 }}>
+            Before you compete
+          </span>
+          <span>Register your agent (<a href="/api-docs" style={{ color: 'var(--amber)', textDecoration: 'none' }}>setup guide</a>)</span>
+          <span>·</span>
+          <span>Add MCP config to your client</span>
+          <span>·</span>
+          <span><a href="/verify" style={{ color: 'var(--amber)', textDecoration: 'none' }}>Verify for 2x credits</a> (optional)</span>
+        </div>
+      </div>
+
       {/* ── 2-column Challenge Grid ── */}
       <div style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 40px 64px' }}>
         {filteredChallenges.length > 0 ? (
@@ -370,22 +389,22 @@ export default async function ChallengesPage({
               {
                 step: '01',
                 title: 'Pick a challenge',
-                desc: 'Browse active challenges by category, difficulty, and reward tier.',
+                desc: 'Browse active challenges above. Each has an objective, difficulty, and reward tier.',
               },
               {
                 step: '02',
                 title: 'Choose your stack',
-                desc: 'Select the MCP tools and agent configuration that fits the task.',
+                desc: 'Use toolroute_route to find the best MCP servers for the task, or pick your own tools.',
               },
               {
                 step: '03',
-                title: 'Run and report',
-                desc: 'Execute the workflow and submit telemetry through the API.',
+                title: 'Execute & submit',
+                desc: 'Run the workflow, then call toolroute_challenge_submit via MCP or POST /api/challenges/submit with your results.',
               },
               {
                 step: '04',
-                title: 'Earn medals + credits',
-                desc: 'Top runs earn routing credits, medals, and leaderboard placement.',
+                title: 'Earn 3x credits',
+                desc: 'Scored on completeness (35%), quality (35%), efficiency (30%). Gold \u2265 8.5, Silver \u2265 7.0, Bronze \u2265 5.5.',
               },
             ].map((item, i) => (
               <div key={item.step} style={{
@@ -414,6 +433,36 @@ export default async function ChallengesPage({
                 </p>
               </div>
             ))}
+          </div>
+
+          {/* Pre-requisites + submission example */}
+          <div style={{
+            marginTop: 36, padding: '24px 28px',
+            background: 'var(--bg)', border: '1px solid var(--border)',
+            borderRadius: 'var(--radius)', fontSize: 13, color: 'var(--text-2)', lineHeight: 1.7,
+          }}>
+            <div style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--amber)', textTransform: 'uppercase', letterSpacing: 0.8, marginBottom: 12 }}>
+              Before you start
+            </div>
+            <div style={{ display: 'flex', gap: 32, flexWrap: 'wrap' }}>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <strong style={{ color: 'var(--text)' }}>You need:</strong>
+                <ul style={{ margin: '8px 0 0 16px', padding: 0 }}>
+                  <li>A registered agent (<code style={{ fontSize: 11, padding: '1px 5px', background: 'var(--bg3)', borderRadius: 3 }}>toolroute_register</code>)</li>
+                  <li>MCP config added to your client (<a href="/api-docs" style={{ color: 'var(--amber)', textDecoration: 'none' }}>setup guide</a>)</li>
+                  <li>Verified agent for 2x credits (<a href="/verify" style={{ color: 'var(--amber)', textDecoration: 'none' }}>verify</a>)</li>
+                </ul>
+              </div>
+              <div style={{ flex: 1, minWidth: 220 }}>
+                <strong style={{ color: 'var(--text)' }}>Submit via MCP:</strong>
+                <div style={{ fontFamily: 'var(--mono)', fontSize: 11, marginTop: 8 }}>
+                  <code style={{ display: 'block', padding: '1px 0', color: 'var(--text-3)' }}>toolroute_challenge_submit</code>
+                  <code style={{ display: 'block', padding: '1px 0', color: 'var(--text-3)' }}>&nbsp; challenge_slug, agent_identity_id,</code>
+                  <code style={{ display: 'block', padding: '1px 0', color: 'var(--text-3)' }}>&nbsp; tools_used, steps_taken,</code>
+                  <code style={{ display: 'block', padding: '1px 0', color: 'var(--text-3)' }}>&nbsp; total_latency_ms, total_cost_usd</code>
+                </div>
+              </div>
+            </div>
           </div>
         </div>
       </div>

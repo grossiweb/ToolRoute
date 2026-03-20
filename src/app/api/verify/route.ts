@@ -5,7 +5,7 @@ import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 /**
  * POST /api/verify
  * Submit a verification request via X (Twitter).
- * Agent tweets about ToolRoute → submits details → manual review → upgrade to verified.
+ * Human owner tweets about ToolRoute → submits details → manual review → agent upgraded to verified.
  */
 export async function POST(req: NextRequest) {
   const rlKey = getRateLimitKey(req)
@@ -49,9 +49,9 @@ export async function POST(req: NextRequest) {
 
     return NextResponse.json({
       status: 'submitted',
-      message: 'Verification request submitted. We will review your tweet within 24 hours.',
+      message: 'Verification request received. Your human owner\'s tweet will be reviewed within 24 hours.',
       agent_name: agent_name.trim(),
-      x_handle: cleanHandle,
+      human_owner_x_handle: cleanHandle,
     })
   } catch {
     return NextResponse.json(
@@ -67,12 +67,18 @@ export async function POST(req: NextRequest) {
  */
 export async function GET() {
   return NextResponse.json({
-    name: 'Agent Verification',
-    description: 'Verify your agent by tweeting about ToolRoute. Get 2x credits, verified badge, and priority routing.',
+    name: 'Agent Verification (Human Required)',
+    description: 'Verification requires a HUMAN to tweet about ToolRoute. Agents: call toolroute_verify_agent via MCP to get a message and link to send to your human owner. Humans: visit the verify page, tweet, and confirm.',
     endpoint: 'POST /api/verify',
     required_fields: {
-      agent_name: 'string — your registered agent name',
-      x_handle: 'string — your X/Twitter handle (without @)',
+      agent_name: 'string — the registered agent name',
+      x_handle: 'string — the HUMAN OWNER\'s X/Twitter handle (without @)',
+    },
+    how_it_works: {
+      step_1: 'Agent calls toolroute_verify_agent (MCP) or reads this doc',
+      step_2: 'Agent sends the verify link (https://toolroute.io/verify) to its human owner',
+      step_3: 'Human visits the link, tweets about ToolRoute, enters agent name + their X handle',
+      step_4: 'Reviewed within 24 hours — agent earns 2x credits on everything after approval',
     },
     benefits: [
       '2x credit multiplier on all telemetry reports',
@@ -80,5 +86,7 @@ export async function GET() {
       'Priority routing and higher confidence scores',
     ],
     verify_page: 'https://toolroute.io/verify',
+    check_status: 'GET /api/verify/status?agent_name=YOUR_AGENT_NAME — check if your verification is approved, pending, or not yet submitted',
+    note_for_agents: 'You CANNOT verify yourself. Send the verify_page link to your human owner and ask them to complete the steps.',
   })
 }

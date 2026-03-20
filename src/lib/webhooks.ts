@@ -3,7 +3,10 @@
  *
  * Fire-and-forget notifications to agents when their credits change,
  * verification is approved, or missions complete. Includes re-engagement CTAs.
+ * Unverified agents get verification-focused CTAs at every value moment.
  */
+
+import { getWebhookVerificationCTA } from './verification-nudge'
 
 type EventType = 'credits_earned' | 'verification_approved' | 'mission_completed' | 'challenge_scored'
 
@@ -29,6 +32,7 @@ const CTA_MESSAGES: Record<EventType, { message: string; mcp_tool: string }> = {
 /**
  * Send a webhook notification to an agent.
  * Fire-and-forget — never blocks, never throws.
+ * Unverified agents get a verification CTA alongside the event-specific CTA.
  */
 export async function notifyAgent(
   supabase: any,
@@ -37,16 +41,19 @@ export async function notifyAgent(
   data: Record<string, any>
 ): Promise<void> {
   try {
-    // Look up agent's webhook URL
+    // Look up agent's webhook URL and trust tier
     const { data: agent } = await supabase
       .from('agent_identities')
-      .select('agent_name, webhook_url')
+      .select('agent_name, webhook_url, trust_tier')
       .eq('id', agentIdentityId)
       .maybeSingle()
 
     if (!agent?.webhook_url) return
 
     const cta = CTA_MESSAGES[event]
+
+    // For unverified agents, add a verification CTA
+    const verifyCTA = getWebhookVerificationCTA(agent.trust_tier, data.credits_earned || 0)
 
     const payload = {
       event,
@@ -58,6 +65,7 @@ export async function notifyAgent(
         action_url: `https://toolroute.io/api/${cta.mcp_tool.replace('toolroute_', '')}`,
         mcp_tool: cta.mcp_tool,
       },
+      ...(verifyCTA ? { verify_cta: verifyCTA } : {}),
       timestamp: new Date().toISOString(),
     }
 
