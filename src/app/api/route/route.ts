@@ -328,9 +328,36 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Also get a model recommendation for full-stack routing
+  let recommendedModel: any = null
+  if (task) {
+    try {
+      const modelBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
+      const modelRes = await fetch(`${modelBaseUrl}/api/route/model`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ task, agent_identity_id: agent_identity_id || null }),
+      })
+      if (modelRes.ok) {
+        const md = await modelRes.json()
+        recommendedModel = {
+          slug: md.model_details?.slug || md.recommended_model,
+          provider: md.model_details?.provider,
+          tier: md.tier,
+          estimated_cost: md.estimated_cost,
+          decision_id: md.decision_id,
+          reason: `${md.tier} tier — best cost/quality for this task type`,
+        }
+      }
+    } catch {
+      // Model routing is optional
+    }
+  }
+
   return NextResponse.json({
     recommended_skill: top.slug,
     recommended_skill_name: top.canonical_name,
+    recommended_model: recommendedModel,
     confidence: Math.round(adjustedConfidence * 100) / 100,
     reasoning: buildReasoning(top, priority, task, resolvedWorkflow),
     alternatives,

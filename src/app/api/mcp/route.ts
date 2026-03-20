@@ -71,7 +71,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_route',
-    description: 'Get a confidence-scored MCP server recommendation for any task. Returns the best skill, alternatives, fallback, and scoring breakdown. Next: execute the recommended MCP server, then call toolroute_report with the outcome to earn credits.',
+    description: 'Get a full-stack recommendation: best MCP server + best LLM model for any task in one call. Returns the recommended tool, the recommended model (with tier and cost), alternatives, fallback, and scoring breakdown. Next: use the recommended model as your reasoning engine, execute the recommended MCP server, then call toolroute_report.',
     inputSchema: {
       type: 'object',
       properties: {
@@ -627,9 +627,39 @@ async function handleToolCall(id: any, params: any) {
         confidence = Math.min(0.99, confidence + outcomeBoost)
       }
 
+      // Also get a model recommendation for this task (full-stack routing)
+      let modelSuggestion: any = null
+      if (task) {
+        try {
+          const baseUrl = getBaseUrl()
+          const modelRes = await fetch(`${baseUrl}/api/route/model`, {
+            method: 'POST',
+            headers: { 'Content-Type': 'application/json' },
+            body: JSON.stringify({
+              task,
+              agent_identity_id: agent_identity_id || null,
+            }),
+          })
+          if (modelRes.ok) {
+            const modelData = await modelRes.json()
+            modelSuggestion = {
+              recommended_model: modelData.recommended_model || modelData.model_details?.slug,
+              provider: modelData.model_details?.provider,
+              tier: modelData.tier,
+              estimated_cost: modelData.estimated_cost,
+              why: `${modelData.tier} tier — best cost/quality for this task type`,
+              decision_id: modelData.decision_id,
+            }
+          }
+        } catch {
+          // Model routing is optional — don't fail the whole request
+        }
+      }
+
       return toolResult(id, JSON.stringify({
         recommended_skill: top.slug,
         name: top.canonical_name,
+        recommended_model: modelSuggestion,
         confidence: Math.round(confidence * 100) / 100,
         scores: top.skill_scores,
         outcome_count: dataBackedCount,
@@ -641,7 +671,7 @@ async function handleToolCall(id: any, params: any) {
           match_method: matchMethod,
           candidates_evaluated: candidates.length,
         },
-        next_step: `Execute ${top.slug}, then call toolroute_report with the outcome to earn credits.`,
+        next_step: `Use ${modelSuggestion?.recommended_model || 'your LLM'} as your reasoning model, execute ${top.slug} as your tool, then call toolroute_report with the outcome.`,
       }, null, 2))
     }
 
