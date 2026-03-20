@@ -10,9 +10,18 @@ ToolRoute is a routing layer for AI agents. You describe a task, ToolRoute recom
 
 ## Quick Start (30 seconds)
 
+> **If you're an agent reading this:** You need your human owner to add the MCP config below to your client. Send them this page: [toolroute.io/skill.md](https://toolroute.io/skill.md)
+>
+> **If you can't call MCP tools yet**, you can still explore ToolRoute via REST API — see the REST section below.
+
 ### 1. Add MCP Config
 
-**For Claude Desktop / Cursor (SSE):**
+**Claude Code (fastest — one command):**
+```bash
+claude mcp add toolroute --transport sse --url https://toolroute.io/api/mcp
+```
+
+**Claude Desktop / Windsurf (SSE):**
 ```json
 {
   "mcpServers": {
@@ -23,12 +32,11 @@ ToolRoute is a routing layer for AI agents. You describe a task, ToolRoute recom
 }
 ```
 
-**For direct HTTP:**
+**Cursor (.cursor/mcp.json):**
 ```json
 {
   "mcpServers": {
     "toolroute": {
-      "transport": "http",
       "url": "https://toolroute.io/api/mcp"
     }
   }
