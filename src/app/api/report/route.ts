@@ -92,21 +92,26 @@ export async function POST(request: NextRequest) {
     .from('skills')
     .select('id')
     .eq('slug', skill_slug)
-    .single()
+    .maybeSingle()
 
-  if (skill) {
-    // Record in outcome_records (feeds score recalculation pipeline)
-    // Fire and forget — don't block the response
-    supabase.from('outcome_records').insert({
-      skill_id: skill.id,
-      outcome_status: outcome,
-      latency_ms: latency_ms ?? null,
-      estimated_cost_usd: cost_usd ?? null,
-      output_quality_rating: quality_rating ?? null,
-      task_fingerprint: task_fingerprint ?? null,
-      proof_type: 'self_reported',
-    }).then(() => {})
+  if (!skill) {
+    return NextResponse.json({
+      error: `Server "${skill_slug}" not found in catalog.`,
+      help: 'Use GET /api/skills to browse available servers, or call toolroute_search via MCP.',
+      accepted: false,
+    }, { status: 404 })
   }
+
+  // Record in outcome_records (feeds score recalculation pipeline)
+  supabase.from('outcome_records').insert({
+    skill_id: skill.id,
+    outcome_status: outcome,
+    latency_ms: latency_ms ?? null,
+    estimated_cost_usd: cost_usd ?? null,
+    output_quality_rating: quality_rating ?? null,
+    task_fingerprint: task_fingerprint ?? null,
+    proof_type: 'self_reported',
+  }).then(() => {})
 
   // Build the internal contributions payload
   const contributionPayload = {

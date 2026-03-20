@@ -834,46 +834,49 @@ async function handleToolCall(id: any, params: any) {
     case 'toolroute_report': {
       const { skill_slug, outcome, latency_ms, cost_usd, quality_rating, agent_identity_id } = args || {}
 
-      const { data: skill } = await supabase
-        .from('skills')
-        .select('id')
-        .eq('slug', skill_slug)
-        .single()
+      if (!skill_slug) return toolResult(id, 'Error: skill_slug is required. Use toolroute_search to find valid slugs.')
+      if (!outcome) return toolResult(id, 'Error: outcome is required. Values: success, partial_success, failure, aborted.')
 
-      if (!skill) return toolResult(id, `Error: Server "${skill_slug}" not found. Use toolroute_search to find valid skill slugs.`)
-
-      // Insert into outcome_records
-      await supabase.from('outcome_records').insert({
-        skill_id: skill.id,
-        outcome_status: outcome,
-        latency_ms: latency_ms ?? null,
-        estimated_cost_usd: cost_usd ?? null,
-        output_quality_rating: quality_rating ?? null,
-        proof_type: 'self_reported',
+      // Forward to REST /api/report endpoint — this handles skill validation,
+      // outcome recording, AND credits via /api/contributions pipeline
+      const baseUrl = getBaseUrl()
+      const reportRes = await fetch(`${baseUrl}/api/report`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          skill_slug,
+          outcome,
+          latency_ms: latency_ms ?? null,
+          cost_usd: cost_usd ?? null,
+          quality_rating: quality_rating ?? null,
+          agent_identity_id: agent_identity_id || null,
+        }),
       })
+      const reportData = await reportRes.json()
 
-      const result: any = {
-        recorded: true,
-        skill: skill_slug,
-        outcome,
-        message: 'Outcome recorded. Scores update every 6 hours. Thank you for improving routing for all agents.',
+      if (!reportRes.ok) {
+        return toolResult(id, JSON.stringify({
+          error: true,
+          message: reportData.error || `Server "${skill_slug}" not found. Use toolroute_search to find valid skill slugs.`,
+          help: 'Call toolroute_search to browse available MCP servers.',
+        }, null, 2))
       }
 
-      // Include balance if registered
+      // Append balance and next step
       if (agent_identity_id) {
         const balance = await getAgentBalance(supabase, agent_identity_id)
         if (balance) {
-          result.credit_balance = balance.total_routing_credits
-          result.next_step = 'Call toolroute_balance for full details, or continue reporting more executions.'
+          reportData.credit_balance = balance.total_routing_credits
         }
+        reportData.next_step = 'Call toolroute_balance for full details, or continue reporting more executions.'
       } else {
-        result.register_for_2x_credits = {
+        reportData.register_for_2x_credits = {
           message: 'Register your agent to earn 2x credits on every report.',
           action: 'Call toolroute_register with your agent_name first, then include agent_identity_id in toolroute_report.',
         }
       }
 
-      return toolResult(id, JSON.stringify(result, null, 2))
+      return toolResult(id, JSON.stringify(reportData, null, 2))
     }
 
     /* ── toolroute_challenges ── */

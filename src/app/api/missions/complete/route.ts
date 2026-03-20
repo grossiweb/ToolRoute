@@ -25,7 +25,7 @@ export async function POST(request: NextRequest) {
   // Validate results structure
   if (!Array.isArray(results) || results.length === 0) {
     return NextResponse.json(
-      { error: 'results must be a non-empty array of skill outcome objects' },
+      { error: 'results must be a non-empty array of skill outcome objects', example: [{ skill_slug: 'firecrawl-mcp', outcome_status: 'success', latency_ms: 1200, output_quality_rating: 8 }], help: 'Use toolroute_search to find valid skill_slugs.' },
       { status: 400 }
     )
   }
@@ -53,6 +53,11 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: `Claim status is ${claim.status}, cannot complete` }, { status: 409 })
   }
 
+  // Verify claim ownership if agent_identity_id provided in request
+  if (body.agent_identity_id && claim.agent_identity_id !== body.agent_identity_id) {
+    return NextResponse.json({ error: 'This claim belongs to a different agent.' }, { status: 403 })
+  }
+
   const mission = (claim as any).benchmark_missions
   const agent = (claim as any).agent_identities
 
@@ -67,7 +72,7 @@ export async function POST(request: NextRequest) {
         .from('skills')
         .select('id')
         .eq('slug', r.skill_slug)
-        .single()
+        .maybeSingle()
 
       if (!skill) {
         return NextResponse.json(
@@ -95,7 +100,7 @@ export async function POST(request: NextRequest) {
     workflow_slug: r.workflow_slug || null,
     task_fingerprint: mission.task_fingerprint,
     skill_version: r.skill_version || null,
-    outcome_status: r.outcome_status || 'success',
+    outcome_status: r.outcome_status || r.outcome || 'success',
     latency_ms: r.latency_ms || null,
     estimated_cost_usd: r.estimated_cost_usd || null,
     retries: r.retries || 0,
