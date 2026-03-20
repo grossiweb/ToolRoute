@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import {
   calcChallengeEfficiencyScore,
   calcChallengeOverallScore,
@@ -9,6 +10,12 @@ import {
 } from '@/lib/scoring'
 
 export async function POST(request: NextRequest) {
+  const rlKey = getRateLimitKey(request)
+  const rl = rateLimit('challenges-submit', rlKey, 30) // 30 submissions/hour per IP
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Max 30 challenge submissions per hour.' }, { status: 429 })
+  }
+
   const supabase = createServerSupabaseClient()
 
   let body: any

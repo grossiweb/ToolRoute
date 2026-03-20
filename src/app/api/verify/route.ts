@@ -1,12 +1,19 @@
-import { NextResponse } from 'next/server'
+import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 
 /**
  * POST /api/verify
  * Submit a verification request via X (Twitter).
  * Agent tweets about ToolRoute → submits details → manual review → upgrade to verified.
  */
-export async function POST(req: Request) {
+export async function POST(req: NextRequest) {
+  const rlKey = getRateLimitKey(req)
+  const rl = rateLimit('verify', rlKey, 5) // 5 verification requests/hour per IP
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Max 5 verification requests per hour.' }, { status: 429 })
+  }
+
   try {
     const body = await req.json()
     const { agent_name, x_handle } = body

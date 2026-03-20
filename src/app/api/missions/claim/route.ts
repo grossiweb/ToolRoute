@@ -1,7 +1,14 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 
 export async function POST(request: NextRequest) {
+  const rlKey = getRateLimitKey(request)
+  const rl = rateLimit('missions-claim', rlKey, 20) // 20 claims/hour per IP
+  if (!rl.allowed) {
+    return NextResponse.json({ error: 'Rate limit exceeded. Max 20 mission claims per hour.' }, { status: 429 })
+  }
+
   const supabase = createServerSupabaseClient()
 
   let body: any
