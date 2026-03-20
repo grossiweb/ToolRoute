@@ -93,9 +93,8 @@ export default function RootLayout({
             <div>
               <h5 style={{ fontFamily: 'var(--mono)', fontSize: 11, color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 13 }}>Company</h5>
               <ul style={{ listStyle: 'none', display: 'flex', flexDirection: 'column', gap: 9, padding: 0, margin: 0 }}>
-                <li><a href="/agents" style={{ textDecoration: 'none', fontSize: 14, color: 'var(--text-2)' }}>About</a></li>
+                <li><a href="/api-docs" style={{ textDecoration: 'none', fontSize: 14, color: 'var(--text-2)' }}>About</a></li>
                 <li><a href="/privacy" style={{ textDecoration: 'none', fontSize: 14, color: 'var(--text-2)' }}>Privacy</a></li>
-                <li><a href="/privacy" style={{ textDecoration: 'none', fontSize: 14, color: 'var(--text-2)' }}>Terms</a></li>
               </ul>
             </div>
           </div>

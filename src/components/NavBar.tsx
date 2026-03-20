@@ -87,7 +87,7 @@ export function NavBar() {
             { href: '/servers', label: 'Servers' },
             { href: '/challenges', label: 'Challenges' },
             { href: '/leaderboards', label: 'Leaderboards' },
-            { href: '/verify', label: 'Verify' },
+            { href: '/api-docs', label: 'Docs' },
           ].map(link => (
             <li key={link.href}>
               <Link
@@ -214,9 +214,9 @@ export function NavBar() {
             { href: '/servers', label: 'Servers' },
             { href: '/challenges', label: 'Challenges' },
             { href: '/leaderboards', label: 'Leaderboards' },
-            { href: '/agents', label: 'Agents' },
-            { href: '/verify', label: 'Verify' },
-            { href: '/api-docs', label: 'API Docs' },
+            { href: '/api-docs', label: 'Docs' },
+            { href: '/verify', label: 'Verify Agent' },
+            { href: '/submit', label: 'Submit Server' },
           ].map(link => (
             <Link
               key={link.href}
