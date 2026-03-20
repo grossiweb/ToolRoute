@@ -2,12 +2,15 @@
 
 import { useState } from 'react'
 
-type Tab = 'openrouter' | 'mcp' | 'python' | 'curl'
+type Tab = 'claude-code' | 'claude-desktop' | 'cursor' | 'openrouter' | 'python' | 'litellm' | 'curl'
 
 const LABELS: Record<Tab, string> = {
+  'claude-code': 'Claude Code',
+  'claude-desktop': 'SSE / JSON',
+  cursor: 'Cursor',
   openrouter: 'OpenRouter',
-  mcp: 'MCP Config',
   python: 'Python',
+  litellm: 'LiteLLM',
   curl: 'cURL',
 }
 
@@ -19,10 +22,35 @@ const cp = { color: '#e5c07b' }  // properties/identifiers
 const co = { color: '#f59e0b' }  // output/result values
 
 export function ConnectBlock() {
-  const [tab, setTab] = useState<Tab>('openrouter')
+  const [tab, setTab] = useState<Tab>('claude-code')
   const [copied, setCopied] = useState(false)
 
   const plainCode: Record<Tab, string> = {
+    'claude-code': `# One command — done in 3 seconds
+claude mcp add toolroute \\
+  --transport sse \\
+  --url https://toolroute.io/api/mcp
+
+# Then in any conversation:
+# "Use toolroute_register to get started"
+# "Route me to the best scraping tool"`,
+    'claude-desktop': `// Works with Claude Desktop, Windsurf, Cline, and any SSE-compatible MCP client
+// Paste into your MCP config file
+{
+  "mcpServers": {
+    "toolroute": {
+      "url": "https://toolroute.io/api/mcp"
+    }
+  }
+}`,
+    cursor: `// .cursor/mcp.json in your project root
+{
+  "mcpServers": {
+    "toolroute": {
+      "url": "https://toolroute.io/api/mcp"
+    }
+  }
+}`,
     openrouter: `// ToolRoute picks the model → you call it via OpenRouter
 import { ToolRoute } from '@toolroute/sdk'
 import OpenAI from 'openai'
@@ -41,20 +69,24 @@ const rec = await tr.route({ task: "parse CSV" })
 const res = await openrouter.chat.completions.create({
   model: rec.model_details.provider_model_id
 })`,
-    mcp: `// SSE transport — works with Claude Desktop, Cursor, Windsurf
-{
-  "mcpServers": {
-    "toolroute": {
-      "url": "https://toolroute.io/api/mcp"
-    }
-  }
-}
-// Paste into your MCP config. Supports SSE + HTTP POST.`,
     python: `from toolroute import ToolRoute
 
 tr = ToolRoute()
 model = tr.model.route(task="parse CSV file")
 tool = tr.route(task="web scraping")`,
+    litellm: `# Use ToolRoute to pick the model, LiteLLM to call it
+import litellm
+import requests
+
+# 1. Ask ToolRoute which model to use
+rec = requests.post("https://toolroute.io/api/route/model",
+  json={"task": "summarize legal documents"}).json()
+
+# 2. Call via LiteLLM with any provider
+response = litellm.completion(
+  model=rec["model_details"]["provider_model_id"],
+  messages=[{"role": "user", "content": "Summarize this contract..."}]
+)`,
     curl: `curl -X POST https://toolroute.io/api/route/model \\
   -H "Content-Type: application/json" \\
   -d '{"task": "parse CSV file"}'`,
@@ -68,6 +100,44 @@ tool = tr.route(task="web scraping")`,
 
   /* Syntax-highlighted JSX for each tab */
   const highlightedCode: Record<Tab, JSX.Element> = {
+    'claude-code': (
+      <>
+        <span style={cc}>{'# One command — done in 3 seconds'}</span>{'\n'}
+        {'claude mcp add toolroute \\\n'}
+        {'  --transport sse \\\n'}
+        {'  --url '}<span style={cs}>https://toolroute.io/api/mcp</span>{'\n'}
+        {'\n'}
+        <span style={cc}>{'# Then in any conversation:'}</span>{'\n'}
+        <span style={cc}>{'# "Use toolroute_register to get started"'}</span>{'\n'}
+        <span style={cc}>{'# "Route me to the best scraping tool"'}</span>
+        <span style={{ animation: 'blink 1s step-end infinite', color: 'var(--amber)' }}>{'█'}</span>
+      </>
+    ),
+    'claude-desktop': (
+      <>
+        <span style={cc}>{'// Settings → Developer → Edit Config'}</span>{'\n'}
+        <span style={cc}>{'// Paste this into claude_desktop_config.json'}</span>{'\n'}
+        {'{\n'}
+        {'  '}<span style={cs}>&quot;mcpServers&quot;</span>{': {\n'}
+        {'    '}<span style={cs}>&quot;toolroute&quot;</span>{': {\n'}
+        {'      '}<span style={cs}>&quot;url&quot;</span>{': '}<span style={cs}>&quot;https://toolroute.io/api/mcp&quot;</span>{'\n'}
+        {'    }\n'}
+        {'  }\n'}
+        {'}'}
+      </>
+    ),
+    cursor: (
+      <>
+        <span style={cc}>{'// .cursor/mcp.json in your project root'}</span>{'\n'}
+        {'{\n'}
+        {'  '}<span style={cs}>&quot;mcpServers&quot;</span>{': {\n'}
+        {'    '}<span style={cs}>&quot;toolroute&quot;</span>{': {\n'}
+        {'      '}<span style={cs}>&quot;url&quot;</span>{': '}<span style={cs}>&quot;https://toolroute.io/api/mcp&quot;</span>{'\n'}
+        {'    }\n'}
+        {'  }\n'}
+        {'}'}
+      </>
+    ),
     openrouter: (
       <>
         <span style={cc}>{'// ToolRoute picks the model → you call it via OpenRouter'}</span>{'\n'}
@@ -88,18 +158,6 @@ tool = tr.route(task="web scraping")`,
         <span style={ck}>const</span>{' res = '}<span style={ck}>await</span>{' openrouter.chat.completions.create({\n'}
         {'  model: rec.'}<span style={cp}>model_details</span>{'.'}<span style={cp}>provider_model_id</span>{'\n'}
         {'})'}
-        <span style={{ animation: 'blink 1s step-end infinite', color: 'var(--amber)' }}>█</span>
-      </>
-    ),
-    mcp: (
-      <>
-        {'{\n'}
-        {'  '}<span style={cs}>&quot;mcpServers&quot;</span>{': {\n'}
-        {'    '}<span style={cs}>&quot;toolroute&quot;</span>{': {\n'}
-        {'      '}<span style={cs}>&quot;url&quot;</span>{': '}<span style={cs}>&quot;https://toolroute.io/api/mcp&quot;</span>{'\n'}
-        {'    }\n'}
-        {'  }\n'}
-        {'}'}
       </>
     ),
     python: (
@@ -111,6 +169,23 @@ tool = tr.route(task="web scraping")`,
         {'tool = tr.route(task='}<span style={cs}>&quot;web scraping&quot;</span>{')'}
       </>
     ),
+    litellm: (
+      <>
+        <span style={cc}>{'# Use ToolRoute to pick the model, LiteLLM to call it'}</span>{'\n'}
+        <span style={ck}>import</span>{' litellm\n'}
+        <span style={ck}>import</span>{' requests\n'}
+        {'\n'}
+        <span style={cc}>{'# 1. Ask ToolRoute which model to use'}</span>{'\n'}
+        {'rec = requests.post('}<span style={cs}>&quot;https://toolroute.io/api/route/model&quot;</span>{',\n'}
+        {'  json={'}<span style={cs}>&quot;task&quot;</span>{': '}<span style={cs}>&quot;summarize legal documents&quot;</span>{'}).json()\n'}
+        {'\n'}
+        <span style={cc}>{'# 2. Call via LiteLLM with any provider'}</span>{'\n'}
+        {'response = litellm.completion(\n'}
+        {'  model=rec['}<span style={cs}>&quot;model_details&quot;</span>{']['}<span style={cs}>&quot;provider_model_id&quot;</span>{'],\n'}
+        {'  messages=[{'}<span style={cs}>&quot;role&quot;</span>{': '}<span style={cs}>&quot;user&quot;</span>{', '}<span style={cs}>&quot;content&quot;</span>{': '}<span style={cs}>&quot;Summarize this contract...&quot;</span>{'}]\n'}
+        {')'}
+      </>
+    ),
     curl: (
       <>
         {'curl -X POST '}<span style={cs}>https://toolroute.io/api/route/model</span>{' \\\n'}
@@ -119,6 +194,8 @@ tool = tr.route(task="web scraping")`,
       </>
     ),
   }
+
+  const TAB_ORDER: Tab[] = ['claude-code', 'claude-desktop', 'cursor', 'openrouter', 'python', 'litellm', 'curl']
 
   return (
     <div style={{
@@ -138,21 +215,22 @@ tool = tr.route(task="web scraping")`,
         background: 'var(--bg3)',
         flexWrap: 'wrap', gap: 6,
       }}>
-        <div style={{ display: 'flex', gap: 2 }}>
-          {(['openrouter', 'mcp', 'python', 'curl'] as const).map(t => (
+        <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+          {TAB_ORDER.map(t => (
             <button
               key={t}
               onClick={() => setTab(t)}
               style={{
-                padding: '5px 12px',
+                padding: '5px 10px',
                 borderRadius: 6,
                 fontFamily: 'var(--mono)',
-                fontSize: 12,
+                fontSize: 11,
                 color: tab === t ? 'var(--amber)' : 'var(--text-3)',
                 background: tab === t ? 'var(--amber-dim)' : 'transparent',
                 border: 'none',
                 cursor: 'pointer',
                 transition: 'all .15s',
+                whiteSpace: 'nowrap',
               }}
             >
               {LABELS[t]}
@@ -179,7 +257,7 @@ tool = tr.route(task="web scraping")`,
               transition: 'all .15s',
             }}
           >
-            {copied ? '✓ Copied' : 'Copy'}
+            {copied ? '\u2713 Copied' : 'Copy'}
           </button>
         </div>
       </div>
