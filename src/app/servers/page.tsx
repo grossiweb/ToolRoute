@@ -1,10 +1,9 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Suspense } from 'react'
-import { SortDropdown } from '@/components/SortDropdown'
 import { SearchBar } from '@/components/SearchBar'
-import { Sidebar } from '@/components/Sidebar'
-import { SkillCard } from '@/components/SkillCard'
+import { formatScore } from '@/lib/scoring'
 import { Metadata } from 'next'
+import Link from 'next/link'
 
 function normalizeScore(score: number | null | undefined): number | null {
   if (score == null) return null
@@ -17,6 +16,15 @@ export const metadata: Metadata = {
   title: 'MCP Servers — ToolRoute',
   description: 'Browse 200+ MCP servers ranked by real execution benchmarks. Find the best tool for any agent task.',
 }
+
+const CATEGORIES = [
+  { label: 'All', value: '' },
+  { label: 'Web & Search', value: 'web-search' },
+  { label: 'Files & Code', value: 'files-code' },
+  { label: 'Databases', value: 'databases' },
+  { label: 'Communication', value: 'communication' },
+  { label: 'CRM', value: 'crm' },
+]
 
 export default async function ServersPage({
   searchParams,
@@ -101,105 +109,541 @@ export default async function ServersPage({
     }
   })
 
-  // Compute badges for servers
-  const serverBadges = new Map<string, string[]>()
-  for (const skill of sortedServers) {
-    const scores = Array.isArray(skill.skill_scores) ? skill.skill_scores[0] : skill.skill_scores
-    const metrics = Array.isArray(skill.skill_metrics) ? skill.skill_metrics[0] : skill.skill_metrics
-    if (!scores) continue
+  // Get spotlight server (top-rated)
+  const spotlight = sortedServers.length > 0 ? sortedServers[0] : null
+  const spotlightScores = spotlight
+    ? (Array.isArray(spotlight.skill_scores) ? spotlight.skill_scores[0] : spotlight.skill_scores)
+    : null
 
-    const badges: string[] = []
-    const vs = normalizeScore(scores.value_score ?? scores.overall_score)
+  // Derive trust badge
+  function getTrustBadge(vendorType: string): { label: string; color: string; bg: string } {
+    if (vendorType === 'official') return { label: 'Verified', color: 'var(--green)', bg: 'rgba(52,211,153,0.12)' }
+    return { label: 'Community', color: 'var(--amber)', bg: 'rgba(251,191,36,0.12)' }
+  }
+
+  // Derive icon letter from name
+  function getIcon(name: string): string {
+    const words = name.split(/[\s-]+/)
+    if (words.length >= 2) return (words[0][0] + words[1][0]).toUpperCase()
+    return name.substring(0, 2).toUpperCase()
+  }
+
+  // Build tags from scores
+  function getTags(scores: any): string[] {
+    if (!scores) return []
+    const tags: string[] = []
     const os = normalizeScore(scores.output_score)
     const rs = normalizeScore(scores.reliability_score)
     const cs = normalizeScore(scores.cost_score)
-    const stars = metrics?.github_stars
-
-    if (vs != null && vs >= 9.0) badges.push('Top Rated')
-    else if (os != null && os >= 9.0) badges.push('Best Output')
-    else if (rs != null && rs >= 9.0) badges.push('Most Reliable')
-    else if (cs != null && cs >= 9.0) badges.push('Best Budget')
-
-    if (stars != null && stars >= 5000) badges.push('Popular')
-    // Note: "Active" badge handled natively by SkillCard via isFresh check
-
-    if (badges.length > 0) serverBadges.set(skill.id, badges.slice(0, 2))
+    if (os != null && os >= 9) tags.push('High Output')
+    if (rs != null && rs >= 9) tags.push('Reliable')
+    if (cs != null && cs >= 8.5) tags.push('Cost-Effective')
+    if (tags.length === 0) tags.push('Benchmarked')
+    return tags.slice(0, 2)
   }
+
+  const activeCategory = searchParams.workflow || ''
 
   return (
     <div style={{ maxWidth: 1240, margin: '0 auto', padding: '0 40px' }}>
-      {/* Page Hero */}
-      <div className="page-hero" style={{ padding: '56px 0 40px', borderBottom: '1px solid var(--border)' }}>
-        <div className="page-hero-label">MCP Servers</div>
-        <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
-          Find the right MCP server<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>for the job.</em>
+      {/* ── Page Hero ── */}
+      <section style={{
+        padding: '72px 0 48px',
+        borderBottom: '1px solid var(--border)',
+        textAlign: 'center',
+      }}>
+        <div style={{
+          fontFamily: 'var(--mono)',
+          fontSize: 11,
+          textTransform: 'uppercase',
+          letterSpacing: 1.5,
+          color: 'var(--amber)',
+          marginBottom: 16,
+        }}>
+          MCP Server Directory
+        </div>
+        <h1 style={{
+          fontFamily: 'var(--serif)',
+          fontSize: 'clamp(36px, 5vw, 56px)',
+          fontWeight: 400,
+          lineHeight: 1.1,
+          color: 'var(--text)',
+          marginBottom: 16,
+        }}>
+          Find the right MCP server<br />
+          <em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>for the job.</em>
         </h1>
-        <p style={{ fontSize: 16, color: 'var(--text-2)', maxWidth: 520, lineHeight: 1.65 }}>
-          {servers.length} servers ranked by real execution data. Every score is outcome-backed on a 0-10 scale across 5 dimensions.
+        <p style={{
+          fontSize: 16,
+          color: 'var(--text-2)',
+          maxWidth: 520,
+          margin: '0 auto 32px',
+          lineHeight: 1.65,
+        }}>
+          {servers.length}+ servers ranked by real execution data. Every score is outcome-backed across 5 dimensions.
         </p>
-        <div className="max-w-md">
+
+        {/* ── Filter Bar ── */}
+        <div style={{
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          gap: 8,
+          flexWrap: 'wrap',
+          marginBottom: 20,
+        }}>
+          {CATEGORIES.map((cat) => (
+            <Link
+              key={cat.value}
+              href={cat.value ? `/servers?workflow=${cat.value}` : '/servers'}
+              style={{
+                display: 'inline-flex',
+                alignItems: 'center',
+                padding: '8px 18px',
+                borderRadius: 100,
+                border: '1px solid ' + (activeCategory === cat.value ? 'var(--amber)' : 'var(--border)'),
+                background: activeCategory === cat.value ? 'rgba(251,191,36,0.1)' : 'var(--bg2)',
+                color: activeCategory === cat.value ? 'var(--amber)' : 'var(--text-2)',
+                fontFamily: 'var(--sans)',
+                fontSize: 13,
+                fontWeight: 500,
+                textDecoration: 'none',
+                transition: 'all .2s',
+                cursor: 'pointer',
+              }}
+            >
+              {cat.label}
+            </Link>
+          ))}
+        </div>
+
+        {/* Search */}
+        <div style={{ maxWidth: 480, margin: '0 auto' }}>
           <Suspense>
-            <SearchBar basePath="/servers" placeholder="Search MCP servers by name or description..." />
+            <SearchBar basePath="/servers" placeholder="Search servers by name or capability..." />
           </Suspense>
         </div>
+
         {searchQuery && (
-          <p style={{ fontSize: 14, color: 'var(--text-3)', marginTop: 12 }}>
-            Showing <span style={{ fontWeight: 600, color: 'var(--text)' }}>{filteredServers.length}</span> results for &quot;<span style={{ fontWeight: 600, color: 'var(--amber)' }}>{searchParams.q}</span>&quot;
+          <p style={{ fontSize: 14, color: 'var(--text-3)', marginTop: 16 }}>
+            Showing <span style={{ fontWeight: 600, color: 'var(--text)' }}>{filteredServers.length}</span> results
+            for &quot;<span style={{ fontWeight: 600, color: 'var(--amber)' }}>{searchParams.q}</span>&quot;
           </p>
         )}
-      </div>
+      </section>
 
-      {/* Stats bar + Sort */}
-      <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', marginBottom: 32, marginTop: 24, flexWrap: 'wrap', gap: 16 }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: 24, fontSize: 14 }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 700, color: 'var(--text)' }}>{filteredServers.length}</span>
-            <span style={{ color: 'var(--text-3)' }}>servers</span>
+      {/* ── Spotlight Card ── */}
+      {spotlight && spotlightScores && (
+        <section style={{ padding: '40px 0 0' }}>
+          <div style={{
+            fontFamily: 'var(--mono)',
+            fontSize: 10,
+            textTransform: 'uppercase',
+            letterSpacing: 1.2,
+            color: 'var(--text-3)',
+            marginBottom: 12,
+          }}>
+            Top Rated
           </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 700, color: 'var(--text)' }}>{workflows?.length || 0}</span>
-            <span style={{ color: 'var(--text-3)' }}>categories</span>
-          </div>
-          <div style={{ display: 'flex', alignItems: 'center', gap: 6 }}>
-            <span style={{ fontWeight: 700, color: 'var(--text)' }}>5</span>
-            <span style={{ color: 'var(--text-3)' }}>score dimensions</span>
-          </div>
-        </div>
-        <Suspense>
-          <SortDropdown currentSort={searchParams.sort || 'score'} basePath="/servers" workflow={searchParams.workflow} vertical={searchParams.vertical} />
-        </Suspense>
-      </div>
+          <Link
+            href={`/mcp-servers/${(spotlight as any).slug}`}
+            style={{
+              display: 'flex',
+              alignItems: 'stretch',
+              gap: 32,
+              background: 'var(--bg2)',
+              border: '1px solid var(--border)',
+              borderRadius: 'var(--radius-lg)',
+              padding: 32,
+              textDecoration: 'none',
+              transition: 'border-color .3s',
+            }}
+          >
+            {/* Left: Icon + Info */}
+            <div style={{ flex: 1, minWidth: 0 }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 14, marginBottom: 12 }}>
+                <div style={{
+                  width: 48, height: 48, borderRadius: 12,
+                  background: 'linear-gradient(135deg, var(--amber), var(--green))',
+                  display: 'flex', alignItems: 'center', justifyContent: 'center',
+                  fontFamily: 'var(--mono)', fontSize: 16, fontWeight: 700, color: '#000',
+                  flexShrink: 0,
+                }}>
+                  {getIcon((spotlight as any).canonical_name)}
+                </div>
+                <div>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 8 }}>
+                    <h2 style={{
+                      fontFamily: 'var(--serif)',
+                      fontSize: 22,
+                      fontWeight: 600,
+                      color: 'var(--text)',
+                      lineHeight: 1.2,
+                    }}>
+                      {(spotlight as any).canonical_name}
+                    </h2>
+                    {(() => {
+                      const badge = getTrustBadge((spotlight as any).vendor_type)
+                      return (
+                        <span style={{
+                          display: 'inline-flex', alignItems: 'center', gap: 4,
+                          padding: '3px 10px', borderRadius: 6,
+                          background: badge.bg, color: badge.color,
+                          fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600,
+                        }}>
+                          <span style={{
+                            width: 6, height: 6, borderRadius: '50%',
+                            background: badge.color, display: 'inline-block',
+                          }} />
+                          {badge.label}
+                        </span>
+                      )
+                    })()}
+                  </div>
+                  <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.5, marginTop: 4 }}>
+                    {(spotlight as any).short_description}
+                  </p>
+                </div>
+              </div>
 
-      {/* Sidebar + Grid */}
-      <div className="flex gap-6">
-        <Suspense><Sidebar context="default" /></Suspense>
-        <div className="flex-1 min-w-0">
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {sortedServers.map((skill: any) => {
-              const scores = Array.isArray(skill.skill_scores) ? skill.skill_scores[0] : skill.skill_scores
-              const metrics = Array.isArray(skill.skill_metrics) ? skill.skill_metrics[0] : skill.skill_metrics
-              return (
-                <SkillCard
-                  key={skill.id}
-                  skill={{
-                    ...skill,
-                    skill_scores: scores,
-                    skill_metrics: metrics,
-                  }}
-                  badges={serverBadges.get(skill.id)}
-                />
-              )
-            })}
-          </div>
-
-          {sortedServers.length === 0 && (
-            <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)' }}>
-              <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No servers found</p>
-              <p style={{ fontSize: 14 }}>Try a different filter or check back soon.</p>
+              {/* Mini benchmark bars */}
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 12, marginTop: 16 }}>
+                {[
+                  { label: 'Output', value: normalizeScore(spotlightScores.output_score) },
+                  { label: 'Reliability', value: normalizeScore(spotlightScores.reliability_score) },
+                  { label: 'Efficiency', value: normalizeScore(spotlightScores.efficiency_score) },
+                  { label: 'Cost', value: normalizeScore(spotlightScores.cost_score) },
+                  { label: 'Trust', value: normalizeScore(spotlightScores.trust_score) },
+                ].map(({ label, value }) => (
+                  <div key={label}>
+                    <div style={{
+                      display: 'flex', justifyContent: 'space-between', alignItems: 'center',
+                      marginBottom: 4, fontSize: 11, fontFamily: 'var(--mono)',
+                    }}>
+                      <span style={{ color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.5 }}>
+                        {label}
+                      </span>
+                      <span style={{
+                        color: (value ?? 0) >= 8 ? 'var(--green)' : (value ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)',
+                        fontWeight: 600,
+                      }}>
+                        {value != null ? formatScore(value) : '--'}
+                      </span>
+                    </div>
+                    <div style={{
+                      height: 6, borderRadius: 3,
+                      background: 'var(--bg3)', overflow: 'hidden',
+                    }}>
+                      <div style={{
+                        height: '100%', borderRadius: 3,
+                        width: value != null ? `${(value / 10) * 100}%` : '0%',
+                        background: (value ?? 0) >= 8 ? 'var(--green)' : (value ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)',
+                        transition: 'width .4s ease',
+                      }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
             </div>
-          )}
+
+            {/* Right: Score ring */}
+            <div style={{
+              display: 'flex', flexDirection: 'column', alignItems: 'center',
+              justifyContent: 'center', flexShrink: 0, minWidth: 100,
+            }}>
+              {(() => {
+                const vs = normalizeScore(spotlightScores.value_score ?? spotlightScores.overall_score)
+                const pct = vs != null ? (vs / 10) * 100 : 0
+                const radius = 42
+                const circumference = 2 * Math.PI * radius
+                const offset = circumference - (pct / 100) * circumference
+                const ringColor = (vs ?? 0) >= 8 ? 'var(--green)' : (vs ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)'
+                return (
+                  <div style={{ position: 'relative', width: 100, height: 100 }}>
+                    <svg viewBox="0 0 100 100" style={{ width: 100, height: 100, transform: 'rotate(-90deg)' }}>
+                      <circle cx="50" cy="50" r={radius} fill="none" stroke="var(--bg3)" strokeWidth="6" />
+                      <circle
+                        cx="50" cy="50" r={radius} fill="none"
+                        stroke={ringColor} strokeWidth="6"
+                        strokeLinecap="round"
+                        strokeDasharray={circumference}
+                        strokeDashoffset={offset}
+                        style={{ transition: 'stroke-dashoffset .5s ease' }}
+                      />
+                    </svg>
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', flexDirection: 'column',
+                      alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--mono)', fontSize: 24, fontWeight: 700,
+                        color: 'var(--text)', lineHeight: 1,
+                      }}>
+                        {vs != null ? formatScore(vs) : '--'}
+                      </span>
+                      <span style={{
+                        fontFamily: 'var(--mono)', fontSize: 9,
+                        color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.5,
+                      }}>
+                        Score
+                      </span>
+                    </div>
+                  </div>
+                )
+              })()}
+            </div>
+          </Link>
+        </section>
+      )}
+
+      {/* ── Server Grid ── */}
+      <section style={{ padding: '40px 0 0' }}>
+        <div style={{
+          display: 'flex', alignItems: 'center', justifyContent: 'space-between',
+          marginBottom: 20,
+        }}>
+          <span style={{
+            fontFamily: 'var(--mono)', fontSize: 10,
+            textTransform: 'uppercase', letterSpacing: 1.2,
+            color: 'var(--text-3)',
+          }}>
+            {sortedServers.length} Servers
+          </span>
         </div>
-      </div>
+
+        <div style={{
+          display: 'grid',
+          gridTemplateColumns: 'repeat(3, 1fr)',
+          gap: 16,
+        }}>
+          {sortedServers.map((skill: any) => {
+            const scores = Array.isArray(skill.skill_scores) ? skill.skill_scores[0] : skill.skill_scores
+            const metrics = Array.isArray(skill.skill_metrics) ? skill.skill_metrics[0] : skill.skill_metrics
+            const valueScore = normalizeScore(scores?.value_score ?? scores?.overall_score)
+            const outputScore = normalizeScore(scores?.output_score)
+            const reliabilityScore = normalizeScore(scores?.reliability_score)
+            const costScore = normalizeScore(scores?.cost_score)
+            const badge = getTrustBadge(skill.vendor_type)
+            const tags = getTags(scores)
+
+            // SVG score ring
+            const pct = valueScore != null ? (valueScore / 10) * 100 : 0
+            const r = 18
+            const circ = 2 * Math.PI * r
+            const ringOffset = circ - (pct / 100) * circ
+            const ringColor = (valueScore ?? 0) >= 8 ? 'var(--green)' : (valueScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)'
+
+            return (
+              <Link
+                key={skill.id}
+                href={`/mcp-servers/${skill.slug}`}
+                style={{
+                  display: 'flex',
+                  flexDirection: 'column',
+                  background: 'var(--bg2)',
+                  border: '1px solid var(--border)',
+                  borderRadius: 'var(--radius-lg)',
+                  padding: 24,
+                  textDecoration: 'none',
+                  transition: 'border-color .25s, transform .2s',
+                  cursor: 'pointer',
+                }}
+              >
+                {/* Top row: icon + badge + score ring */}
+                <div style={{
+                  display: 'flex', alignItems: 'flex-start',
+                  justifyContent: 'space-between', marginBottom: 14,
+                }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: 10 }}>
+                    {/* Icon */}
+                    <div style={{
+                      width: 38, height: 38, borderRadius: 10,
+                      background: 'var(--bg3)',
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                      fontFamily: 'var(--mono)', fontSize: 13, fontWeight: 700,
+                      color: 'var(--text-2)', flexShrink: 0,
+                    }}>
+                      {getIcon(skill.canonical_name)}
+                    </div>
+                    {/* Trust badge */}
+                    <span style={{
+                      display: 'inline-flex', alignItems: 'center', gap: 4,
+                      padding: '2px 8px', borderRadius: 5,
+                      background: badge.bg, color: badge.color,
+                      fontFamily: 'var(--mono)', fontSize: 10, fontWeight: 600,
+                    }}>
+                      <span style={{
+                        width: 5, height: 5, borderRadius: '50%',
+                        background: badge.color, display: 'inline-block',
+                      }} />
+                      {badge.label}
+                    </span>
+                  </div>
+
+                  {/* Score ring (SVG) */}
+                  <div style={{ position: 'relative', width: 44, height: 44, flexShrink: 0 }}>
+                    <svg viewBox="0 0 44 44" style={{ width: 44, height: 44, transform: 'rotate(-90deg)' }}>
+                      <circle cx="22" cy="22" r={r} fill="none" stroke="var(--bg3)" strokeWidth="3" />
+                      <circle
+                        cx="22" cy="22" r={r} fill="none"
+                        stroke={ringColor} strokeWidth="3"
+                        strokeLinecap="round"
+                        strokeDasharray={circ}
+                        strokeDashoffset={ringOffset}
+                      />
+                    </svg>
+                    <div style={{
+                      position: 'absolute', inset: 0,
+                      display: 'flex', alignItems: 'center', justifyContent: 'center',
+                    }}>
+                      <span style={{
+                        fontFamily: 'var(--mono)', fontSize: 11, fontWeight: 700,
+                        color: 'var(--text)',
+                      }}>
+                        {valueScore != null ? formatScore(valueScore) : '--'}
+                      </span>
+                    </div>
+                  </div>
+                </div>
+
+                {/* Name */}
+                <h3 style={{
+                  fontWeight: 700, color: 'var(--text)',
+                  fontSize: 15, letterSpacing: -0.2, marginBottom: 4,
+                  fontFamily: 'var(--sans)',
+                }}>
+                  {skill.canonical_name}
+                </h3>
+
+                {/* Description */}
+                <p style={{
+                  fontSize: 13, color: 'var(--text-2)', lineHeight: 1.55,
+                  overflow: 'hidden', display: '-webkit-box',
+                  WebkitLineClamp: 2, WebkitBoxOrient: 'vertical' as const,
+                  marginBottom: 12,
+                }}>
+                  {skill.short_description}
+                </p>
+
+                {/* Tags */}
+                <div style={{ display: 'flex', gap: 6, flexWrap: 'wrap', marginBottom: 16 }}>
+                  {tags.map(tag => (
+                    <span key={tag} style={{
+                      padding: '3px 10px', borderRadius: 100,
+                      background: 'var(--bg3)', color: 'var(--text-3)',
+                      fontFamily: 'var(--mono)', fontSize: 10,
+                    }}>
+                      {tag}
+                    </span>
+                  ))}
+                </div>
+
+                {/* Stats row */}
+                <div style={{
+                  display: 'flex', gap: 16, marginTop: 'auto',
+                  paddingTop: 14, borderTop: '1px solid var(--border)',
+                  fontSize: 11, fontFamily: 'var(--mono)',
+                }}>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{
+                      color: 'var(--text-3)', textTransform: 'uppercase',
+                      letterSpacing: 0.5, fontSize: 9, marginBottom: 2,
+                    }}>Quality</span>
+                    <span style={{
+                      fontWeight: 600,
+                      color: (outputScore ?? 0) >= 8 ? 'var(--green)' : (outputScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
+                    }}>
+                      {outputScore != null ? `${Math.round((outputScore / 10) * 100)}%` : '--'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{
+                      color: 'var(--text-3)', textTransform: 'uppercase',
+                      letterSpacing: 0.5, fontSize: 9, marginBottom: 2,
+                    }}>Uptime</span>
+                    <span style={{
+                      fontWeight: 600,
+                      color: (reliabilityScore ?? 0) >= 8 ? 'var(--green)' : (reliabilityScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
+                    }}>
+                      {reliabilityScore != null ? `${Math.round((reliabilityScore / 10) * 100)}%` : '--'}
+                    </span>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
+                    <span style={{
+                      color: 'var(--text-3)', textTransform: 'uppercase',
+                      letterSpacing: 0.5, fontSize: 9, marginBottom: 2,
+                    }}>Cost</span>
+                    <span style={{
+                      fontWeight: 600,
+                      color: (costScore ?? 0) >= 8 ? 'var(--green)' : (costScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
+                    }}>
+                      {costScore != null ? `${Math.round((costScore / 10) * 100)}%` : '--'}
+                    </span>
+                  </div>
+                </div>
+              </Link>
+            )
+          })}
+        </div>
+
+        {sortedServers.length === 0 && (
+          <div style={{ textAlign: 'center', padding: '80px 0', color: 'var(--text-3)' }}>
+            <p style={{ fontSize: 18, fontWeight: 700, marginBottom: 8 }}>No servers found</p>
+            <p style={{ fontSize: 14 }}>Try a different filter or check back soon.</p>
+          </div>
+        )}
+      </section>
+
+      {/* ── CTA Banner ── */}
+      <section style={{
+        margin: '56px 0 64px',
+        padding: '48px 40px',
+        background: 'var(--bg2)',
+        border: '1px solid var(--border)',
+        borderRadius: 'var(--radius-lg)',
+        textAlign: 'center',
+      }}>
+        <h2 style={{
+          fontFamily: 'var(--serif)',
+          fontSize: 28,
+          fontWeight: 400,
+          color: 'var(--text)',
+          marginBottom: 8,
+        }}>
+          Built an MCP server?
+        </h2>
+        <p style={{
+          fontSize: 15,
+          color: 'var(--text-2)',
+          marginBottom: 24,
+          maxWidth: 440,
+          margin: '0 auto 24px',
+          lineHeight: 1.6,
+        }}>
+          Submit your server to the directory. Get benchmarked, scored, and discovered by agents worldwide.
+        </p>
+        <Link
+          href="/submit"
+          style={{
+            display: 'inline-flex',
+            alignItems: 'center',
+            gap: 8,
+            padding: '12px 28px',
+            borderRadius: 100,
+            background: 'var(--amber)',
+            color: '#000',
+            fontFamily: 'var(--sans)',
+            fontSize: 14,
+            fontWeight: 600,
+            textDecoration: 'none',
+            transition: 'opacity .2s',
+          }}
+        >
+          Submit your server
+          <span style={{ fontSize: 16 }}>&rarr;</span>
+        </Link>
+      </section>
     </div>
   )
 }
