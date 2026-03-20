@@ -6,7 +6,7 @@ type Tab = 'claude-code' | 'claude-desktop' | 'cursor' | 'openrouter' | 'python'
 
 const LABELS: Record<Tab, string> = {
   'claude-code': 'Claude Code',
-  'claude-desktop': 'Claude Desktop',
+  'claude-desktop': 'SSE / JSON',
   cursor: 'Cursor',
   openrouter: 'OpenRouter',
   python: 'Python',
@@ -34,8 +34,8 @@ claude mcp add toolroute \\
 # Then in any conversation:
 # "Use toolroute_register to get started"
 # "Route me to the best scraping tool"`,
-    'claude-desktop': `// Settings → Developer → Edit Config
-// Paste this into claude_desktop_config.json
+    'claude-desktop': `// Works with Claude Desktop, Windsurf, Cline, and any SSE-compatible MCP client
+// Paste into your MCP config file
 {
   "mcpServers": {
     "toolroute": {
