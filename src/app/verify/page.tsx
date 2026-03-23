@@ -1,13 +1,16 @@
 'use client'
 
-import { useState } from 'react'
+import { useState, useMemo } from 'react'
 import Link from 'next/link'
 
-const TWEET_TEXT = `I just connected my agent to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.
-
-Free routing for AI agents: https://toolroute.io`
-
-const TWEET_URL = `https://twitter.com/intent/tweet?text=${encodeURIComponent(TWEET_TEXT)}`
+function generateVerificationCode(): string {
+  const words = ['reef', 'wave', 'bolt', 'glow', 'flux', 'peak', 'node', 'core', 'link', 'sync', 'beam', 'dart', 'edge', 'fuse', 'grid', 'hive', 'iron', 'jump', 'knot', 'loop']
+  const chars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+  const word = words[Math.floor(Math.random() * words.length)]
+  let code = ''
+  for (let i = 0; i < 4; i++) code += chars[Math.floor(Math.random() * chars.length)]
+  return `${word}-${code}`
+}
 
 export default function VerifyPage() {
   const [step, setStep] = useState<'info' | 'tweeted' | 'submitted'>('info')
@@ -17,6 +20,16 @@ export default function VerifyPage() {
   const [submitting, setSubmitting] = useState(false)
   const [verified, setVerified] = useState(false)
   const [error, setError] = useState<string | null>(null)
+
+  // Generate a unique verification code per session (stable across re-renders)
+  const verificationCode = useMemo(() => generateVerificationCode(), [])
+
+  const tweetText = `I just connected my agent to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.
+
+Verification: ${verificationCode}
+Free routing for AI agents: https://toolroute.io`
+
+  const tweetIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
 
   const handleSubmitVerification = async () => {
     if (!agentName.trim() || !xHandle.trim()) return
@@ -31,6 +44,7 @@ export default function VerifyPage() {
           agent_name: agentName.trim(),
           x_handle: xHandle.trim().replace('@', ''),
           tweet_url: tweetUrl.trim() || undefined,
+          verification_code: verificationCode,
           method: 'x',
         }),
       })
@@ -97,11 +111,11 @@ export default function VerifyPage() {
                   <div className="text-xs" style={{ color: 'var(--text-3)' }}>@yourhandle</div>
                 </div>
               </div>
-              <p className="whitespace-pre-line">{TWEET_TEXT}</p>
+              <p className="whitespace-pre-line">{tweetText}</p>
             </div>
 
             <a
-              href={TWEET_URL}
+              href={tweetIntentUrl}
               target="_blank"
               rel="noopener noreferrer"
               className="inline-flex items-center gap-2 px-5 py-2.5 rounded-lg bg-gray-900 text-white text-sm font-semibold hover:bg-gray-800 transition-colors"
