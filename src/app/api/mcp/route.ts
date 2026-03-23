@@ -1039,6 +1039,7 @@ async function handleToolCall(id: any, params: any) {
     /* ── toolroute_verify_agent ── */
     case 'toolroute_verify_agent': {
       const agentName = (args || {}).agent_name || 'my-agent'
+
       // Generate a unique verification code (MoltBook-style)
       const vWords = ['reef', 'wave', 'bolt', 'glow', 'flux', 'peak', 'node', 'core', 'link', 'sync', 'beam', 'dart', 'edge', 'fuse', 'grid']
       const vChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
@@ -1047,13 +1048,27 @@ async function handleToolCall(id: any, params: any) {
       for (let i = 0; i < 4; i++) vCode += vChars[Math.floor(Math.random() * vChars.length)]
       const verificationCode = `${vWord}-${vCode}`
 
+      // Store the code in the DB tied to this agent name (this is the claim link)
+      await supabase
+        .from('verification_requests')
+        .insert({
+          agent_name: agentName,
+          method: 'x',
+          verification_code: verificationCode,
+          status: 'pending',
+          submitted_at: new Date().toISOString(),
+        })
+
       const tweetText = `I'm verifying my AI agent "${agentName}" on @ToolRoute4U — intelligent routing for MCP servers.\n\nVerification: ${verificationCode}\nhttps://toolroute.io`
       const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
+      const claimUrl = `https://toolroute.io/verify?code=${verificationCode}`
+
       return toolResult(id, JSON.stringify({
-        important: 'You CANNOT verify yourself — this requires your human owner to tweet. Send them the verify_url below and ask them to complete the steps.',
+        important: 'You CANNOT verify yourself — this requires your human owner to tweet and claim. Send them the claim_url below.',
         verification_code: verificationCode,
-        what_to_tell_your_human: `Hey! I need you to verify me on ToolRoute so I can earn 2x credits. It takes 30 seconds:\n\n1. Go to https://toolroute.io/verify\n2. Click "Tweet" (includes verification code: ${verificationCode})\n3. After tweeting, paste the tweet URL into the form\n4. Enter my agent name "${agentName}" and your X handle\n5. Click Submit — I'm instantly verified!\n\nNo waiting — it's immediate.`,
-        verify_url: 'https://toolroute.io/verify',
+        claim_url: claimUrl,
+        what_to_tell_your_human: `Hey! I need you to verify me on ToolRoute so I can earn 2x credits. It takes 30 seconds:\n\n1. Go to ${claimUrl}\n2. Tweet using the button (it includes my verification code: ${verificationCode})\n3. Paste your tweet URL and your X handle\n4. Click Verify — I'm instantly verified!\n\nThe code ${verificationCode} is tied to my agent account "${agentName}". No one else can use it.`,
+        verify_url: claimUrl,
         tweet_url: tweetUrl,
         tweet_text: tweetText,
         benefits: {
@@ -1063,14 +1078,13 @@ async function handleToolCall(id: any, params: any) {
           leaderboard_visibility: 'enhanced',
         },
         steps_for_human: [
-          '1. Human opens https://toolroute.io/verify',
-          `2. Human tweets about ToolRoute (includes verification code: ${verificationCode})`,
-          '3. Human pastes the tweet URL into the form',
-          `4. Human enters agent name "${agentName}" and their X handle`,
-          '5. Human clicks Submit — agent is instantly verified (no waiting)',
+          `1. Human opens ${claimUrl}`,
+          `2. Human tweets (includes verification code: ${verificationCode})`,
+          '3. Human pastes their tweet URL and X handle',
+          `4. Human clicks Verify — agent "${agentName}" is instantly verified`,
         ],
-        your_role: 'Send your human the verify_url and the what_to_tell_your_human message. Do NOT try to tweet yourself.',
-        check_status: 'GET https://toolroute.io/api/verify/status?agent_name=' + agentName + ' — check if your verification has been approved',
+        your_role: 'Send your human the claim_url and the what_to_tell_your_human message. Do NOT try to tweet yourself.',
+        check_status: 'GET https://toolroute.io/api/verify/status?agent_name=' + agentName,
       }, null, 2))
     }
 
