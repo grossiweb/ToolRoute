@@ -5,20 +5,29 @@
  */
 
 // Pre-computed workflow descriptions for embedding comparison
+// All 17 workflows from the database are represented here.
 const WORKFLOW_DESCRIPTIONS: Record<string, string> = {
-  'research-competitive-intelligence': 'Research competitors, scrape websites, crawl web pages, extract data from URLs, gather competitive intelligence, web search, find pricing information',
-  'developer-workflow-code-management': 'Write code, manage git repositories, create pull requests, review code, refactor, debug, deploy, continuous integration, GitHub operations',
-  'qa-testing-automation': 'Browser automation, navigate web pages, click buttons, fill forms, take screenshots, end-to-end testing, Playwright, Selenium, test automation',
-  'data-analysis-reporting': 'Query databases, run SQL, BigQuery, PostgreSQL analytics, generate reports, data analysis, create dashboards, aggregate data',
-  'sales-research-outreach': 'Find prospects, enrich leads, CRM operations, Salesforce, HubSpot, sales outreach, pipeline management, contact research',
-  'content-creation-publishing': 'Write blog posts, create articles, publish content, CMS operations, SEO optimization, social media posts, editorial workflow',
-  'customer-support-automation': 'Handle support tickets, triage issues, Jira operations, helpdesk automation, customer service, incident management, escalation',
-  'knowledge-management': 'Notion operations, Confluence, wiki management, knowledge base, documentation, workspace organization, note-taking',
-  'design-to-code-workflow': 'Figma designs, UI components, layout implementation, mockup to code, wireframe conversion, design system, prototype',
-  'it-devops-platform-operations': 'AWS cloud, infrastructure management, DevOps, deployment, monitoring, Kubernetes, Docker, Terraform, platform operations',
+  'research-competitive-intelligence': 'Research competitors, scrape websites, crawl web pages, extract data from URLs, gather competitive intelligence, web search, find pricing information, search the internet, look up information online',
+  'developer-workflow-code-management': 'Write code, manage git repositories, create pull requests, review code, refactor, debug, deploy, continuous integration, GitHub GitLab operations, software development, programming, version control',
+  'qa-testing-automation': 'Browser automation, navigate web pages, click buttons, fill forms, take screenshots, end-to-end testing, Playwright, Selenium, test automation, headless browser, web interaction',
+  'data-analysis-reporting': 'Query databases, run SQL, BigQuery, PostgreSQL, Snowflake, DuckDB analytics, generate reports, data analysis, create dashboards, aggregate data, parse CSV files, analyze datasets, data processing, spreadsheet operations, statistics',
+  'sales-research-outreach': 'Find prospects, enrich leads, CRM operations, Salesforce, HubSpot, Pipedrive, sales outreach, pipeline management, contact research, lead generation, deal tracking',
+  'content-creation-publishing': 'Write blog posts, create articles, publish content, CMS operations, WordPress, Medium, Ghost, Contentful, SEO optimization, editorial workflow, content management',
+  'customer-support-automation': 'Handle support tickets, triage issues, Jira operations, Zendesk, Intercom, Freshdesk, helpdesk automation, customer service, incident management, escalation, bug reports',
+  'knowledge-management': 'Notion operations, Confluence, wiki management, knowledge base, documentation, workspace organization, note-taking, Obsidian, README, document organization',
+  'design-to-code-workflow': 'Figma designs, UI components, layout implementation, mockup to code, wireframe conversion, design system, prototype, Storybook, Tailwind CSS, frontend visual design, Framer',
+  'it-devops-platform-operations': 'AWS cloud, infrastructure management, DevOps, deployment, monitoring, Kubernetes, Docker, Terraform, Cloudflare, Vercel, Datadog, Grafana, PagerDuty, platform operations, containers, serverless, Lambda',
+  'marketing-intelligence-campaign-management': 'Marketing campaigns, email marketing, newsletters, Mailchimp, SendGrid, Google Ads, advertising, SEMrush, SEO analysis, marketing automation, audience targeting, conversion optimization, ad campaigns, landing pages',
+  'finance-accounting-automation': 'Invoices, payments, accounting, Stripe, QuickBooks, Plaid, financial transactions, billing, expenses, revenue tracking, tax, bookkeeping, payroll, Xero, bank reconciliation, financial reports',
+  'legal-research-document-management': 'Legal contracts, compliance, DocuSign, NDA, agreements, legal research, court records, regulations, terms of service, privacy policy, intellectual property, e-signatures, legal documents',
+  'hr-recruiting-automation': 'Recruiting, hiring, candidates, resumes, interviews, Greenhouse, Lever, BambooHR, onboarding, job postings, applicant tracking, talent acquisition, HR management, performance reviews',
+  'ecommerce-operations': 'Shopify, WooCommerce, Amazon seller, ecommerce, product listings, inventory management, order fulfillment, shopping cart, checkout, online store, product catalog, shipping, returns',
+  'security-operations': 'Security scanning, vulnerability detection, Snyk, SonarQube, Trivy, penetration testing, security audits, compliance checks, threat detection, CVE, patching, code scanning, dependency checks',
+  'executive-assistant-productivity': 'Send email, draft email, compose messages, schedule meetings, calendar management, Google Calendar, Gmail, Slack messages, Discord, Microsoft Teams, Zoom calls, reminders, task management, Todoist, Calendly, appointments, SMS, Twilio, phone calls, notifications, forum comments, social media posting, summarize documents, PDF summaries, meeting notes, communication, messaging',
 }
 
-// Cache for workflow embeddings (computed once, reused)
+// Cache for workflow embeddings (computed once per cold start, reused)
+// Cache invalidates on deploy (new serverless instance)
 let workflowEmbeddingsCache: Map<string, number[]> | null = null
 
 async function getEmbedding(text: string): Promise<number[] | null> {
