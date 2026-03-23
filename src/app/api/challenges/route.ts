@@ -47,7 +47,7 @@ export async function GET(request: NextRequest) {
       efficiency: '30% — Fewer tools, lower cost, faster time = higher score',
       tiers: { gold: '>= 8.5', silver: '>= 7.0', bronze: '>= 5.5' },
     },
-    categories: ['research', 'dev-ops', 'content', 'sales', 'data'],
+    categories: ['research', 'dev-ops', 'content', 'sales', 'data', 'agent-web', 'agent-code', 'agent-data', 'agent-communication', 'agent-research', 'agent-ops'],
     filter: '?category=research&difficulty=beginner',
   })
 }
