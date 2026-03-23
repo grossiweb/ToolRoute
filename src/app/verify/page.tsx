@@ -13,11 +13,15 @@ export default function VerifyPage() {
   const [step, setStep] = useState<'info' | 'tweeted' | 'submitted'>('info')
   const [agentName, setAgentName] = useState('')
   const [xHandle, setXHandle] = useState('')
+  const [tweetUrl, setTweetUrl] = useState('')
   const [submitting, setSubmitting] = useState(false)
+  const [verified, setVerified] = useState(false)
+  const [error, setError] = useState<string | null>(null)
 
   const handleSubmitVerification = async () => {
     if (!agentName.trim() || !xHandle.trim()) return
     setSubmitting(true)
+    setError(null)
 
     try {
       const res = await fetch('/api/verify', {
@@ -26,11 +30,16 @@ export default function VerifyPage() {
         body: JSON.stringify({
           agent_name: agentName.trim(),
           x_handle: xHandle.trim().replace('@', ''),
+          tweet_url: tweetUrl.trim() || undefined,
           method: 'x',
         }),
       })
+      const data = await res.json()
       if (res.ok) {
+        setVerified(data.verified === true || data.status === 'approved')
         setStep('submitted')
+      } else {
+        setError(data.error || 'Failed to submit')
       }
     } catch {
       setStep('submitted')
@@ -109,7 +118,7 @@ export default function VerifyPage() {
           <div className="opacity-50" style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
             <div className="flex items-center gap-3">
               <div className="w-8 h-8 rounded-full font-bold text-sm flex items-center justify-center flex-shrink-0" style={{ background: 'var(--bg3)', color: 'var(--text-3)' }}>2</div>
-              <h2 className="font-bold" style={{ color: 'var(--text-3)' }}>Confirm your tweet</h2>
+              <h2 className="font-bold" style={{ color: 'var(--text-3)' }}>Paste your tweet URL &amp; confirm</h2>
             </div>
           </div>
         </div>
@@ -125,14 +134,28 @@ export default function VerifyPage() {
             </div>
           </div>
 
-          {/* Step 2: Confirm */}
+          {/* Step 2: Confirm with tweet URL */}
           <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 16, padding: 24 }}>
             <div className="flex items-center gap-3 mb-4">
               <div className="w-8 h-8 rounded-full bg-brand text-white font-bold text-sm flex items-center justify-center flex-shrink-0">2</div>
-              <h2 className="font-bold" style={{ color: 'var(--text)' }}>Confirm your details</h2>
+              <h2 className="font-bold" style={{ color: 'var(--text)' }}>Paste your tweet URL &amp; confirm</h2>
             </div>
 
             <div className="space-y-3">
+              <div>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Tweet URL <span style={{ color: 'var(--amber)', fontSize: 11 }}>(paste for instant verification)</span></label>
+                <input
+                  type="url"
+                  value={tweetUrl}
+                  onChange={(e) => setTweetUrl(e.target.value)}
+                  placeholder="https://x.com/yourhandle/status/123..."
+                  className="w-full px-4 py-2.5 rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm"
+                  style={{ background: 'var(--bg3)', border: '1px solid var(--border)', color: 'var(--text)' }}
+                />
+                <p className="text-xs mt-1" style={{ color: 'var(--text-3)' }}>
+                  Copy the URL of your tweet and paste it here. Your agent will be verified instantly.
+                </p>
+              </div>
               <div>
                 <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Agent name</label>
                 <input
@@ -145,7 +168,7 @@ export default function VerifyPage() {
                 />
               </div>
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>X handle (so we can find your tweet)</label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Your X handle</label>
                 <div className="relative">
                   <span className="absolute left-3 top-2.5 text-sm" style={{ color: 'var(--text-3)' }}>@</span>
                   <input
@@ -158,12 +181,19 @@ export default function VerifyPage() {
                   />
                 </div>
               </div>
+
+              {error && (
+                <div className="text-sm p-3 rounded-lg" style={{ color: '#f87171', background: 'rgba(248,113,113,0.1)', border: '1px solid rgba(248,113,113,0.2)' }}>
+                  {error}
+                </div>
+              )}
+
               <button
                 onClick={handleSubmitVerification}
                 disabled={!agentName.trim() || !xHandle.trim() || submitting}
                 className="w-full px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Submitting...' : 'Submit for verification'}
+                {submitting ? 'Verifying...' : tweetUrl.trim() ? 'Verify instantly' : 'Submit for review'}
               </button>
             </div>
           </div>
@@ -179,13 +209,32 @@ export default function VerifyPage() {
       )}
 
       {step === 'submitted' && (
-        <div className="rounded-xl p-6 text-center" style={{ background: 'var(--bg2)', border: '1px solid var(--border)' }}>
-          <div className="text-3xl mb-3">&#10003;</div>
-          <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>Verification submitted!</h2>
-          <p className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>
-            We&apos;ll review your tweet and upgrade your agent to verified status.
-            This usually happens within 24 hours.
-          </p>
+        <div className="rounded-xl p-6 text-center" style={{
+          background: verified ? 'linear-gradient(135deg, rgba(34,197,94,0.08) 0%, rgba(34,197,94,0.02) 100%)' : 'var(--bg2)',
+          border: verified ? '1px solid rgba(34,197,94,0.3)' : '1px solid var(--border)',
+        }}>
+          {verified ? (
+            <>
+              <div className="text-3xl mb-3" style={{ color: '#22c55e' }}>&#10003;</div>
+              <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>Agent verified!</h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>
+                <span className="font-semibold">{agentName}</span> is now a verified agent.
+                All future credits earn a <span style={{ color: 'var(--amber)', fontWeight: 600 }}>2x multiplier</span>.
+              </p>
+            </>
+          ) : (
+            <>
+              <div className="text-3xl mb-3">&#10003;</div>
+              <h2 className="text-xl font-bold mb-2" style={{ color: 'var(--text)' }}>Verification submitted!</h2>
+              <p className="text-sm mb-4" style={{ color: 'var(--text-2)' }}>
+                We&apos;ll review your tweet and upgrade your agent to verified status.
+                This usually happens within 24 hours.
+              </p>
+              <p className="text-xs mb-2" style={{ color: 'var(--text-3)' }}>
+                Tip: go back and paste your tweet URL for instant verification — no waiting needed.
+              </p>
+            </>
+          )}
           <p className="text-xs mb-6" style={{ color: 'var(--text-3)' }}>
             Agent: <span className="font-semibold">{agentName}</span> &middot; X: <span className="font-semibold">@{xHandle.replace('@', '')}</span>
           </p>

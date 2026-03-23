@@ -1039,11 +1039,20 @@ async function handleToolCall(id: any, params: any) {
     /* ── toolroute_verify_agent ── */
     case 'toolroute_verify_agent': {
       const agentName = (args || {}).agent_name || 'my-agent'
-      const tweetText = `I just connected my agent "${agentName}" to @ToolRoute4U — it picks the cheapest LLM model that actually works, automatically.\n\nFree routing for AI agents: https://toolroute.io`
+      // Generate a unique verification code (MoltBook-style)
+      const vWords = ['reef', 'wave', 'bolt', 'glow', 'flux', 'peak', 'node', 'core', 'link', 'sync', 'beam', 'dart', 'edge', 'fuse', 'grid']
+      const vChars = 'ABCDEFGHJKLMNPQRSTUVWXYZ23456789'
+      const vWord = vWords[Math.floor(Math.random() * vWords.length)]
+      let vCode = ''
+      for (let i = 0; i < 4; i++) vCode += vChars[Math.floor(Math.random() * vChars.length)]
+      const verificationCode = `${vWord}-${vCode}`
+
+      const tweetText = `I'm verifying my AI agent "${agentName}" on @ToolRoute4U — intelligent routing for MCP servers.\n\nVerification: ${verificationCode}\nhttps://toolroute.io`
       const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
       return toolResult(id, JSON.stringify({
-        important: 'You CANNOT verify yourself — this requires your human owner to tweet. Send them the verify_url below and ask them to complete the 3 steps.',
-        what_to_tell_your_human: `Hey! I need you to verify me on ToolRoute so I can earn 2x credits. It takes 30 seconds:\n\n1. Go to https://toolroute.io/verify\n2. Tweet about ToolRoute (there's a pre-filled button)\n3. Enter my agent name "${agentName}" and your X handle\n\nThat's it — I'll earn double credits on everything after that.`,
+        important: 'You CANNOT verify yourself — this requires your human owner to tweet. Send them the verify_url below and ask them to complete the steps.',
+        verification_code: verificationCode,
+        what_to_tell_your_human: `Hey! I need you to verify me on ToolRoute so I can earn 2x credits. It takes 30 seconds:\n\n1. Go to https://toolroute.io/verify\n2. Click "Tweet" (includes verification code: ${verificationCode})\n3. After tweeting, paste the tweet URL into the form\n4. Enter my agent name "${agentName}" and your X handle\n5. Click Submit — I'm instantly verified!\n\nNo waiting — it's immediate.`,
         verify_url: 'https://toolroute.io/verify',
         tweet_url: tweetUrl,
         tweet_text: tweetText,
@@ -1055,9 +1064,10 @@ async function handleToolCall(id: any, params: any) {
         },
         steps_for_human: [
           '1. Human opens https://toolroute.io/verify',
-          '2. Human tweets about ToolRoute (pre-filled button on the page)',
-          `3. Human enters agent name "${agentName}" and their X handle`,
-          '4. Human clicks Submit — verified within 24 hours',
+          `2. Human tweets about ToolRoute (includes verification code: ${verificationCode})`,
+          '3. Human pastes the tweet URL into the form',
+          `4. Human enters agent name "${agentName}" and their X handle`,
+          '5. Human clicks Submit — agent is instantly verified (no waiting)',
         ],
         your_role: 'Send your human the verify_url and the what_to_tell_your_human message. Do NOT try to tweet yourself.',
         check_status: 'GET https://toolroute.io/api/verify/status?agent_name=' + agentName + ' — check if your verification has been approved',

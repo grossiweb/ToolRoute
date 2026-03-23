@@ -1,0 +1,41 @@
+{
+  "permissions": {
+    "allow": [
+      "Bash(npx tsc:*)",
+      "mcp__Claude_Preview__preview_start",
+      "Read(//c/Users/stefa/OneDrive/Documents/Grossi Consulting/NeoSkill/node_modules/.bin/**)",
+      "Read(//c/Users/stefa/OneDrive/Documents/Grossi Consulting/NeoSkill/node_modules/next/dist/bin/**)",
+      "WebFetch(domain:www.moltbook.com)",
+      "Bash(grep -n \"case ''toolroute_register''\" \"/c/Users/stefa/OneDrive/Documents/Grossi Consulting/NeoSkill/.claude/worktrees/unruffled-franklin/src/app/api/mcp/route.ts\")",
+      "Bash(ls -la src/app/submit*)",
+      "Bash(for file:*)",
+      "Bash(do echo:*)",
+      "Read(//c/Users/stefa/OneDrive/Documents/Grossi Consulting/NeoSkill/.claude/worktrees/unruffled-franklin/**)",
+      "Bash(done)",
+      "Bash(grep -r \"agent.*tweet\\\\|you.*tweet\" '/c/Users/stefa/OneDrive/Documents/Grossi Consulting/NeoSkill/.claude/worktrees/unruffled-franklin/src/app/api/' --include=*.ts)",
+      "Bash(grep -A10 \"case ''initialize''\" \"/c/Users/stefa/OneDrive/Documents/Grossi Consulting/NeoSkill/.claude/worktrees/unruffled-franklin/src/app/api/mcp/route.ts\")",
+      "Bash(gh pr:*)",
+      "Bash(python -m json.tool)",
+      "Bash(curl -s -X POST https://toolroute.io/api/route -H 'Content-Type: application/json' -d '{\"\"\"\"task\"\"\"\": \"\"\"\"write a comment on an agent forum\"\"\"\"}')",
+      "Bash(curl -s -X POST https://toolroute.io/api/route -H 'Content-Type: application/json' -d '{\"\"\"\"task\"\"\"\": \"\"\"\"scrape competitor pricing data\"\"\"\"}')",
+      "Bash(curl -s -X POST https://toolroute.io/api/route -H 'Content-Type: application/json' -d '{\"\"\"\"task\"\"\"\": \"\"\"\"draft an email to a client about project status\"\"\"\"}')",
+      "Bash(curl -s -X POST https://toolroute.io/api/route -H 'Content-Type: application/json' -d '{\"\"\"\"task\"\"\"\": \"\"\"\"summarize a PDF document\"\"\"\"}')",
+      "Bash(curl -s \"https://toolroute.io/api/skills?limit=1\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills?limit=100\")",
+      "Bash(curl -s \"https://toolroute.io/api/admin/stats\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills?limit=100&q=\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills?q=slack\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills?q=gmail\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills?q=google-calendar\")",
+      "Bash(curl -s \"https://toolroute.io/api/skills?q=calendar\")",
+      "Bash(curl -s \"https://toolroute.io/api/challenges?limit=5\")",
+      "Bash(curl -s -X POST https://toolroute.io/api/challenges/submit)",
+      "Bash(curl -s -X GET https://toolroute.io/api/challenges/submit)",
+      "Bash(xargs grep:*)",
+      "WebSearch",
+      "WebFetch(domain:moltbook.com)",
+      "WebFetch(domain:o-mega.ai)"
+    ]
+  }
+}
