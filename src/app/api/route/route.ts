@@ -193,28 +193,66 @@ export async function POST(request: NextRequest) {
   }
 
   // Fetch skills with scores
-  let query = supabase
-    .from('skills')
-    .select(`
-      id, slug, canonical_name, short_description, vendor_type,
-      skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score, value_score ),
-      skill_metrics ( github_stars, days_since_last_commit ),
-      skill_cost_models ( monthly_base_cost_usd, pricing_model )
-    `)
-    .eq('status', 'active')
-    .not('skill_scores', 'is', null)
-    .limit(50)
+  // Strategy: if we resolved a workflow, fetch skills for that workflow first.
+  // This avoids the "top 50 skills" trap where relevant skills get excluded.
+  let candidates: any[] = []
+  let junctionFiltered = false
 
-  const { data: skills, error: skillsError } = await query
+  if (resolvedWorkflow) {
+    // First: get skill IDs mapped to this workflow
+    const { data: workflowSkillIds } = await supabase
+      .from('skill_workflows')
+      .select('skill_id, workflows!inner(slug)')
+      .eq('workflows.slug', resolvedWorkflow)
 
-  if (skillsError) {
-    return NextResponse.json({
-      error: 'Database query failed',
-      detail: skillsError.message,
-    }, { status: 500 })
+    if (workflowSkillIds && workflowSkillIds.length > 0) {
+      const matchedIds = workflowSkillIds.map((ws: any) => ws.skill_id)
+
+      // Fetch full details for these specific skills
+      const { data: workflowSkills } = await supabase
+        .from('skills')
+        .select(`
+          id, slug, canonical_name, short_description, vendor_type,
+          skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score, value_score ),
+          skill_metrics ( github_stars, days_since_last_commit ),
+          skill_cost_models ( monthly_base_cost_usd, pricing_model )
+        `)
+        .eq('status', 'active')
+        .not('skill_scores', 'is', null)
+        .in('id', matchedIds)
+
+      if (workflowSkills && workflowSkills.length > 0) {
+        candidates = workflowSkills
+        junctionFiltered = true
+      }
+    }
   }
 
-  if (!skills || skills.length === 0) {
+  // Fallback: if no workflow or no workflow-specific skills found, fetch all
+  if (candidates.length === 0) {
+    const { data: allSkills, error: skillsError } = await supabase
+      .from('skills')
+      .select(`
+        id, slug, canonical_name, short_description, vendor_type,
+        skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score, value_score ),
+        skill_metrics ( github_stars, days_since_last_commit ),
+        skill_cost_models ( monthly_base_cost_usd, pricing_model )
+      `)
+      .eq('status', 'active')
+      .not('skill_scores', 'is', null)
+      .limit(50)
+
+    if (skillsError) {
+      return NextResponse.json({
+        error: 'Database query failed',
+        detail: skillsError.message,
+      }, { status: 500 })
+    }
+
+    candidates = allSkills || []
+  }
+
+  if (candidates.length === 0) {
     return NextResponse.json({
       recommended_skill: null,
       confidence: 0,
@@ -223,7 +261,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Filter by trust floor
-  const filtered = skills.filter((s: any) => {
+  const filtered = candidates.filter((s: any) => {
     const trust = s.skill_scores?.trust_score ?? 0
     return trust >= trust_floor
   })
@@ -236,24 +274,7 @@ export async function POST(request: NextRequest) {
       })
     : filtered
 
-  let candidates = costFiltered.length > 0 ? costFiltered : filtered
-
-  // If we resolved a workflow, filter by junction table (skill_workflows)
-  if (resolvedWorkflow) {
-    const { data: workflowSkillIds } = await supabase
-      .from('skill_workflows')
-      .select('skill_id, workflows!inner(slug)')
-      .eq('workflows.slug', resolvedWorkflow)
-
-    if (workflowSkillIds && workflowSkillIds.length > 0) {
-      const matchedIds = new Set(workflowSkillIds.map((ws: any) => ws.skill_id))
-      const workflowFiltered = candidates.filter((s: any) => matchedIds.has(s.id))
-      if (workflowFiltered.length > 0) {
-        candidates = workflowFiltered
-      }
-      // If no candidates survive the junction filter, fall back to unfiltered list
-    }
-  }
+  candidates = costFiltered.length > 0 ? costFiltered : filtered
 
   // Sort by priority mode
   const sorted = [...candidates].sort((a: any, b: any) => {
@@ -291,7 +312,7 @@ export async function POST(request: NextRequest) {
 
   // Adjust confidence: boost when we have junction-table matches and outcome data
   let adjustedConfidence = confidence
-  if (resolvedWorkflow && candidates.length < (costFiltered.length > 0 ? costFiltered : filtered).length) {
+  if (junctionFiltered) {
     // Junction table narrowed the results — boost confidence
     adjustedConfidence = Math.min(0.97, adjustedConfidence + 0.05)
   }
@@ -370,7 +391,7 @@ export async function POST(request: NextRequest) {
       resolved_workflow: resolvedWorkflow,
       priority_mode: priority,
       candidates_evaluated: candidates.length,
-      junction_table_filtered: resolvedWorkflow ? true : false,
+      junction_table_filtered: junctionFiltered,
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
       match_method: matchMethod,
