@@ -10,6 +10,11 @@ interface SidebarProps {
 
 const WORKFLOWS = [
   { label: 'All Workflows', slug: '' },
+  { label: 'Email', slug: 'communication-email' },
+  { label: 'Messaging', slug: 'communication-messaging' },
+  { label: 'Social & Forums', slug: 'social-forum-engagement' },
+  { label: 'Document Processing', slug: 'document-processing-summarization' },
+  { label: 'Calendar & Scheduling', slug: 'executive-assistant-productivity' },
   { label: 'Developer Workflow', slug: 'developer-workflow-code-management' },
   { label: 'Research & Intelligence', slug: 'research-competitive-intelligence' },
   { label: 'Sales & Outreach', slug: 'sales-research-outreach' },
@@ -26,7 +31,6 @@ const WORKFLOWS = [
   { label: 'Security Operations', slug: 'security-operations' },
   { label: 'Design-to-Code', slug: 'design-to-code-workflow' },
   { label: 'Knowledge Management', slug: 'knowledge-management' },
-  { label: 'Productivity', slug: 'executive-assistant-productivity' },
 ]
 
 const INDUSTRIES = [
@@ -105,7 +109,8 @@ export function Sidebar({ context = 'default' }: SidebarProps) {
     <>
       {/* Mobile toggle */}
       <button
-        className="md:hidden flex items-center gap-2 text-sm text-gray-600 font-medium mb-4"
+        className="md:hidden flex items-center gap-2 text-sm font-medium mb-4"
+        style={{ color: 'var(--text-2)' }}
         onClick={() => setMobileOpen(!mobileOpen)}
       >
         <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -141,10 +146,10 @@ export function Sidebar({ context = 'default' }: SidebarProps) {
 function SidebarSection({ title, children }: { title: string; children: React.ReactNode }) {
   return (
     <div className="mb-6">
-      <h4 className="text-[10px] font-bold uppercase tracking-wider text-gray-400 mb-3">
+      <h4 style={{ fontSize: 10, fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-3)', marginBottom: 12 }}>
         {title}
       </h4>
-      <ul className="flex flex-col gap-1">
+      <ul style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
         {children}
       </ul>
     </div>
@@ -165,11 +170,17 @@ function SidebarItem({
       <Link
         href={href}
         scroll={false}
-        className={`block text-sm px-2 py-1.5 rounded-md transition-colors ${
-          active
-            ? 'bg-brand-light text-brand font-semibold'
-            : 'text-gray-600 hover:text-brand hover:bg-gray-50'
-        }`}
+        style={{
+          display: 'block',
+          fontSize: 13,
+          padding: '6px 10px',
+          borderRadius: 6,
+          transition: 'all .15s',
+          textDecoration: 'none',
+          fontWeight: active ? 600 : 400,
+          color: active ? 'var(--amber)' : 'var(--text-2)',
+          background: active ? 'rgba(251,191,36,0.1)' : 'transparent',
+        }}
       >
         {label}
       </Link>
@@ -216,6 +227,12 @@ const CHALLENGE_CATEGORIES = [
   { label: 'Content', slug: 'content' },
   { label: 'Sales', slug: 'sales' },
   { label: 'Data', slug: 'data' },
+  { label: 'Agent — Web', slug: 'agent-web' },
+  { label: 'Agent — Code', slug: 'agent-code' },
+  { label: 'Agent — Data', slug: 'agent-data' },
+  { label: 'Agent — Communication', slug: 'agent-communication' },
+  { label: 'Agent — Research', slug: 'agent-research' },
+  { label: 'Agent — Ops', slug: 'agent-ops' },
 ]
 
 const CHALLENGE_DIFFICULTIES = [
