@@ -5,7 +5,7 @@
  */
 
 // Pre-computed workflow descriptions for embedding comparison
-// All 17 workflows from the database are represented here.
+// All 21 workflows from the database are represented here.
 const WORKFLOW_DESCRIPTIONS: Record<string, string> = {
   'research-competitive-intelligence': 'Research competitors, scrape websites, crawl web pages, extract data from URLs, gather competitive intelligence, web search, find pricing information, search the internet, look up information online',
   'developer-workflow-code-management': 'Write code, manage git repositories, create pull requests, review code, refactor, debug, deploy, continuous integration, GitHub GitLab operations, software development, programming, version control',
@@ -23,7 +23,11 @@ const WORKFLOW_DESCRIPTIONS: Record<string, string> = {
   'hr-recruiting-automation': 'Recruiting, hiring, candidates, resumes, interviews, Greenhouse, Lever, BambooHR, onboarding, job postings, applicant tracking, talent acquisition, HR management, performance reviews',
   'ecommerce-operations': 'Shopify, WooCommerce, Amazon seller, ecommerce, product listings, inventory management, order fulfillment, shopping cart, checkout, online store, product catalog, shipping, returns',
   'security-operations': 'Security scanning, vulnerability detection, Snyk, SonarQube, Trivy, penetration testing, security audits, compliance checks, threat detection, CVE, patching, code scanning, dependency checks',
-  'executive-assistant-productivity': 'Send email, draft email, compose messages, schedule meetings, calendar management, Google Calendar, Gmail, Slack messages, Discord, Microsoft Teams, Zoom calls, reminders, task management, Todoist, Calendly, appointments, SMS, Twilio, phone calls, notifications, forum comments, social media posting, summarize documents, PDF summaries, meeting notes, communication, messaging',
+  'communication-email': 'Send email, draft email, compose email, reply to email, forward email, inbox triage, Gmail, SendGrid, email outreach, cold email, newsletter, email automation, mailbox management',
+  'communication-messaging': 'Send Slack message, Discord message, Microsoft Teams chat, post in channel, direct message, group chat, SMS text message, Twilio phone call, real-time messaging, notifications, team communication',
+  'social-forum-engagement': 'Post comment on forum, write social media post, engage in discussion thread, community participation, online forum, reply to thread, social engagement, community interaction',
+  'document-processing-summarization': 'Summarize PDF document, extract text from document, parse PDF, meeting notes summary, document analysis, text extraction, transcript processing, digest creation, action items from notes',
+  'executive-assistant-productivity': 'Schedule meetings, calendar management, Google Calendar, Zoom calls, reminders, task management, Todoist, Calendly, appointments, booking, agenda planning, time management',
 }
 
 // Cache for workflow embeddings (computed once per cold start, reused)

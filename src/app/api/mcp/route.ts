@@ -722,10 +722,11 @@ async function handleToolCall(id: any, params: any) {
       }
 
       if (vertical) {
-        const { data: vSkills } = await supabase
-          .from('skill_verticals')
-          .select('skill_id, verticals!inner(slug)')
-          .eq('verticals.slug', vertical)
+        // Two-step lookup to avoid PostgREST embedded filter issues
+        const { data: vtRecord } = await supabase.from('verticals').select('id').eq('slug', vertical).maybeSingle()
+        const { data: vSkills } = vtRecord
+          ? await supabase.from('skill_verticals').select('skill_id').eq('vertical_id', vtRecord.id)
+          : { data: null }
         if (vSkills && vSkills.length > 0) {
           const ids = vSkills.map((vs: any) => vs.skill_id)
           dbQuery = dbQuery.in('id', ids)
