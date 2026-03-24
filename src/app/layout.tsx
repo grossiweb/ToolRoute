@@ -6,21 +6,21 @@ import { NavBar } from '@/components/NavBar'
 import { ThemeScript } from '@/components/ThemeScript'
 
 export const metadata: Metadata = {
-  title: 'ToolRoute — Best output, best price, every task',
-  description: 'ToolRoute picks the best MCP server and cheapest LLM model for any task — automatically, based on real execution data. Free for AI agents.',
+  title: 'ToolRoute — Best results. Optimal price. Fastest turnaround.',
+  description: 'ToolRoute routes your AI agent to the best MCP server and LLM model for every task — best results, optimal price, fastest turnaround. Scored on real execution data.',
   metadataBase: new URL('https://toolroute.io'),
   openGraph: {
-    title: 'ToolRoute — Best output, best price, every task',
-    description: 'Stop hardcoding which LLM your agent uses. ToolRoute picks the best MCP server + cheapest model for every task — based on real execution data, not vibes.',
+    title: 'ToolRoute — Best results. Optimal price. Fastest turnaround.',
+    description: 'Stop guessing which tool or model to use. ToolRoute picks the best MCP server + LLM for every task — best results, optimal price, fastest turnaround.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
-    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — Best output, best price, every task' }],
+    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — Best results. Optimal price. Fastest turnaround.' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ToolRoute — Best output, best price, every task',
-    description: 'Stop hardcoding which LLM your agent uses. ToolRoute picks the best MCP server + cheapest model for every task — based on real execution data, not vibes.',
+    title: 'ToolRoute — Best results. Optimal price. Fastest turnaround.',
+    description: 'Stop guessing which tool or model to use. ToolRoute picks the best MCP server + LLM for every task — best results, optimal price, fastest turnaround.',
     images: ['/api/og?title=ToolRoute&type=server'],
   },
 }
