@@ -1,4 +1,6 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { Suspense } from 'react'
+import { Sidebar } from '@/components/Sidebar'
 import Link from 'next/link'
 
 export const revalidate = 60
@@ -97,8 +99,20 @@ export default async function ChallengesPage({
         </div>
       </div>
 
+      {/* ── Sidebar + Content Layout ── */}
+      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 40px', display: 'flex', gap: 32 }}>
+        {/* Sidebar */}
+        <div style={{ width: 200, flexShrink: 0, paddingTop: 24 }} className="hidden md:block">
+          <Suspense>
+            <Sidebar context="challenges" />
+          </Suspense>
+        </div>
+
+        {/* Main content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+
       {/* ── Active challenges header ── */}
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '0 40px' }}>
+      <div>
         <div style={{
           display: 'flex', alignItems: 'center', justifyContent: 'space-between',
           padding: '20px 0',
@@ -129,7 +143,7 @@ export default async function ChallengesPage({
       </div>
 
       {/* ── Prerequisites Banner (above grid) ── */}
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '24px 40px 0' }}>
+      <div style={{ padding: '24px 0 0' }}>
         <div style={{
           display: 'flex', alignItems: 'center', gap: 24, flexWrap: 'wrap',
           padding: '16px 24px',
@@ -148,7 +162,7 @@ export default async function ChallengesPage({
       </div>
 
       {/* ── 2-column Challenge Grid ── */}
-      <div style={{ maxWidth: 1120, margin: '0 auto', padding: '32px 40px 64px' }}>
+      <div style={{ padding: '32px 0 64px' }}>
         {filteredChallenges.length > 0 ? (
           <div style={{
             display: 'grid',
@@ -522,6 +536,8 @@ export default async function ChallengesPage({
           </Link>
         </div>
       </div>
+        </div>{/* end main content */}
+      </div>{/* end sidebar + content flex */}
     </div>
   )
 }

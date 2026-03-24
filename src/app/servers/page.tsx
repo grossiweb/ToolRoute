@@ -1,6 +1,7 @@
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { Suspense } from 'react'
 import { SearchBar } from '@/components/SearchBar'
+import { Sidebar } from '@/components/Sidebar'
 import { formatScore } from '@/lib/scoring'
 import { Metadata } from 'next'
 import Link from 'next/link'
@@ -17,14 +18,6 @@ export const metadata: Metadata = {
   description: 'Browse 200+ MCP servers ranked by real execution benchmarks. Find the best tool for any agent task.',
 }
 
-const CATEGORIES = [
-  { label: 'All', value: '', emoji: '' },
-  { label: 'Web & Search', value: 'web-search', emoji: '\uD83C\uDF10' },
-  { label: 'Files & Code', value: 'files-code', emoji: '\uD83D\uDCC1' },
-  { label: 'Databases', value: 'databases', emoji: '\uD83D\uDDC4\uFE0F' },
-  { label: 'Communication', value: 'communication', emoji: '\uD83D\uDCE7' },
-  { label: 'CRM & Sales', value: 'crm', emoji: '\uD83C\uDFE2' },
-]
 
 export default async function ServersPage({
   searchParams,
@@ -177,49 +170,23 @@ export default async function ServersPage({
         </p>
       </div>
 
-      {/* ── Filter Bar ── */}
-      <div style={{
-        display: 'flex',
-        alignItems: 'center',
-        gap: 8,
-        padding: '24px 0',
-        borderBottom: '1px solid var(--border)',
-        flexWrap: 'wrap',
-      }}>
-        {CATEGORIES.map((cat) => (
-          <Link
-            key={cat.value}
-            href={cat.value ? `/servers?workflow=${cat.value}` : '/servers'}
-            className="filter-pill"
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              gap: 6,
-              padding: '8px 18px',
-              borderRadius: 100,
-              border: '1px solid ' + (activeCategory === cat.value ? 'var(--amber)' : 'var(--border)'),
-              background: activeCategory === cat.value ? 'rgba(251,191,36,0.1)' : 'var(--bg2)',
-              color: activeCategory === cat.value ? 'var(--amber)' : 'var(--text-2)',
-              fontFamily: 'var(--sans)',
-              fontSize: 13,
-              fontWeight: 500,
-              textDecoration: 'none',
-              transition: 'all .2s',
-              cursor: 'pointer',
-            }}
-          >
-            {cat.emoji && <span>{cat.emoji}</span>}
-            {cat.label}
-          </Link>
-        ))}
-
-        {/* Search on the right */}
-        <div style={{ marginLeft: 'auto', minWidth: 220, maxWidth: 300 }}>
+      {/* ── Sidebar + Content Layout ── */}
+      <div style={{ display: 'flex', gap: 32, paddingTop: 32 }}>
+        {/* Sidebar */}
+        <div style={{ width: 200, flexShrink: 0 }} className="hidden md:block">
           <Suspense>
-            <SearchBar basePath="/servers" placeholder="Search servers..." />
+            <Sidebar context="default" />
           </Suspense>
         </div>
-      </div>
+
+        {/* Main content */}
+        <div style={{ flex: 1, minWidth: 0 }}>
+          {/* Search bar */}
+          <div style={{ marginBottom: 24, maxWidth: 400 }}>
+            <Suspense>
+              <SearchBar basePath="/servers" placeholder="Search servers..." />
+            </Suspense>
+          </div>
 
       {searchQuery && (
         <p style={{ fontSize: 13, color: 'var(--text-3)', marginTop: 16, fontFamily: 'var(--mono)' }}>
@@ -614,6 +581,8 @@ export default async function ServersPage({
           <span style={{ fontSize: 16 }}>&rarr;</span>
         </Link>
       </section>
+        </div>{/* end main content */}
+      </div>{/* end sidebar + content flex */}
     </div>
   )
 }
