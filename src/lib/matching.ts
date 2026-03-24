@@ -2,7 +2,7 @@
  * Shared task → workflow matching logic
  * Single source of truth — used by both /api/route and /api/mcp
  *
- * All 17 workflows from the database are represented here.
+ * All 21 workflows from the database are represented here.
  * Keywords are scored by length (longer = more specific = higher weight).
  */
 
@@ -105,18 +105,38 @@ export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
     'threat', 'cve', 'patch', 'security assessment',
     'code scanning', 'dependency check',
   ],
+  'communication-email': [
+    'email', 'gmail', 'send email', 'draft email', 'compose email',
+    'inbox', 'sendgrid', 'mail', 'forward email', 'reply email',
+    'email triage', 'email draft', 'newsletter', 'cold email',
+    'email outreach', 'mailbox',
+  ],
+  'communication-messaging': [
+    'slack', 'discord', 'teams', 'message', 'chat',
+    'send message', 'post message', 'dm', 'direct message',
+    'channel', 'twilio', 'sms', 'text message',
+    'phone call', 'notification', 'communicate',
+    'microsoft teams', 'group chat',
+  ],
+  'social-forum-engagement': [
+    'forum', 'comment', 'social', 'post on', 'thread',
+    'discussion', 'community', 'social media', 'engage',
+    'write a comment', 'forum post', 'social post',
+    'online community', 'reply to thread',
+  ],
+  'document-processing-summarization': [
+    'summarize', 'summary', 'pdf', 'document', 'meeting notes',
+    'extract text', 'parse document', 'transcript',
+    'summarize document', 'read pdf', 'pdf extraction',
+    'document analysis', 'text extraction', 'digest',
+    'note taking', 'action items',
+  ],
   'executive-assistant-productivity': [
-    'email', 'calendar', 'schedule', 'meeting', 'reminder',
-    'slack', 'message', 'chat', 'teams', 'discord',
-    'gmail', 'send email', 'draft email', 'compose email',
+    'calendar', 'schedule', 'meeting', 'reminder',
     'schedule meeting', 'book meeting', 'google calendar',
     'todoist', 'task list', 'to-do', 'organize',
-    'zoom', 'video call', 'notification', 'communicate',
-    'send message', 'post message', 'reply', 'forward',
-    'social', 'forum', 'comment', 'discussion',
-    'twilio', 'sms', 'text message', 'phone call',
-    'calendly', 'appointment', 'booking',
-    'summarize', 'summary', 'pdf', 'document',
+    'zoom', 'video call', 'calendly', 'appointment', 'booking',
+    'agenda', 'planner', 'time management',
   ],
 }
 
