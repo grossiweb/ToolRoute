@@ -25,7 +25,7 @@ function VerifyContent() {
     }
   }, [codeFromUrl])
 
-  const tweetText = `Why are you still hardcoding which LLM your agent uses?\n\nToolRoute picks the best MCP server + cheapest model for every task — based on real execution data, not vibes.\n\nVerification: ${verificationCode}\n@ToolRoute4U https://toolroute.io`
+  const tweetText = `Why are you still hardcoding which LLM your agent uses?\n\nToolRoute finds the best tool for every task — highest quality output, fastest speed, lowest cost. All scored on real results.\n\nVerification: ${verificationCode}\n@ToolRoute4U https://toolroute.io`
 
   const tweetIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
 
