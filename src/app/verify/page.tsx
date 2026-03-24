@@ -191,7 +191,7 @@ function VerifyContent() {
 
             <div className="space-y-3">
               <div>
-                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Tweet URL <span style={{ color: 'var(--amber)', fontSize: 11 }}>(for instant verification)</span></label>
+                <label className="block text-sm font-medium mb-1" style={{ color: 'var(--text-2)' }}>Tweet URL <span style={{ color: '#f87171', fontSize: 11 }}>(required)</span></label>
                 <input
                   type="url"
                   value={tweetUrl}
@@ -224,10 +224,10 @@ function VerifyContent() {
 
               <button
                 onClick={handleClaim}
-                disabled={!xHandle.trim() || submitting}
+                disabled={!xHandle.trim() || !tweetUrl.trim() || submitting}
                 className="w-full px-5 py-2.5 rounded-lg bg-brand text-white text-sm font-semibold hover:bg-brand-dark transition-colors disabled:opacity-50 disabled:cursor-not-allowed"
               >
-                {submitting ? 'Verifying...' : tweetUrl.trim() ? 'Verify instantly' : 'Submit for review'}
+                {submitting ? 'Verifying...' : 'Verify instantly'}
               </button>
             </div>
           </div>

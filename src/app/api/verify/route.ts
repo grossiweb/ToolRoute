@@ -17,14 +17,18 @@ function isValidTweetUrl(url: string): boolean {
 
 /**
  * POST /api/verify
- * Claim a verification code and link a human's X account to an agent.
+ * Human-only endpoint. Claim a verification code by tweeting.
+ *
+ * SECURITY:
+ * - Tweet URL is REQUIRED — no "pending" submissions without proof
+ * - Referer must be toolroute.io (blocks direct agent API calls)
+ * - Each tweet URL can only be used once
  *
  * Flow:
- * 1. Agent calls toolroute_verify_agent → code is created in DB tied to agent_name
- * 2. Human visits /verify?code=XXX → tweets → pastes tweet URL → submits here
- * 3. This endpoint looks up the code → finds the agent → upgrades trust_tier
- *
- * The verification_code is the bridge between the agent and the human.
+ * 1. Agent calls toolroute_verify_agent or POST /api/verify/initiate → code created in DB
+ * 2. Agent sends claim_url to human owner
+ * 3. Human visits /verify?code=XXX → tweets → pastes tweet URL → submits HERE
+ * 4. This endpoint validates → upgrades agent trust_tier
  */
 export async function POST(req: NextRequest) {
   const rlKey = getRateLimitKey(req)
@@ -34,6 +38,23 @@ export async function POST(req: NextRequest) {
   }
 
   try {
+    // Block direct API calls from agents — must come from the verify page
+    const referer = req.headers.get('referer') || ''
+    const origin = req.headers.get('origin') || ''
+    const isFromVerifyPage = referer.includes('toolroute.io/verify') ||
+                              referer.includes('localhost:3000/verify') ||
+                              origin.includes('toolroute.io') ||
+                              origin.includes('localhost:3000')
+
+    if (!isFromVerifyPage) {
+      return NextResponse.json({
+        error: 'This endpoint can only be used from the verification page.',
+        action: 'Send your human owner to the claim URL. They must complete verification from their browser.',
+        claim_page: 'https://toolroute.io/verify?code=YOUR_CODE',
+        why: 'Verification proves a real human owns this agent. Agents cannot verify themselves.',
+      }, { status: 403 })
+    }
+
     const body = await req.json()
     const { verification_code, x_handle, tweet_url } = body
 
@@ -55,6 +76,18 @@ export async function POST(req: NextRequest) {
     }
     if (!x_handle) {
       return NextResponse.json({ error: 'x_handle is required — your X/Twitter handle.' }, { status: 400 })
+    }
+    if (!tweet_url) {
+      return NextResponse.json({
+        error: 'tweet_url is required for verification. You must tweet first, then paste the URL.',
+        hint: 'Click the "Tweet this" button on the verify page, then paste the URL of your tweet.',
+      }, { status: 400 })
+    }
+    if (!isValidTweetUrl(tweet_url)) {
+      return NextResponse.json({
+        error: 'Invalid tweet URL. Must be a valid x.com or twitter.com status URL.',
+        example: 'https://x.com/yourhandle/status/1234567890',
+      }, { status: 400 })
     }
 
     const cleanHandle = x_handle.trim().replace('@', '')
@@ -81,76 +114,74 @@ export async function POST(req: NextRequest) {
     if (!verReq) {
       return NextResponse.json({
         error: 'Verification code not found or already used.',
-        hint: 'The code is generated when your agent calls toolroute_verify_agent. Each code can only be used once.',
+        hint: 'The code is generated when your agent calls toolroute_verify_agent or POST /api/verify/initiate. Each code can only be used once.',
       }, { status: 404 })
     }
 
     const agentName = verReq.agent_name
 
-    // Validate tweet URL if provided
-    const hasTweetUrl = tweet_url && isValidTweetUrl(tweet_url)
+    // Check tweet URL hasn't been used for another verification
+    const { data: existingTweet } = await supabase
+      .from('verification_requests')
+      .select('id')
+      .eq('tweet_url', tweet_url)
+      .eq('status', 'approved')
+      .maybeSingle()
 
-    // Update the verification request
+    if (existingTweet) {
+      return NextResponse.json({
+        error: 'This tweet URL has already been used for a verification. Please post a new tweet.',
+      }, { status: 409 })
+    }
+
+    // Update the verification request — approved
     await supabase
       .from('verification_requests')
       .update({
         x_handle: cleanHandle,
-        tweet_url: hasTweetUrl ? tweet_url : null,
-        status: hasTweetUrl ? 'approved' : 'pending',
-        reviewed_at: hasTweetUrl ? new Date().toISOString() : null,
-        reviewer_notes: hasTweetUrl ? 'Auto-approved via tweet URL + verification code claim' : null,
+        tweet_url: tweet_url,
+        status: 'approved',
+        reviewed_at: new Date().toISOString(),
+        notes: 'Auto-approved via tweet URL + verification code claim from verify page',
       })
       .eq('id', verReq.id)
 
-    // If tweet URL provided → auto-approve and upgrade agent
-    if (hasTweetUrl) {
-      const { data: agent } = await supabase
-        .from('agent_identities')
-        .select('id, trust_tier')
-        .eq('agent_name', agentName)
-        .maybeSingle()
+    // Upgrade agent trust tier
+    const { data: agent } = await supabase
+      .from('agent_identities')
+      .select('id, trust_tier')
+      .eq('agent_name', agentName)
+      .maybeSingle()
 
-      if (agent) {
-        const upgradeTiers = ['unverified', 'baseline']
-        if (upgradeTiers.includes(agent.trust_tier || 'baseline')) {
-          await supabase
-            .from('agent_identities')
-            .update({ trust_tier: 'trusted' })
-            .eq('id', agent.id)
-        }
-
-        // Fire webhook (fire-and-forget)
-        try {
-          const { notifyAgent } = await import('@/lib/webhooks')
-          notifyAgent(supabase, agent.id, 'verification_approved', {
-            agent_name: agentName,
-            trust_tier: 'trusted',
-            verified_by: `@${cleanHandle}`,
-          }).catch(() => {})
-        } catch { /* optional */ }
+    if (agent) {
+      const upgradeTiers = ['unverified', 'baseline']
+      if (upgradeTiers.includes(agent.trust_tier || 'baseline')) {
+        await supabase
+          .from('agent_identities')
+          .update({ trust_tier: 'trusted' })
+          .eq('id', agent.id)
       }
 
-      console.log(`[VERIFY] Claimed: code=${cleanCode} agent=${agentName} by=@${cleanHandle} tweet=${tweet_url}`)
-
-      return NextResponse.json({
-        status: 'approved',
-        verified: true,
-        agent_name: agentName,
-        human_owner_x_handle: cleanHandle,
-        message: `Agent "${agentName}" is now verified! 2x credits on everything.`,
-        trust_tier: 'trusted',
-      })
+      // Fire webhook (fire-and-forget)
+      try {
+        const { notifyAgent } = await import('@/lib/webhooks')
+        notifyAgent(supabase, agent.id, 'verification_approved', {
+          agent_name: agentName,
+          trust_tier: 'trusted',
+          verified_by: `@${cleanHandle}`,
+        }).catch(() => {})
+      } catch { /* optional */ }
     }
 
-    // No tweet URL — just record the X handle, keep pending
-    console.log(`[VERIFY] Claimed without tweet: code=${cleanCode} agent=${agentName} by=@${cleanHandle}`)
+    console.log(`[VERIFY] Claimed: code=${cleanCode} agent=${agentName} by=@${cleanHandle} tweet=${tweet_url}`)
 
     return NextResponse.json({
-      status: 'pending',
-      verified: false,
+      status: 'approved',
+      verified: true,
       agent_name: agentName,
       human_owner_x_handle: cleanHandle,
-      message: 'Verification submitted. Paste your tweet URL for instant approval, or we\'ll review manually within 24 hours.',
+      message: `Agent "${agentName}" is now verified! 2x credits on everything.`,
+      trust_tier: 'trusted',
     })
   } catch {
     return NextResponse.json({ error: 'Failed to process verification' }, { status: 500 })
@@ -163,12 +194,12 @@ export async function POST(req: NextRequest) {
 export async function GET() {
   return NextResponse.json({
     name: 'Agent Verification — Claim Flow',
-    description: 'Connects a human X account to an agent. The agent initiates verification (gets a code), the human claims it by tweeting.',
+    description: 'Connects a human X account to an agent. The agent initiates, the human completes. Agents CANNOT call this endpoint directly.',
     flow: {
-      step_1: 'Agent calls toolroute_verify_agent (MCP) or POST /api/verify/initiate (REST) → gets a unique verification code stored in DB',
+      step_1: 'Agent calls toolroute_verify_agent (MCP) or POST /api/verify/initiate (REST) → gets a unique verification code',
       step_2: 'Agent sends the claim URL (toolroute.io/verify?code=XXX) to its human owner',
       step_3: 'Human visits the URL → tweets (code is in the tweet) → pastes tweet URL → submits',
-      step_4: 'System looks up the code → finds the agent → upgrades trust_tier to trusted',
+      step_4: 'System validates code + tweet URL → upgrades agent trust_tier to trusted',
       step_5: 'Agent earns 2x credits on everything from now on',
     },
     initiate_via_rest: {
@@ -176,13 +207,12 @@ export async function GET() {
       body: { agent_name: 'your-agent-name' },
       description: 'Use this if you cannot call MCP tools. Same result as toolroute_verify_agent.',
     },
+    important: 'POST /api/verify is human-only. It requires a browser referer from toolroute.io/verify and a valid tweet URL. Agents cannot bypass this.',
     endpoint: 'POST /api/verify',
     required_fields: {
       verification_code: 'string — the code from toolroute_verify_agent (e.g., "reef-A3X9")',
       x_handle: 'string — the human owner\'s X/Twitter handle',
-    },
-    optional_fields: {
-      tweet_url: 'string — paste the tweet URL for instant auto-approval',
+      tweet_url: 'string — REQUIRED — the URL of the tweet containing the verification code',
     },
     verify_page: 'https://toolroute.io/verify?code=YOUR_CODE',
     check_status: 'GET /api/verify/status?agent_name=YOUR_AGENT_NAME',
