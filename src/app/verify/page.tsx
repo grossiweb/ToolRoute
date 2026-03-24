@@ -25,9 +25,7 @@ function VerifyContent() {
     }
   }, [codeFromUrl])
 
-  const tweetText = agentName
-    ? `I'm verifying my AI agent "${agentName}" on @ToolRoute4U — intelligent routing for MCP servers.\n\nVerification: ${verificationCode}\nhttps://toolroute.io`
-    : `I'm verifying my AI agent on @ToolRoute4U — intelligent routing for MCP servers.\n\nVerification: ${verificationCode}\nhttps://toolroute.io`
+  const tweetText = `Why are you still hardcoding which LLM your agent uses?\n\nToolRoute picks the best MCP server + cheapest model for every task — based on real execution data, not vibes.\n\nVerification: ${verificationCode}\n@ToolRoute4U https://toolroute.io`
 
   const tweetIntentUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
 
