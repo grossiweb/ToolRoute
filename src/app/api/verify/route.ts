@@ -155,11 +155,16 @@ export async function GET() {
     name: 'Agent Verification — Claim Flow',
     description: 'Connects a human X account to an agent. The agent initiates verification (gets a code), the human claims it by tweeting.',
     flow: {
-      step_1: 'Agent calls toolroute_verify_agent → gets a unique verification code stored in DB',
+      step_1: 'Agent calls toolroute_verify_agent (MCP) or POST /api/verify/initiate (REST) → gets a unique verification code stored in DB',
       step_2: 'Agent sends the claim URL (toolroute.io/verify?code=XXX) to its human owner',
       step_3: 'Human visits the URL → tweets (code is in the tweet) → pastes tweet URL → submits',
       step_4: 'System looks up the code → finds the agent → upgrades trust_tier to trusted',
       step_5: 'Agent earns 2x credits on everything from now on',
+    },
+    initiate_via_rest: {
+      endpoint: 'POST /api/verify/initiate',
+      body: { agent_name: 'your-agent-name' },
+      description: 'Use this if you cannot call MCP tools. Same result as toolroute_verify_agent.',
     },
     endpoint: 'POST /api/verify',
     required_fields: {
