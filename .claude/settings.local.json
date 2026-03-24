@@ -37,7 +37,8 @@
       "WebFetch(domain:moltbook.com)",
       "WebFetch(domain:o-mega.ai)",
       "Bash(curl -s https://toolroute.io)",
-      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\" \"https://toolroute.io/api/og?title=ToolRoute&type=server\")"
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\" \"https://toolroute.io/api/og?title=ToolRoute&type=server\")",
+      "Bash(curl -s \"https://toolroute.io/api/verify/status?agent_name=claudia\")"
     ]
   }
 }

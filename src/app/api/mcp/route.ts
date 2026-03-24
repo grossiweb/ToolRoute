@@ -1049,15 +1049,17 @@ async function handleToolCall(id: any, params: any) {
       const verificationCode = `${vWord}-${vCode}`
 
       // Store the code in the DB tied to this agent name (this is the claim link)
-      await supabase
+      const { error: insertErr } = await supabase
         .from('verification_requests')
         .insert({
           agent_name: agentName,
-          method: 'x',
           verification_code: verificationCode,
           status: 'pending',
-          submitted_at: new Date().toISOString(),
         })
+
+      if (insertErr) {
+        return toolResult(id, JSON.stringify({ error: 'Failed to create verification record', detail: insertErr.message }))
+      }
 
       const tweetText = `Why are you still hardcoding which LLM your agent uses?\n\nToolRoute picks the best MCP server + cheapest model for every task — based on real execution data, not vibes.\n\nVerification: ${verificationCode}\n@ToolRoute4U https://toolroute.io`
       const tweetUrl = `https://twitter.com/intent/tweet?text=${encodeURIComponent(tweetText)}`
