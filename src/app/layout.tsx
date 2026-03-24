@@ -6,21 +6,21 @@ import { NavBar } from '@/components/NavBar'
 import { ThemeScript } from '@/components/ThemeScript'
 
 export const metadata: Metadata = {
-  title: 'ToolRoute — Best results. Optimal price. Fastest turnaround.',
-  description: 'ToolRoute routes your AI agent to the best MCP server and LLM model for every task — best results, optimal price, fastest turnaround. Scored on real execution data.',
+  title: 'ToolRoute — The best tool at the lowest price, instantly.',
+  description: 'ToolRoute matches your AI agent to the highest-scoring MCP server and lowest-cost LLM for any task — in milliseconds, based on real execution data.',
   metadataBase: new URL('https://toolroute.io'),
   openGraph: {
-    title: 'ToolRoute — Best results. Optimal price. Fastest turnaround.',
-    description: 'Stop guessing which tool or model to use. ToolRoute picks the best MCP server + LLM for every task — best results, optimal price, fastest turnaround.',
+    title: 'ToolRoute — The best tool at the lowest price, instantly.',
+    description: 'ToolRoute matches your AI agent to the highest-scoring MCP server and lowest-cost LLM for any task — in milliseconds, based on real execution data.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
-    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — Best results. Optimal price. Fastest turnaround.' }],
+    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — The best tool at the lowest price, instantly.' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ToolRoute — Best results. Optimal price. Fastest turnaround.',
-    description: 'Stop guessing which tool or model to use. ToolRoute picks the best MCP server + LLM for every task — best results, optimal price, fastest turnaround.',
+    title: 'ToolRoute — The best tool at the lowest price, instantly.',
+    description: 'ToolRoute matches your AI agent to the highest-scoring MCP server and lowest-cost LLM for any task — in milliseconds, based on real execution data.',
     images: ['/api/og?title=ToolRoute&type=server'],
   },
 }
