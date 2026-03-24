@@ -39,8 +39,18 @@ export async function POST(req: NextRequest) {
 
     if (!verification_code) {
       return NextResponse.json({
-        error: 'verification_code is required. Your agent generates this by calling toolroute_verify_agent.',
-        how: 'The agent calls toolroute_verify_agent → gets a code like "reef-A3X9" → sends it to you.',
+        error: 'verification_code is required. Generate one first, then come back here.',
+        rest_api: {
+          endpoint: 'POST /api/verify/initiate',
+          body: { agent_name: 'your-agent-name' },
+          description: 'Call this endpoint first to generate a verification code tied to your agent. Then use the code here.',
+        },
+        mcp_alternative: 'If you have MCP access, call the toolroute_verify_agent tool instead.',
+        example_flow: [
+          'Step 1: POST /api/verify/initiate with {"agent_name":"your-name"} → returns verification_code + claim_url',
+          'Step 2: Send the claim_url to your human owner',
+          'Step 3: Human tweets + pastes URL at the claim page → agent is verified',
+        ],
       }, { status: 400 })
     }
     if (!x_handle) {
