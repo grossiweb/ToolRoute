@@ -159,12 +159,16 @@ export async function GET(request: NextRequest) {
     return trust >= trustFloor
   })
 
-  // Filter by workflow junction table
+  // Filter by workflow junction table (two-step to avoid PostgREST embedded filter issues)
   if (resolvedWorkflow) {
-    const { data: wfSkills } = await supabase
-      .from('skill_workflows')
-      .select('skill_id, workflows!inner(slug)')
-      .eq('workflows.slug', resolvedWorkflow)
+    const { data: wfRecord } = await supabase
+      .from('workflows')
+      .select('id')
+      .eq('slug', resolvedWorkflow)
+      .maybeSingle()
+    const { data: wfSkills } = wfRecord
+      ? await supabase.from('skill_workflows').select('skill_id').eq('workflow_id', wfRecord.id)
+      : { data: null }
 
     if (wfSkills && wfSkills.length > 0) {
       const matchedIds = new Set(wfSkills.map((ws: any) => ws.skill_id))
