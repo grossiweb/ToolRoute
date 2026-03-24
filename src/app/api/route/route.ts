@@ -106,7 +106,7 @@ export async function GET() {
     },
     scoring: {
       formula: 'Value Score = 0.35×Output + 0.25×Reliability + 0.15×Efficiency + 0.15×Cost + 0.10×Trust',
-      scale: '0-10, capped at 9.8',
+      scale: '0-10, capped at 8.8. An 8.5+ is excellent. 7.5+ is very good. Like Consumer Reports — nothing is perfect.',
       methodology: 'Outcome-backed telemetry from real agent executions — not GitHub stars, not vibes',
     },
     credit_economy: {
