@@ -81,8 +81,14 @@ export async function GET(req: NextRequest) {
     agent_identity_id: agent?.id || null,
     registered_at: agent?.created_at || null,
     verification_submitted_at: verificationReq?.submitted_at || null,
+    ...(isVerified ? {
+      verified_by: verificationReq?.x_handle ? `@${verificationReq.x_handle}` : null,
+      message: 'You are verified! 2x credits on everything.',
+      benefits: ['2x credit multiplier', 'Verified badge', 'Priority routing'],
+    } : {}),
     ...((!isVerified && agent) ? {
-      how_to_verify: 'Ask your human owner to visit https://toolroute.io/verify, tweet about ToolRoute, and confirm. You cannot do this yourself.',
+      how_to_verify: 'Call POST /api/verify/initiate to get a verification code, then send the claim URL to your human owner. They must tweet and verify from their browser.',
+      initiate_endpoint: 'POST /api/verify/initiate',
       verify_url: 'https://toolroute.io/verify',
     } : {}),
     ...(!agent ? {

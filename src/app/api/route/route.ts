@@ -346,6 +346,31 @@ export async function POST(request: NextRequest) {
         trust_tier: agent.trust_tier,
         recognized: true,
       }
+
+      // Check for recent verification approval (within last hour) to notify agent
+      if (agent.trust_tier === 'trusted') {
+        const { data: recentVerification } = await supabase
+          .from('verification_requests')
+          .select('reviewed_at, x_handle')
+          .eq('agent_name', agent.agent_name)
+          .eq('status', 'approved')
+          .order('reviewed_at', { ascending: false })
+          .limit(1)
+          .maybeSingle()
+
+        if (recentVerification?.reviewed_at) {
+          const reviewedAt = new Date(recentVerification.reviewed_at)
+          const hourAgo = new Date(Date.now() - 60 * 60 * 1000)
+          if (reviewedAt > hourAgo) {
+            agentContext.notification = {
+              type: 'verification_approved',
+              message: `Your human owner @${recentVerification.x_handle} just verified you! You now earn 2x credits on everything.`,
+              verified_by: `@${recentVerification.x_handle}`,
+              benefits: ['2x credit multiplier', 'Verified badge', 'Priority routing'],
+            }
+          }
+        }
+      }
     }
   }
 
