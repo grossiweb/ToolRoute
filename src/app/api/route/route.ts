@@ -199,11 +199,20 @@ export async function POST(request: NextRequest) {
   let junctionFiltered = false
 
   if (resolvedWorkflow) {
-    // First: get skill IDs mapped to this workflow
-    const { data: workflowSkillIds } = await supabase
-      .from('skill_workflows')
-      .select('skill_id, workflows!inner(slug)')
-      .eq('workflows.slug', resolvedWorkflow)
+    // Step 1: look up workflow ID by slug
+    const { data: workflowRecord } = await supabase
+      .from('workflows')
+      .select('id')
+      .eq('slug', resolvedWorkflow)
+      .maybeSingle()
+
+    // Step 2: query junction table directly by workflow_id
+    const { data: workflowSkillIds } = workflowRecord
+      ? await supabase
+          .from('skill_workflows')
+          .select('skill_id')
+          .eq('workflow_id', workflowRecord.id)
+      : { data: null }
 
     if (workflowSkillIds && workflowSkillIds.length > 0) {
       const matchedIds = workflowSkillIds.map((ws: any) => ws.skill_id)

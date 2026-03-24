@@ -62,12 +62,12 @@ export default async function ServersPage({
     )
   }
 
-  // Filter by workflow if selected
+  // Filter by workflow if selected (two-step to avoid PostgREST embedded filter issues)
   if (searchParams.workflow) {
-    const { data: workflowSkillIds } = await supabase
-      .from('skill_workflows')
-      .select('skill_id, workflows!inner(slug)')
-      .eq('workflows.slug', searchParams.workflow)
+    const { data: wfRecord } = await supabase.from('workflows').select('id').eq('slug', searchParams.workflow).maybeSingle()
+    const { data: workflowSkillIds } = wfRecord
+      ? await supabase.from('skill_workflows').select('skill_id').eq('workflow_id', wfRecord.id)
+      : { data: null }
 
     if (workflowSkillIds && workflowSkillIds.length > 0) {
       const matchedIds = new Set(workflowSkillIds.map((ws: any) => ws.skill_id))
@@ -75,12 +75,12 @@ export default async function ServersPage({
     }
   }
 
-  // Filter by vertical if selected
+  // Filter by vertical if selected (two-step to avoid PostgREST embedded filter issues)
   if (searchParams.vertical) {
-    const { data: verticalSkillIds } = await supabase
-      .from('skill_verticals')
-      .select('skill_id, verticals!inner(slug)')
-      .eq('verticals.slug', searchParams.vertical)
+    const { data: vtRecord } = await supabase.from('verticals').select('id').eq('slug', searchParams.vertical).maybeSingle()
+    const { data: verticalSkillIds } = vtRecord
+      ? await supabase.from('skill_verticals').select('skill_id').eq('vertical_id', vtRecord.id)
+      : { data: null }
 
     if (verticalSkillIds && verticalSkillIds.length > 0) {
       const matchedIds = new Set(verticalSkillIds.map((vs: any) => vs.skill_id))
