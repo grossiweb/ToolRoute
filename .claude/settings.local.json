@@ -35,7 +35,9 @@
       "Bash(xargs grep:*)",
       "WebSearch",
       "WebFetch(domain:moltbook.com)",
-      "WebFetch(domain:o-mega.ai)"
+      "WebFetch(domain:o-mega.ai)",
+      "Bash(curl -s https://toolroute.io)",
+      "Bash(curl -s -o /dev/null -w \"%{http_code} %{content_type}\" \"https://toolroute.io/api/og?title=ToolRoute&type=server\")"
     ]
   }
 }
