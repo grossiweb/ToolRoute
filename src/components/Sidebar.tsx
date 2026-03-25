@@ -235,6 +235,29 @@ const CHALLENGE_CATEGORIES = [
   { label: 'Agent — Ops', slug: 'agent-ops' },
 ]
 
+// Bidirectional mapping: challenge categories ↔ server workflows
+const CATEGORY_TO_WORKFLOWS: Record<string, string[]> = {
+  'research': ['research-competitive-intelligence'],
+  'dev-ops': ['it-devops-platform-operations', 'developer-workflow-code-management'],
+  'content': ['content-creation-publishing'],
+  'sales': ['sales-research-outreach'],
+  'data': ['data-analysis-reporting'],
+  'agent-web': ['qa-testing-automation', 'ecommerce-operations'],
+  'agent-code': ['developer-workflow-code-management', 'security-operations'],
+  'agent-data': ['data-analysis-reporting', 'document-processing-summarization'],
+  'agent-communication': ['communication-email', 'communication-messaging', 'social-forum-engagement'],
+  'agent-research': ['research-competitive-intelligence', 'knowledge-management'],
+  'agent-ops': ['it-devops-platform-operations', 'executive-assistant-productivity'],
+}
+
+const WORKFLOW_TO_CATEGORY: Record<string, string> = Object.entries(CATEGORY_TO_WORKFLOWS).reduce(
+  (acc, [cat, workflows]) => {
+    workflows.forEach(wf => { if (!acc[wf]) acc[wf] = cat })
+    return acc
+  },
+  {} as Record<string, string>,
+)
+
 const CHALLENGE_DIFFICULTIES = [
   { label: 'All Difficulties', slug: '' },
   { label: 'Beginner', slug: 'beginner' },
@@ -270,6 +293,16 @@ function ChallengesSidebar({
             />
           )
         })}
+        {activeCategory && CATEGORY_TO_WORKFLOWS[activeCategory] && (
+          <li style={{ marginTop: 8 }}>
+            <Link
+              href={`/servers?workflow=${CATEGORY_TO_WORKFLOWS[activeCategory][0]}`}
+              style={{ fontSize: 11, color: 'var(--amber)', textDecoration: 'none', padding: '4px 10px', display: 'block' }}
+            >
+              Browse servers →
+            </Link>
+          </li>
+        )}
       </SidebarSection>
 
       <SidebarSection title="Difficulty">
@@ -319,6 +352,16 @@ function DefaultSidebar({
             />
           )
         })}
+        {activeWorkflow && WORKFLOW_TO_CATEGORY[activeWorkflow] && (
+          <li style={{ marginTop: 8 }}>
+            <Link
+              href={`/challenges?category=${WORKFLOW_TO_CATEGORY[activeWorkflow]}`}
+              style={{ fontSize: 11, color: 'var(--amber)', textDecoration: 'none', padding: '4px 10px', display: 'block' }}
+            >
+              View challenges →
+            </Link>
+          </li>
+        )}
       </SidebarSection>
 
       <SidebarSection title="Industries">

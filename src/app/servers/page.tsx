@@ -124,16 +124,25 @@ export default async function ServersPage({
     return name.substring(0, 2).toUpperCase()
   }
 
-  // Build tags from scores
+  // Score tier label (Consumer Reports style: 8.8 cap)
+  function getScoreTier(score: number | null): { label: string; color: string } {
+    if (score == null) return { label: '--', color: 'var(--text-3)' }
+    if (score >= 8.0) return { label: 'Excellent', color: 'var(--green)' }
+    if (score >= 7.0) return { label: 'Very Good', color: 'var(--green)' }
+    if (score >= 6.0) return { label: 'Good', color: 'var(--amber)' }
+    return { label: 'Average', color: 'var(--text-3)' }
+  }
+
+  // Build tags from scores (adjusted for 8.8 cap)
   function getTags(scores: any): string[] {
     if (!scores) return []
     const tags: string[] = []
     const os = normalizeScore(scores.output_score)
     const rs = normalizeScore(scores.reliability_score)
     const cs = normalizeScore(scores.cost_score)
-    if (os != null && os >= 9) tags.push('High Output')
-    if (rs != null && rs >= 9) tags.push('Reliable')
-    if (cs != null && cs >= 8.5) tags.push('Cost-Effective')
+    if (os != null && os >= 7.8) tags.push('High Output')
+    if (rs != null && rs >= 7.8) tags.push('Reliable')
+    if (cs != null && cs >= 7.5) tags.push('Cost-Effective')
     if (tags.length === 0) tags.push('Benchmarked')
     return tags.slice(0, 2)
   }
@@ -288,8 +297,9 @@ export default async function ServersPage({
                 {benchmarkServers.map((server: any, idx: number) => {
                   const sc = Array.isArray(server.skill_scores) ? server.skill_scores[0] : server.skill_scores
                   const vs = normalizeScore(sc?.value_score ?? sc?.overall_score)
-                  const pct = vs != null ? (vs / 10) * 100 : 0
-                  const barColor = (vs ?? 0) >= 8 ? 'var(--green)' : (vs ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)'
+                  // Scale 5.0-8.8 → 0-100% for visual bar
+                  const pct = vs != null ? Math.min(100, Math.max(0, ((vs - 5.0) / 3.8) * 100)) : 0
+                  const barColor = (vs ?? 0) >= 7.5 ? 'var(--green)' : (vs ?? 0) >= 6.0 ? 'var(--amber)' : 'var(--text-3)'
 
                   return (
                     <div key={server.id}>
@@ -363,12 +373,12 @@ export default async function ServersPage({
             const badge = getTrustBadge(skill.vendor_type)
             const tags = getTags(scores)
 
-            // SVG score ring
-            const pct = valueScore != null ? (valueScore / 10) * 100 : 0
+            // SVG score ring (scaled 5.0-8.8 → 0-100%)
+            const ringPct = valueScore != null ? Math.min(100, Math.max(0, ((valueScore - 5.0) / 3.8) * 100)) : 0
             const r = 18
             const circ = 2 * Math.PI * r
-            const ringOffset = circ - (pct / 100) * circ
-            const ringColor = (valueScore ?? 0) >= 8 ? 'var(--green)' : (valueScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-3)'
+            const ringOffset = circ - (ringPct / 100) * circ
+            const { color: ringColor } = getScoreTier(valueScore)
 
             return (
               <Link
@@ -460,9 +470,9 @@ export default async function ServersPage({
                     }}>Quality</span>
                     <span style={{
                       fontWeight: 600,
-                      color: (outputScore ?? 0) >= 8 ? 'var(--green)' : (outputScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
+                      color: getScoreTier(outputScore).color,
                     }}>
-                      {outputScore != null ? `${Math.round((outputScore / 10) * 100)}%` : '--'}
+                      {outputScore != null ? formatScore(outputScore) : '--'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
@@ -472,21 +482,21 @@ export default async function ServersPage({
                     }}>Uptime</span>
                     <span style={{
                       fontWeight: 600,
-                      color: (reliabilityScore ?? 0) >= 8 ? 'var(--green)' : (reliabilityScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
+                      color: getScoreTier(reliabilityScore).color,
                     }}>
-                      {reliabilityScore != null ? `${Math.round((reliabilityScore / 10) * 100)}%` : '--'}
+                      {reliabilityScore != null ? formatScore(reliabilityScore) : '--'}
                     </span>
                   </div>
                   <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center' }}>
                     <span style={{
                       color: 'var(--text-3)', textTransform: 'uppercase',
                       letterSpacing: 0.5, fontSize: 9, marginBottom: 2,
-                    }}>Per run</span>
+                    }}>Cost</span>
                     <span style={{
                       fontWeight: 600,
-                      color: (costScore ?? 0) >= 8 ? 'var(--green)' : (costScore ?? 0) >= 6 ? 'var(--amber)' : 'var(--text-2)',
+                      color: getScoreTier(costScore).color,
                     }}>
-                      {costScore != null ? `${Math.round((costScore / 10) * 100)}%` : '--'}
+                      {costScore != null ? formatScore(costScore) : '--'}
                     </span>
                   </div>
 
