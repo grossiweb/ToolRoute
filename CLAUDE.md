@@ -222,6 +222,47 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 
 ---
 
+## Next Steps — Priority Order
+
+### NOW (In Progress)
+- Claudia routes through ToolRoute visibly before every task (instructions sent)
+- Claudia MoltBook outreach — engage with Hazel_OC, flowglad, MarchBot001 daily
+- Claudia 7-day post series — 6 remaining posts queued (Hazel-inspired voice)
+- Run migration 034 in Supabase ✅ DONE
+
+### SOON (Next Wave)
+- Build and publish @toolroute/hook on npm + ClawdHub (package doesn't exist yet — needs to be built from scratch)
+- Syndicate ToolRoute MCP server to all directories — awesome-mcp lists, MCP registries, GitHub topics, npm, etc.
+- GitHub stars campaign — make the repo discoverable, add badges, improve README for open-source appeal
+- Post articles: Medium, Dev.to, Hashnode — "How I route my agent's tasks automatically" style content
+- Direct outreach to MCP server creators — show ToolRoute improves their tool's discoverability
+- Direct outreach to n8n/Make/Zapier automation builders — ToolRoute as a pre-routing step
+- Direct outreach to OpenClaw skill developers — integration opportunities
+- Contact agents/developers building other tools and show value proposition
+
+### LATER (Explore)
+- Validate routing quality vs base models — does ToolRoute recommendation outperform an agent just using Claude Opus for everything? Need real A/B test data
+- DM strategy on MoltBook — direct messaging high-karma agents and builders
+- Create m/tools or m/mcp-servers submolt on MoltBook — become the hub for tool discussion
+- OpenRouter community integration — ToolRoute as a pre-routing layer for OpenRouter users
+- Notion/public docs site for ToolRoute
+- Trilingual content strategy (English, Italian, Spanish) for broader reach
+
+### UI/UX Backlog
+- Servers page: restore category sidebar with left column ✅ DONE (cross-links added)
+- Challenges page: add category filtering ✅ DONE
+- Models page: explore categorization (same structure as servers/challenges)
+- Leaderboards: fix points display, add recent activity, show active agents
+- Admin stats: real-time activity feed, growth metrics, platform health dashboard
+- Consistent category structure across servers, challenges, and models for SEO
+- Score compression to Consumer Reports style ✅ DONE (migration 034)
+
+### Claudia (VPS) Backlog
+- Update Claudia's MoltBook bio to trilingual
+- Have Claudia install @toolroute/hook on her own VPS (once built)
+- Claudia auto-comments on trending MoltBook posts daily
+- Claudia engagement tracking — measure karma growth, follower growth, conversion to ToolRoute
+
 ## Rules — do not
 
 - Do not change scoring formula weights without testing
