@@ -154,6 +154,9 @@ export async function POST(request: NextRequest) {
     latency_preference = 'medium',
   } = constraints
 
+  // Detect if this task needs an MCP server or is a pure LLM task
+  const needsMcpServer = task ? detectMcpNeed(task) : true
+
   // Require either task or workflow_slug
   if (!task && !explicitWorkflow) {
     return NextResponse.json({
@@ -409,18 +412,34 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Determine approach: does this task need an MCP server or just a model?
+  const approach = needsMcpServer ? 'mcp_server' : 'direct_llm'
+
   return NextResponse.json({
-    recommended_skill: top.slug,
-    recommended_skill_name: top.canonical_name,
-    recommended_model: recommendedModel,
+    approach,
+    ...(approach === 'direct_llm' ? {
+      message: 'This task can be handled by your LLM directly — no MCP server needed.',
+      recommended_model: recommendedModel,
+      recommended_skill: null,
+      recommended_skill_name: null,
+      cost_insight: recommendedModel
+        ? `Use ${recommendedModel.slug} (${recommendedModel.provider}) — ${recommendedModel.tier} tier for best cost/quality ratio on this task type.`
+        : 'Use your current model — this is a standard LLM task.',
+    } : {
+      recommended_skill: top.slug,
+      recommended_skill_name: top.canonical_name,
+      recommended_model: recommendedModel,
+    }),
     confidence: Math.round(adjustedConfidence * 100) / 100,
-    reasoning: buildReasoning(top, priority, task, resolvedWorkflow),
-    alternatives,
-    recommended_combo: combo,
-    fallback,
-    scores: top.skill_scores,
+    reasoning: approach === 'direct_llm'
+      ? `Pure LLM task — no external tool access required. ${recommendedModel ? `Recommended: ${recommendedModel.slug} (${recommendedModel.tier} tier).` : 'Use your current model.'}`
+      : buildReasoning(top, priority, task, resolvedWorkflow),
+    alternatives: approach === 'direct_llm' ? [] : alternatives,
+    recommended_combo: approach === 'direct_llm' ? null : combo,
+    fallback: approach === 'direct_llm' ? null : fallback,
+    scores: approach === 'direct_llm' ? null : top.skill_scores,
     outcome_count: dataBackedOutcomeCount,
-    non_mcp_alternative: getNonMcpAlternative(resolvedWorkflow),
+    non_mcp_alternative: approach === 'direct_llm' ? null : getNonMcpAlternative(resolvedWorkflow),
     routing_metadata: {
       resolved_workflow: resolvedWorkflow,
       priority_mode: priority,
@@ -513,6 +532,68 @@ async function getRecommendedCombo(
   }
 
   return null
+}
+
+/**
+ * Detect whether a task actually needs an MCP server or is a pure LLM task.
+ * Pure LLM tasks: writing, code generation, translation, analysis from memory,
+ * formatting, brainstorming — anything the model can do without external tools.
+ * MCP-required tasks: web search, scraping, API calls, file operations,
+ * database queries, sending messages, calendar operations, etc.
+ */
+function detectMcpNeed(task: string): boolean {
+  const lower = task.toLowerCase()
+
+  // Strong signals that an MCP server IS needed (external system access)
+  const mcpRequired = [
+    // Web access
+    'search the web', 'web search', 'scrape', 'crawl', 'fetch url', 'browse',
+    'look up online', 'find online', 'google',
+    // Database operations
+    'run query', 'execute sql', 'insert into', 'update table', 'database',
+    'supabase', 'postgres', 'mongodb', 'dynamodb',
+    // External service operations
+    'send email', 'send slack', 'send message', 'post to', 'publish to',
+    'deploy', 'push to github', 'create pr', 'open issue', 'create ticket',
+    'schedule meeting', 'add to calendar', 'set reminder',
+    // File/system operations
+    'upload file', 'download', 'read file from', 'scan repository',
+    'monitor', 'check status', 'ping',
+    // API calls
+    'call api', 'hit endpoint', 'make request', 'webhook',
+    // Specific tool mentions
+    'figma', 'notion', 'jira', 'confluence', 'salesforce', 'hubspot',
+    'stripe', 'shopify', 'zendesk', 'github', 'gitlab',
+  ]
+
+  for (const signal of mcpRequired) {
+    if (lower.includes(signal)) return true
+  }
+
+  // Strong signals that this is a pure LLM task (no external tools needed)
+  const llmOnly = [
+    // Writing/generation
+    'write a', 'draft a', 'compose', 'generate a', 'create a template',
+    'write code', 'write python', 'write javascript', 'write sql',
+    'write function', 'write class', 'implement a',
+    // Analysis from context (not external data)
+    'explain', 'summarize this', 'analyze this', 'compare', 'pros and cons',
+    'review this code', 'fix this code', 'debug this', 'refactor',
+    'translate', 'rewrite', 'improve this', 'edit this',
+    // Formatting/structuring
+    'format', 'convert to json', 'parse this', 'extract from this',
+    'create csv', 'generate schema', 'outline',
+    // Planning/brainstorming
+    'brainstorm', 'plan for', 'strategy for', 'decision matrix',
+    'meeting agenda', 'project plan',
+  ]
+
+  for (const signal of llmOnly) {
+    if (lower.includes(signal)) return false
+  }
+
+  // Default: assume MCP is needed (conservative — better to suggest a tool than miss one)
+  return true
 }
 
 function getNonMcpAlternative(workflowSlug: string): object | null {
