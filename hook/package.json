@@ -1,0 +1,36 @@
+{
+  "name": "@toolroute/hook",
+  "version": "1.0.0",
+  "description": "Auto-route every agent task through ToolRoute. Install once, every task gets the best tool and model recommendation.",
+  "main": "dist/index.js",
+  "module": "dist/index.mjs",
+  "types": "dist/index.d.ts",
+  "exports": {
+    ".": {
+      "types": "./dist/index.d.ts",
+      "import": "./dist/index.mjs",
+      "require": "./dist/index.js"
+    }
+  },
+  "files": ["dist"],
+  "scripts": {
+    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "prepublishOnly": "npm run build"
+  },
+  "keywords": ["toolroute", "mcp", "ai-agent", "hook", "routing", "auto-route", "openclaw", "tool-selection", "cost-optimization"],
+  "author": "Grossi Consulting",
+  "license": "MIT",
+  "homepage": "https://toolroute.io",
+  "repository": {
+    "type": "git",
+    "url": "https://github.com/grossiweb/ToolRoute",
+    "directory": "hook"
+  },
+  "dependencies": {
+    "@toolroute/sdk": "^0.2.0"
+  },
+  "devDependencies": {
+    "tsup": "^8.0.0",
+    "typescript": "^5.0.0"
+  }
+}
