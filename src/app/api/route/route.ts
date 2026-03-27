@@ -507,12 +507,26 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Determine approach: does this task need an MCP server or just a model?
-  const approach = needsMcpServer ? 'mcp_server' : 'direct_llm'
+  // Determine approach: multi-tool, single MCP server, or direct LLM?
+  const isMultiTool = taskClassification?.is_multi_tool && (taskClassification.tool_categories?.length ?? 0) >= 2
+  const approach = isMultiTool ? 'multi_tool' : (needsMcpServer ? 'mcp_server' : 'direct_llm')
+
+  // Build orchestration chain for multi-tool tasks
+  let orchestration = null
+  if (isMultiTool && taskClassification?.tool_categories) {
+    const { buildOrchestrationChain } = await import('@/lib/task-classifier')
+    orchestration = buildOrchestrationChain(taskClassification.tool_categories, task || '')
+  }
 
   return NextResponse.json({
     approach,
-    ...(approach === 'direct_llm' ? {
+    ...(approach === 'multi_tool' ? {
+      message: `This task requires ${taskClassification?.tool_categories?.length} tools in sequence.`,
+      orchestration,
+      recommended_skill: orchestration?.[0]?.recommended_skill || null,
+      recommended_skill_name: orchestration?.[0]?.skill_name || null,
+      recommended_model: recommendedModel,
+    } : approach === 'direct_llm' ? {
       message: 'This task can be handled by your LLM directly — no MCP server needed.',
       recommended_model: recommendedModel,
       recommended_skill: null,
@@ -526,7 +540,9 @@ export async function POST(request: NextRequest) {
       recommended_model: recommendedModel,
     }),
     confidence: Math.round(adjustedConfidence * 100) / 100,
-    reasoning: approach === 'direct_llm'
+    reasoning: approach === 'multi_tool'
+      ? `Multi-tool task requiring ${taskClassification?.tool_categories?.join(', ')}. Execute steps in order.`
+      : approach === 'direct_llm'
       ? `Pure LLM task — no external tool access required. ${recommendedModel ? `Recommended: ${recommendedModel.slug} (${recommendedModel.tier} tier).` : 'Use your current model.'}`
       : buildReasoning(top, priority, task, resolvedWorkflow),
     alternatives: approach === 'direct_llm' ? [] : alternatives,
@@ -548,6 +564,8 @@ export async function POST(request: NextRequest) {
           task_type: taskClassification.task_type,
           complexity: taskClassification.complexity,
           tool_category: taskClassification.tool_category,
+          tool_categories: taskClassification.tool_categories,
+          is_multi_tool: taskClassification.is_multi_tool,
           method: taskClassification.method,
           reasoning: taskClassification.reasoning,
         },

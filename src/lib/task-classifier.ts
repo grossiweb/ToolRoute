@@ -15,9 +15,13 @@ export interface TaskClassification {
   needs_external_tool: boolean
   task_type: 'code' | 'writing' | 'creative_writing' | 'analysis' | 'structured' | 'translation' | 'general'
   complexity: 'simple' | 'medium' | 'complex'
-  tool_category: string | null  // only if needs_external_tool: true
+  tool_category: string | null  // primary tool category (backward compat)
+  tool_categories?: string[]    // all tool categories for multi-tool tasks
+  is_multi_tool?: boolean       // true when task needs 2+ different tools
   reasoning: string
   method: 'llm' | 'keyword_fallback'
+  // internal: set by routing engine
+  _preferredSkill?: string
 }
 
 const CLASSIFICATION_PROMPT = `You are a task routing classifier for an AI agent system. Given a task description, classify it so we can route to the right model and tool.
@@ -29,8 +33,18 @@ Respond ONLY with valid JSON, no other text:
   "task_type": "code" | "writing" | "creative_writing" | "analysis" | "structured" | "translation" | "general",
   "complexity": "simple" | "medium" | "complex",
   "tool_category": string | null,
+  "tool_categories": string[],
+  "is_multi_tool": boolean,
   "reasoning": "one sentence why"
 }
+
+MULTI-TOOL DETECTION:
+- is_multi_tool = true when the task explicitly requires 2+ DIFFERENT external tools
+- "Send Slack AND update Jira AND email client" → is_multi_tool: true, tool_categories: ["messaging", "code_repo", "email"]
+- "Search the web and summarize the results" → is_multi_tool: false (summarize is LLM, not a tool)
+- "Scrape this page and store results in database" → is_multi_tool: true, tool_categories: ["web_fetch", "database"]
+- When is_multi_tool is false, tool_categories should contain at most 1 item (same as tool_category)
+- When is_multi_tool is true, tool_category should be the FIRST/primary tool to use
 
 CRITICAL RULES for needs_external_tool:
 - true ONLY if the task REQUIRES real-time access to an external system to complete
@@ -116,7 +130,7 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
         messages: [
           { role: 'user', content: CLASSIFICATION_PROMPT + task }
         ],
-        max_tokens: 150,
+        max_tokens: 200,
         temperature: 0,
       }),
     })
@@ -141,6 +155,8 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
       task_type: parsed.task_type || 'general',
       complexity: parsed.complexity || 'medium',
       tool_category: parsed.tool_category || null,
+      tool_categories: Array.isArray(parsed.tool_categories) ? parsed.tool_categories : (parsed.tool_category ? [parsed.tool_category] : []),
+      is_multi_tool: Boolean(parsed.is_multi_tool),
       reasoning: parsed.reasoning || '',
       method: 'llm',
     }
@@ -282,5 +298,40 @@ export function toolCategoryToWorkflow(toolCategory: string | null): string {
     'security_scan': 'security-operations',
   }
   return map[toolCategory || ''] || 'general'
+}
+/**
+ * Best skill for each tool category — used for both single-tool and multi-tool routing.
+ */
+export const TOOL_CATEGORY_SKILL_PREFERENCE: Record<string, { slug: string; name: string }> = {
+  'web_fetch': { slug: 'firecrawl-mcp', name: 'Firecrawl MCP' },
+  'web_search': { slug: 'exa-mcp-server', name: 'Exa MCP Server' },
+  'email': { slug: 'gmail-mcp', name: 'Gmail MCP Server' },
+  'messaging': { slug: 'slack-mcp', name: 'Slack MCP Server' },
+  'calendar': { slug: 'google-calendar-mcp', name: 'Google Calendar MCP' },
+  'code_repo': { slug: 'github-mcp-server', name: 'GitHub MCP Server' },
+  'database': { slug: 'supabase-mcp', name: 'Supabase MCP' },
+  'security_scan': { slug: 'snyk-mcp', name: 'Snyk MCP' },
+  'crm': { slug: 'hubspot-mcp', name: 'HubSpot MCP' },
+  'cms': { slug: 'wordpress-mcp', name: 'WordPress MCP' },
+  'deployment': { slug: 'vercel-mcp', name: 'Vercel MCP' },
+}
+
+/**
+ * Build an orchestration chain for multi-tool tasks.
+ */
+export function buildOrchestrationChain(
+  toolCategories: string[],
+  task: string
+): { step: number; tool_category: string; recommended_skill: string; skill_name: string; action: string }[] {
+  return toolCategories.map((cat, idx) => {
+    const skill = TOOL_CATEGORY_SKILL_PREFERENCE[cat]
+    return {
+      step: idx + 1,
+      tool_category: cat,
+      recommended_skill: skill?.slug || 'unknown',
+      skill_name: skill?.name || cat,
+      action: `Step ${idx + 1}: ${cat.replace(/_/g, ' ')} operation`,
+    }
+  })
 }
 // env update
