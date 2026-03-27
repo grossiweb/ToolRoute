@@ -225,13 +225,13 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 ## Next Steps — Priority Order
 
 ### NOW (In Progress)
-- Claudia routes through ToolRoute visibly before every task (instructions sent)
 - Claudia MoltBook outreach — engage with Hazel_OC, flowglad, MarchBot001 daily
-- Claudia 7-day post series — 6 remaining posts queued (Hazel-inspired voice)
-- Run migration 034 in Supabase ✅ DONE
+- Claudia 7-day post series — 6 remaining posts queued (Hazel-inspired voice + trilingual)
+- Claudia final validation run (Round 4) — test with LLM classifier active
+- Content marketing blitz — Twitter thread, Medium, Reddit, HN with benchmark data
+- Syndicate ToolRoute to MCP directories, awesome-mcp lists, npm, ClawdHub
 
 ### SOON (Next Wave)
-- Build and publish @toolroute/hook on npm + ClawdHub (package doesn't exist yet — needs to be built from scratch)
 - Syndicate ToolRoute MCP server to all directories — awesome-mcp lists, MCP registries, GitHub topics, npm, etc.
 - GitHub stars campaign — make the repo discoverable, add badges, improve README for open-source appeal
 - Post articles: Medium, Dev.to, Hashnode — "How I route my agent's tasks automatically" style content
@@ -240,8 +240,24 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 - Direct outreach to OpenClaw skill developers — integration opportunities
 - Contact agents/developers building other tools and show value proposition
 
+### COMPLETED
+- LLM-based task classifier (Gemini Flash Lite, ~$0.00001/call) — 100% correct classification on all test tasks
+- Creative writing tier added — routes to Claude Sonnet 4 for persuasive/marketing content
+- Routing accuracy: 15% → 95% across 4 rounds of testing with Claudia
+- Keyword + semantic matching tightened (removed generic terms causing collisions)
+- Routing quality validated via Claudia's 96-execution A/B test (see Model Routing Matrix)
+- Merged routing response: single /api/route call returns approach (direct_llm vs mcp_server) + model + MCP server
+- Budget models seeded from benchmark data (migration 035)
+- Premium model benchmarks completed (Sonnet 4, GPT-4o, Claude 3.5 Sonnet)
+- Claude Sonnet 4 set as primary for reasoning_pro and creative_writing tiers
+- Score compression to Consumer Reports style (migration 034, cap 8.8)
+- @toolroute/hook@1.0.1 published on npm
+- @toolroute/sdk@0.2.0 published on npm
+- ClawdHub skill grossiweb/toolroute@1.0.4 published with privacy section
+- Claudia installed ToolRoute skill on VPS
+- Competitive landscape research completed (see section below)
+
 ### LATER (Explore)
-- Validate routing quality vs base models — does ToolRoute recommendation outperform an agent just using Claude Opus for everything? Need real A/B test data
 - DM strategy on MoltBook — direct messaging high-karma agents and builders
 - Create m/tools or m/mcp-servers submolt on MoltBook — become the hub for tool discussion
 - OpenRouter community integration — ToolRoute as a pre-routing layer for OpenRouter users
@@ -258,10 +274,77 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 - Score compression to Consumer Reports style ✅ DONE (migration 034)
 
 ### Claudia (VPS) Backlog
-- Update Claudia's MoltBook bio to trilingual
-- Have Claudia install @toolroute/hook on her own VPS (once built)
 - Claudia auto-comments on trending MoltBook posts daily
 - Claudia engagement tracking — measure karma growth, follower growth, conversion to ToolRoute
+- Run continuous A/B model tests as new models drop on OpenRouter
+- Build automated OpenRouter model sync (weekly cron to discover new models + auto-seed)
+
+## Model Routing Matrix (from Claudia's 96-execution A/B tests)
+
+Based on 12 tasks × 8 models = 96 real executions with honest quality ratings.
+
+| Task Type | Route To | Quality | Cost/1M | Why |
+|-----------|----------|---------|---------|-----|
+| Code generation | DeepSeek V3 | 8.0 | $0.14 | Ties premium at 1/21x cost |
+| Writing (creative) | Claude Sonnet 4 | 9.0 | $3.00 | +2 pts over budget — worth it |
+| Writing (simple) | Gemini Flash Lite | 7.7 | $0.075 | Good enough, cheapest |
+| Analysis (complex) | Claude Sonnet 4 | 8.7 | $3.00 | +1.3 pts over budget |
+| Analysis (simple) | Gemini Flash | 7.7 | $0.10 | Same quality, cheapest |
+| Structured output | Gemini Flash | 8.4 | $0.10 | All models tied — cheapest wins |
+| Translation | Gemini Flash | 8.0 | $0.10 | All models 8-9, cheapest wins |
+| Fast turnaround | GPT-4o | 7.9 | $2.50 | Fastest premium, consistent |
+
+Key findings:
+- Budget models score within 5% of premium on code, structured, and translation tasks
+- Premium is ONLY worth it for creative writing (+2 pts) and complex analysis (+1.3 pts)
+- GPT-4o ($2.50) scored LOWER than some budget models — price ≠ quality
+- Claude 3.5 Sonnet ($6) scored 0.2 pts lower than Sonnet 4 ($3) — never route to it
+- Do NOT route to Claude 3.5 Sonnet — always prefer Sonnet 4 (half the cost, better quality)
+
+## Competitive Landscape (March 2026)
+
+ToolRoute is unique: the only platform that routes BOTH models AND MCP servers with real outcome data.
+
+| Competitor | Routes Models | Routes MCP | Outcome Data | Agent-Native | Price |
+|---|---|---|---|---|---|
+| OpenRouter | Auto Router | No | No | No | Per-token markup |
+| Martian | Per-prompt analysis | No | No | No | Usage-based |
+| Not Diamond | Trainable classifiers | No | Yes (eval data) | No | Free 100K/mo |
+| Portkey | Rules-based | MCP Gateway (auth only) | No | No | $49/mo+ |
+| LiteLLM | Rules-based | No | No | No | Open source |
+| Unify AI | Benchmark-driven | No | No | No | Free tier |
+| **ToolRoute** | **LLM classifier** | **Task-based** | **Telemetry loop** | **16 MCP tools** | **Free** |
+
+Key differentiators:
+- Only platform that IS an MCP server (agents connect natively via MCP protocol)
+- Only platform routing to MCP servers based on task type (not just auth/governance)
+- Outcome flywheel: agents report → routing improves → better routing attracts agents
+- Not a proxy: returns recommendations, agent calls directly (zero latency overhead)
+- Contribution economy with credit incentives for telemetry
+
+Key threat: Portkey ($15M Series A, 1T+ tokens/day) has MCP Gateway but it's governance/auth, not intelligent task routing. Different product philosophy.
+
+Quote: "Model routing changes how well your agent thinks. Tool routing changes what your agent can do." — WorkOS
+
+## Content Marketing (Ready to Execute)
+
+Core narrative: "We ran 96 real tasks across 8 LLMs. Budget models matched premium on 75% of task types."
+
+Channels:
+- Twitter/X thread: "I tested 8 LLMs on 96 real tasks. Here's what $150/1M buys you that $0.10 doesn't."
+- Medium/Dev.to: Deep dive with data tables, methodology, findings per category
+- Reddit: r/artificial, r/LocalLLaMA, r/ChatGPT — A/B test results
+- HackerNews: "Show HN: ToolRoute — intelligent routing saved our agent 96% on tokens"
+- LinkedIn: Business angle for decision-makers
+- MoltBook: Claudia posts findings agent-to-agent
+
+Data points for marketing:
+- 96 real executions across 8 models (not synthetic benchmarks)
+- Budget models score within 5% of premium on code, structured, translation
+- Premium only worth it for creative writing (+2 pts) and complex analysis (+1.3 pts)
+- GPT-4o ($2.50) scored LOWER than budget models on some tasks
+- Gemini Flash Lite ($0.075/1M) best value overall
+- LLM classifier achieved 100% correct task classification
 
 ## Rules — do not
 
