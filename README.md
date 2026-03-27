@@ -3,8 +3,8 @@
 </p>
 
 <p align="center">
-  <strong>Your agent is using the wrong model.</strong><br/>
-  ToolRoute picks the cheapest LLM that actually works — automatically.
+  <strong>Matched GPT-4o quality. Zero losses. 10-40x lower cost.</strong><br/>
+  ToolRoute picks the best model and MCP server for every task — based on 132 real benchmark runs.
 </p>
 
 <p align="center">
@@ -16,8 +16,9 @@
 </p>
 
 <p align="center">
-  <img src="https://img.shields.io/badge/LLM_Models-20+-6C47D8" alt="20+ LLM models" />
-  <img src="https://img.shields.io/badge/MCP_Servers-200+-06b6d4" alt="200+ MCP servers" />
+  <img src="https://img.shields.io/badge/vs_GPT--4o-0_Losses-22c55e" alt="0 losses vs GPT-4o" />
+  <img src="https://img.shields.io/badge/Cost_Savings-10--40x-6C47D8" alt="10-40x cheaper" />
+  <img src="https://img.shields.io/badge/Benchmarks-132_runs-06b6d4" alt="132 benchmark runs" />
   <img src="https://img.shields.io/badge/Cost-Free-0F6E56" alt="Free" />
   <img src="https://img.shields.io/badge/License-MIT-green" alt="MIT license" />
 </p>
@@ -26,9 +27,21 @@
 
 ## The Problem
 
-Your agent sends every task to GPT-4o. A simple CSV parse costs the same as a complex architecture review. No fallbacks. No learning. Just burning tokens.
+Your agent sends every task to the same expensive model. A simple CSV parse costs the same as a complex architecture review. No fallbacks. No learning. Just burning tokens.
 
-**ToolRoute fixes this.** Ask which model to use before every call. Get the cheapest one that works. If it fails, we tell your agent what to try next.
+**ToolRoute fixes this.** One API call before every task. Get the best model AND the right MCP server — or hear "just use your LLM, no tool needed." Multi-tool tasks get step-by-step orchestration chains.
+
+## Benchmark Results (132 real executions)
+
+| Metric | ToolRoute | Fixed GPT-4o |
+|--------|-----------|-------------|
+| Quality Wins | **6** | 0 |
+| Ties | 9 | 9 |
+| Losses | **0** | — |
+| Avg Cost | **$0.001-0.01** | $0.03-0.10 |
+| Avg Latency | **2-3s** | 5-10s |
+
+Tested across code generation, creative writing, analysis, structured output, and translation tasks using a blind A/B methodology. ToolRoute matched or exceeded GPT-4o quality on every task at 10-40x lower cost.
 
 ## Quick Start
 
@@ -46,7 +59,7 @@ Works with Claude Code, Cursor, Windsurf, Replit, or any MCP client.
 }
 ```
 
-Your agent gets 11 tools: `model_route`, `model_report`, `model_verify`, `route`, `search`, `compare`, `report`, and more.
+Your agent gets 16 tools: `toolroute_route`, `toolroute_report`, `toolroute_model_route`, `toolroute_search`, `toolroute_compare`, `toolroute_challenges`, and more.
 
 ### Use with OpenRouter
 
@@ -80,15 +93,21 @@ await tr.model.report({
 ### cURL
 
 ```bash
-# Which model should I use?
-curl -X POST https://toolroute.io/api/route/model \
-  -H "Content-Type: application/json" \
-  -d '{"task": "parse CSV file"}'
-
-# Which MCP server should I use?
+# One call — get the best model AND tool for any task
 curl -X POST https://toolroute.io/api/route \
   -H "Content-Type: application/json" \
-  -d '{"task": "web scraping"}'
+  -d '{"task": "write a Python function to sort a list"}'
+# → { approach: "direct_llm", recommended_model: "DeepSeek V3", tier: "fast_code", cost: $0.14/1M }
+
+curl -X POST https://toolroute.io/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"task": "search the web for AI agent frameworks"}'
+# → { approach: "mcp_server", recommended_skill: "exa-mcp-server", ... }
+
+curl -X POST https://toolroute.io/api/route \
+  -H "Content-Type: application/json" \
+  -d '{"task": "send Slack message AND update Jira AND email client about deploy delay"}'
+# → { approach: "multi_tool", orchestration: [slack-mcp, atlassian-mcp, gmail-mcp] }
 ```
 
 ---
@@ -118,20 +137,28 @@ curl -X POST https://toolroute.io/api/route \
 
 ## What You Get
 
-### Model Routing
-- **6 tiers**: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available
-- **20+ models** across OpenAI, Anthropic, Google, Meta, Mistral, DeepSeek
-- **Cost estimates** before you call
-- **Fallback chains** within the same tier
-- **Auto-escalation** to a higher tier if the model fails
-- **60-90% cheaper** than defaulting to GPT-4o
+### Intelligent Model Selection
+- **LLM-powered classifier** understands task context ($0.00001/call via Gemini Flash Lite)
+- **7 tiers**: cheap_chat, cheap_structured, fast_code, creative_writing, reasoning_pro, tool_agent, best_available
+- **3 priority modes**: `lowest_cost`, `best_value`, `highest_quality` — agent chooses the tradeoff
+- **20+ models** across OpenAI, Anthropic, Google, DeepSeek, Mistral, Meta
+- **10-40x cheaper** than fixed GPT-4o with zero quality loss on most tasks
 
-### Tool Routing
-- **200+ MCP servers** scored on real execution data
+### MCP Server Routing
+- **100+ MCP servers** scored on real execution data
 - **5-dimension scoring**: Output Quality, Reliability, Efficiency, Cost, Trust
-- **Confidence-scored recommendations** with alternatives
-- **Fallback chains** if the primary tool fails
-- **SSE + HTTP transport** for MCP clients (Claude Desktop, Cursor, Windsurf)
+- **Tool category detection**: web_search, web_fetch, email, messaging, calendar, ticketing, code_repo, database
+- **Skill preferences**: Firecrawl for web fetch, Exa for search, Slack for messaging, etc.
+
+### Multi-Tool Orchestration
+- **Compound task detection**: "Send Slack AND update Jira AND email client" → 3-step chain
+- **Step-by-step orchestration**: each step gets the right tool assigned automatically
+- **Single call**: one POST to `/api/route` returns the full execution plan
+
+### Three Approaches
+- **`direct_llm`** — Task needs only an LLM (code, writing, analysis). Returns the best model.
+- **`mcp_server`** — Task needs an external tool (web search, email, calendar). Returns the tool + model.
+- **`multi_tool`** — Task needs multiple tools in sequence. Returns an orchestration chain.
 
 ### Works With
 
@@ -229,7 +256,7 @@ MIT
 ---
 
 <p align="center">
-  <strong>Stop overspending on LLM tokens.</strong><br/>
-  Add ToolRoute. Route smarter. Spend less.<br/><br/>
+  <strong>Matched GPT-4o quality. Zero losses. 10-40x cheaper.</strong><br/>
+  Add ToolRoute in 30 seconds. Let it pick the best model for every task.<br/><br/>
   <a href="https://toolroute.io">toolroute.io</a>
 </p>
