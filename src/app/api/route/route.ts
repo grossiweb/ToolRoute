@@ -508,8 +508,11 @@ export async function POST(request: NextRequest) {
   }
 
   // Determine approach: multi-tool, single MCP server, or direct LLM?
+  // Re-read needs_external_tool from taskClassification — it may have been overridden
+  // (e.g. calculation tasks are redirected to direct LLM after initial classification)
+  const effectiveNeedsMcp = taskClassification ? taskClassification.needs_external_tool : needsMcpServer
   const isMultiTool = taskClassification?.is_multi_tool && (taskClassification.tool_categories?.length ?? 0) >= 2
-  const approach = isMultiTool ? 'multi_tool' : (needsMcpServer ? 'mcp_server' : 'direct_llm')
+  const approach = isMultiTool ? 'multi_tool' : (effectiveNeedsMcp ? 'mcp_server' : 'direct_llm')
 
   // Build orchestration chain for multi-tool tasks
   let orchestration = null

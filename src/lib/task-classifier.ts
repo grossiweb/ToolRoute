@@ -55,7 +55,7 @@ CRITICAL RULES for needs_external_tool:
 - "Send a Slack message" = TRUE (needs Slack API)
 - "Schedule a meeting" = TRUE (needs calendar API)
 - "Deploy to production" = TRUE (needs deployment system)
-- "What is 87423 * 99231" = TRUE (precise arithmetic needs calculator tool)
+- "What is 87423 * 99231" = FALSE (arithmetic is solved by code model, task_type: "code", no MCP server needed)
 - "Write ABOUT Slack messages" = FALSE (just generating text)
 - "Draft an email" = FALSE (generating text, not sending)
 - "Create a project plan" = FALSE (generating text, not booking calendar)
