@@ -190,8 +190,16 @@ export async function POST(request: NextRequest) {
     // Use LLM classification if available (most accurate)
     if (taskClassification && taskClassification.method === 'llm') {
       if (taskClassification.needs_external_tool && taskClassification.tool_category) {
+        // Calculation tasks are better handled by code models than MCP servers
+        if (taskClassification.tool_category === 'calculation') {
+          taskClassification.needs_external_tool = false
+          taskClassification.task_type = 'code'
+          taskClassification.complexity = 'simple'
+          resolvedWorkflow = 'general'
+        } else {
         const { toolCategoryToWorkflow } = await import('@/lib/task-classifier')
         resolvedWorkflow = toolCategoryToWorkflow(taskClassification.tool_category)
+        }
         // Preferred skill overrides for specific tool categories
         const TOOL_CATEGORY_SKILL_PREFERENCE: Record<string, string> = {
           'web_fetch': 'firecrawl-mcp',
