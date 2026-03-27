@@ -65,7 +65,7 @@ task_type rules:
 - "creative_writing" = ONLY high-stakes persuasive content: sales pitches, cold outreach to executives, marketing campaigns, ad copy. NOT simple blog outlines or LinkedIn updates.
 - "analysis" = comparing options, evaluating tradeoffs, pros/cons, decision matrices, architectural decisions, financial modeling, mathematical derivations
 - "structured" = JSON schemas, CSV templates, data parsing/extraction, format conversion
-- "translation" = translating between human languages
+- "translation" = simple, direct translation between human languages. If the task also requires analysis (e.g., "translate then compare", "translate and identify what was lost", "back-translate and analyze differences"), classify as "analysis" not "translation"
 - "general" = anything else
 
 complexity rules:
