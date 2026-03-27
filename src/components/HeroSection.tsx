@@ -1,5 +1,51 @@
 'use client'
 
+import { useState } from 'react'
+
+function MCPTooltip() {
+  const [open, setOpen] = useState(false)
+  return (
+    <span style={{ position: 'relative', display: 'inline-block' }}>
+      <span
+        onMouseEnter={() => setOpen(true)}
+        onMouseLeave={() => setOpen(false)}
+        style={{
+          color: 'var(--amber)',
+          borderBottom: '1px dashed rgba(245,158,11,0.5)',
+          cursor: 'help',
+          fontSize: 'inherit',
+          whiteSpace: 'nowrap',
+        }}
+      >
+        WTF is MCP?
+      </span>
+      {open && (
+        <span style={{
+          position: 'absolute',
+          bottom: 'calc(100% + 8px)',
+          left: '50%',
+          transform: 'translateX(-50%)',
+          background: 'var(--bg)',
+          border: '1px solid var(--border-bright)',
+          borderRadius: 10,
+          padding: '12px 16px',
+          fontSize: 13,
+          color: 'var(--text-2)',
+          lineHeight: 1.6,
+          width: 270,
+          textAlign: 'left',
+          boxShadow: '0 12px 32px rgba(0,0,0,0.3)',
+          zIndex: 20,
+          pointerEvents: 'none',
+        }}>
+          <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>Model Context Protocol</strong>
+          The standard that lets your agent use real tools — Slack, GitHub, Postgres, Stripe — without writing custom integrations.
+        </span>
+      )}
+    </span>
+  )
+}
+
 /* Official brand SVG logos — monochrome, 25% larger for visibility */
 const COMPAT_LOGOS: { name: string; icon: JSX.Element }[] = [
   { name: 'OpenRouter', icon: (
@@ -121,7 +167,7 @@ export function HeroSection() {
         fontSize: 18, color: 'var(--text-2)', maxWidth: 560,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server (Model Context Protocol) for each task — matched GPT-4o quality at 10-40x lower cost across 132 real benchmark runs.
+        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server{' '}<MCPTooltip />{' '}for each task — matched GPT-4o quality at 10-40x lower cost across 132 real benchmark runs.
       </p>
 
       {/* CTA buttons */}
