@@ -386,29 +386,63 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Also get a model recommendation for full-stack routing
+  // Get model recommendation directly (no self-fetch — fails on Vercel)
   let recommendedModel: any = null
   if (task) {
     try {
-      const modelBaseUrl = process.env.NEXT_PUBLIC_SITE_URL || (process.env.VERCEL_URL ? `https://${process.env.VERCEL_URL}` : 'https://toolroute.io')
-      const modelRes = await fetch(`${modelBaseUrl}/api/route/model`, {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({ task, agent_identity_id: agent_identity_id || null }),
-      })
-      if (modelRes.ok) {
-        const md = await modelRes.json()
-        recommendedModel = {
-          slug: md.model_details?.slug || md.recommended_model,
-          provider: md.model_details?.provider,
-          tier: md.tier,
-          estimated_cost: md.estimated_cost,
-          decision_id: md.decision_id,
-          reason: `${md.tier} tier — best cost/quality for this task type`,
+      const { detectTaskSignals, resolveModelTier, rankModelsInTier, buildFallbackChain, estimateTaskCost, TIER_DESCRIPTIONS } = await import('@/lib/model-routing')
+      const signals = detectTaskSignals(task)
+      const tier = resolveModelTier(signals, task)
+
+      const { data: aliasRows } = await supabase
+        .from('model_aliases')
+        .select(`
+          priority, is_fallback, alias_name,
+          model_registry (
+            id, slug, display_name, provider, provider_model_id,
+            input_cost_per_mtok, output_cost_per_mtok,
+            context_window, supports_tool_calling, supports_structured_output
+          )
+        `)
+        .eq('tier', tier)
+        .eq('active', true)
+        .order('priority', { ascending: true })
+
+      if (aliasRows && aliasRows.length > 0) {
+        const candidates = aliasRows.map((a: any) => {
+          const m = Array.isArray(a.model_registry) ? a.model_registry[0] : a.model_registry
+          return {
+            id: m.id, slug: m.slug, display_name: m.display_name,
+            provider: m.provider, provider_model_id: m.provider_model_id,
+            priority: a.priority, is_fallback: a.is_fallback,
+            input_cost_per_mtok: parseFloat(m.input_cost_per_mtok || '0'),
+            output_cost_per_mtok: parseFloat(m.output_cost_per_mtok || '0'),
+            context_window: m.context_window,
+            supports_tool_calling: m.supports_tool_calling,
+            supports_structured_output: m.supports_structured_output,
+            avg_latency_ms: null, supports_vision: false,
+            reasoning_strength: 'medium', code_strength: 'medium',
+            deprecation_date: null,
+          }
+        })
+        const ranked = rankModelsInTier(candidates, {})
+        if (ranked.length > 0) {
+          const primary = ranked[0]
+          recommendedModel = {
+            slug: primary.slug,
+            display_name: primary.display_name,
+            provider: primary.provider,
+            provider_model_id: primary.provider_model_id,
+            input_cost_per_mtok: primary.input_cost_per_mtok,
+            output_cost_per_mtok: primary.output_cost_per_mtok,
+            tier,
+            tier_description: TIER_DESCRIPTIONS[tier]?.name || tier,
+            reason: `${TIER_DESCRIPTIONS[tier]?.name || tier} tier — best cost/quality for this task type`,
+          }
         }
       }
     } catch {
-      // Model routing is optional
+      // Model routing is optional — don't block skill routing
     }
   }
 
@@ -423,7 +457,7 @@ export async function POST(request: NextRequest) {
       recommended_skill: null,
       recommended_skill_name: null,
       cost_insight: recommendedModel
-        ? `Use ${recommendedModel.slug} (${recommendedModel.provider}) — ${recommendedModel.tier} tier for best cost/quality ratio on this task type.`
+        ? `Use ${recommendedModel.display_name} (${recommendedModel.provider}) at $${recommendedModel.input_cost_per_mtok}/1M tokens — ${recommendedModel.tier_description || recommendedModel.tier} tier, best cost/quality ratio for this task type.`
         : 'Use your current model — this is a standard LLM task.',
     } : {
       recommended_skill: top.slug,
