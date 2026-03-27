@@ -101,7 +101,7 @@ const BEST_AVAILABLE_KEYWORDS = [
 
 export function detectTaskSignals(task: string): TaskSignals {
   if (!task) {
-    return { tools_needed: false, structured_output_needed: false, code_present: false, complex_reasoning: false, signal_count: 0 }
+    return { tools_needed: false, structured_output_needed: false, code_present: false, complex_reasoning: false, creative_writing: false, signal_count: 0 }
   }
 
   const lower = task.toLowerCase()
@@ -281,6 +281,7 @@ const TIER_OUTPUT_ESTIMATES: Record<ModelTier, number> = {
   cheap_chat: 200,
   cheap_structured: 500,
   fast_code: 800,
+  creative_writing: 1200,
   reasoning_pro: 1500,
   tool_agent: 1000,
   best_available: 2000,
