@@ -7,11 +7,11 @@ import { ThemeScript } from '@/components/ThemeScript'
 
 export const metadata: Metadata = {
   title: 'ToolRoute — The best tool at the lowest price, instantly.',
-  description: 'ToolRoute matches your AI agent to the highest-scoring MCP server and lowest-cost LLM for any task — in milliseconds, based on real execution data.',
+  description: 'ToolRoute finds the best output for the lowest cost. Matched GPT-4o quality with zero losses at 10-40x lower cost across 132 real benchmark runs.',
   metadataBase: new URL('https://toolroute.io'),
   openGraph: {
     title: 'ToolRoute — The best tool at the lowest price, instantly.',
-    description: 'ToolRoute matches your AI agent to the highest-scoring MCP server and lowest-cost LLM for any task — in milliseconds, based on real execution data.',
+    description: 'ToolRoute finds the best output for the lowest cost. Matched GPT-4o quality with zero losses at 10-40x lower cost across 132 real benchmark runs.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
@@ -20,7 +20,7 @@ export const metadata: Metadata = {
   twitter: {
     card: 'summary_large_image',
     title: 'ToolRoute — The best tool at the lowest price, instantly.',
-    description: 'ToolRoute matches your AI agent to the highest-scoring MCP server and lowest-cost LLM for any task — in milliseconds, based on real execution data.',
+    description: 'ToolRoute finds the best output for the lowest cost. Matched GPT-4o quality with zero losses at 10-40x lower cost across 132 real benchmark runs.',
     images: ['/api/og?title=ToolRoute&type=server'],
   },
 }
