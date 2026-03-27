@@ -128,7 +128,7 @@ export function HeroSection() {
         fontSize: 18, color: 'var(--text-2)', maxWidth: 540,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        Your agents are using the same expensive model for every task. ToolRoute picks the best model and MCP server per step — cutting costs while improving results.
+        Matched GPT-4o quality on every task. Zero losses. 10-40x lower cost. ToolRoute picks the best model and MCP server for each step — scored on real execution data, not benchmarks.
       </p>
 
       {/* CTA buttons */}

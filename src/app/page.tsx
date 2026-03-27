@@ -19,10 +19,10 @@ export default function HomePage() {
           background: 'var(--bg2)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', overflow: 'hidden',
         }}>
           {[
-            { num: '20+', label: 'LLM Models' },
-            { num: '50+', label: 'MCP Servers' },
+            { num: '0', label: 'Losses vs GPT-4o' },
+            { num: '10-40x', label: 'Cost savings' },
+            { num: '132', label: 'Benchmark runs' },
             { num: '100%', label: 'Free to use' },
-            { num: '0', label: 'API key needed' },
           ].map((s, i) => (
             <div key={i} style={{
               padding: '28px 32px',
