@@ -39,7 +39,9 @@ function MCPTooltip() {
           pointerEvents: 'none',
         }}>
           <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>Model Context Protocol</strong>
-          The standard that lets your agent use real tools — Slack, GitHub, Postgres, Stripe — without writing custom integrations.
+          <span>The standard that lets your agent use real tools — GitHub, Slack, Stripe, Gmail — without writing custom integrations.</span>
+          <span style={{ display: 'block', marginTop: 8, color: 'var(--text-3)', fontSize: 12 }}>Add GitHub → your agent can open PRs. Add Slack → it can send messages. Zero code.</span>
+          <span style={{ display: 'block', marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 8, fontStyle: 'italic', color: 'var(--text-3)', fontSize: 12 }}>🥋 &ldquo;I know kung fu.&rdquo; — Neo, <em>The Matrix</em> (1999)</span>
         </span>
       )}
     </span>
