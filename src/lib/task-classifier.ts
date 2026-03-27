@@ -35,10 +35,13 @@ Respond ONLY with valid JSON, no other text:
 CRITICAL RULES for needs_external_tool:
 - true ONLY if the task REQUIRES real-time access to an external system to complete
 - "Search the web for X" = TRUE (needs live web access)
-- "Fetch/summarize a URL" = TRUE (needs to retrieve a web page)
+- "Fetch/summarize a URL like https://..." = TRUE (needs to retrieve a web page)
+- "What is the current price of X" = TRUE (needs live data)
+- "What did X announce yesterday" = TRUE (needs recent news)
 - "Send a Slack message" = TRUE (needs Slack API)
 - "Schedule a meeting" = TRUE (needs calendar API)
 - "Deploy to production" = TRUE (needs deployment system)
+- "What is 87423 * 99231" = TRUE (precise arithmetic needs calculator tool)
 - "Write ABOUT Slack messages" = FALSE (just generating text)
 - "Draft an email" = FALSE (generating text, not sending)
 - "Create a project plan" = FALSE (generating text, not booking calendar)
@@ -47,24 +50,33 @@ CRITICAL RULES for needs_external_tool:
 - "Explain the difference between X and Y" = FALSE (reasoning from knowledge)
 - "Create a competitive analysis" = FALSE (reasoning from knowledge, unless explicitly asking to research live data)
 - "Parse JSON data" = FALSE (text processing, no external system needed)
+- "Summarize this article" or "Summarize this 5000-word article" = FALSE (content is provided by user, not fetched)
+- "Write a Python script to scrape X" = FALSE (writing CODE that scrapes, not actually scraping)
+
+IMPORTANT distinction:
+- "Scrape this website" = TRUE (needs web_fetch tool to actually scrape)
+- "Write a script to scrape a website" = FALSE (writing code, task_type = "code")
+- "Summarize https://example.com" = TRUE (needs web_fetch to retrieve the URL)
+- "Summarize this article about climate change" = FALSE (article is provided by user)
 
 task_type rules:
-- "code" = writing/reviewing/debugging code, SQL queries, regex, unit tests, any programming
+- "code" = writing/reviewing/debugging code, SQL queries, regex, unit tests, any programming. INCLUDES "write a script to do X" even if X involves web/API/DB — the task is writing code.
 - "writing" = replies, messages, basic emails, explanations, guides, agendas, outlines, troubleshooting docs
 - "creative_writing" = ONLY high-stakes persuasive content: sales pitches, cold outreach to executives, marketing campaigns, ad copy. NOT simple blog outlines or LinkedIn updates.
-- "analysis" = comparing options, evaluating tradeoffs, pros/cons, decision matrices, architectural decisions
+- "analysis" = comparing options, evaluating tradeoffs, pros/cons, decision matrices, architectural decisions, financial modeling, mathematical derivations
 - "structured" = JSON schemas, CSV templates, data parsing/extraction, format conversion
 - "translation" = translating between human languages
 - "general" = anything else
 
 complexity rules:
-- "simple" = single-step, straightforward task (basic email, simple function, template, translation, short message)
-- "medium" = requires domain knowledge or multi-part output (technical guide, code review, project plan)
-- "complex" = requires deep reasoning, multi-step analysis, or expert judgment (architectural decisions, competitive analysis, complex debugging, comprehensive strategy)
+- "simple" = single-step, straightforward task (basic email, simple function, template, translation, short message, trivial question like "What is the capital of France?", trick questions like "pound of feathers vs pound of steel")
+- "medium" = requires domain knowledge or multi-part output (technical guide, code review, project plan, multi-step code)
+- "complex" = ANY of these: mathematical derivation or proof, financial modeling (DCF, Black-Scholes), self-critique or self-evaluation ("then critique your own answer"), multi-domain reasoning (combining finance + tech + strategy), comprehensive strategy or whitepaper, multi-step logic puzzles with constraints, tasks requiring expert-level judgment
 
 tool_category (ONLY if needs_external_tool is true):
-- "web_search" = searching the internet for information
+- "web_search" = searching the internet for information or recent events
 - "web_fetch" = retrieving/scraping a specific URL or web page
+- "calculation" = precise arithmetic that LLMs get wrong (large numbers, financial calculations)
 - "email" = sending emails via Gmail/SendGrid/etc
 - "messaging" = sending messages via Slack/Discord/Teams
 - "database" = querying a live database
@@ -257,6 +269,7 @@ export function toolCategoryToWorkflow(toolCategory: string | null): string {
   const map: Record<string, string> = {
     'web_search': 'research-competitive-intelligence',
     'web_fetch': 'research-competitive-intelligence',
+    'calculation': 'data-analysis-reporting',
     'email': 'communication-email',
     'messaging': 'communication-messaging',
     'database': 'data-analysis-reporting',
