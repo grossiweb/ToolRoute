@@ -269,7 +269,7 @@ export function toolCategoryToWorkflow(toolCategory: string | null): string {
   const map: Record<string, string> = {
     'web_search': 'research-competitive-intelligence',
     'web_fetch': 'research-competitive-intelligence',
-    'calculation': 'data-analysis-reporting',
+    // 'calculation' intentionally omitted — handled as direct_llm with code model
     'email': 'communication-email',
     'messaging': 'communication-messaging',
     'database': 'data-analysis-reporting',
