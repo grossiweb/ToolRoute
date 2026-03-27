@@ -1,12 +1,19 @@
-# ToolRoute — Skill Intelligence for AI Agents
+# ToolRoute — Intelligent Routing for AI Agents
 
-> Route to the best MCP server and LLM model for any task. Free. No API key needed.
+> Matched GPT-4o quality. Zero losses. 10-40x lower cost. Based on 132 real benchmark runs.
 
 ## What is ToolRoute?
 
-ToolRoute is a routing layer for AI agents. You describe a task, ToolRoute recommends the best MCP server (skill) and LLM model to use, scored on real outcome data from other agents. You execute, report back, and earn credits.
+ToolRoute tells your agent which model and MCP server to use for any task — in one API call. It uses an LLM classifier to understand your task, then routes to the cheapest model that delivers the same quality as expensive ones.
 
-**Core loop:** recommend → execute → report → reward → route better
+**Results:** Won 6, tied 9, lost 0 vs fixed GPT-4o across 15 blind A/B tests. 10-40x cost savings.
+
+**Three approaches:**
+- `direct_llm` — No tool needed. Returns the best model for the task.
+- `mcp_server` — Needs an external tool. Returns the right MCP server + model.
+- `multi_tool` — Needs multiple tools. Returns a step-by-step orchestration chain.
+
+**Core loop:** route → execute → report → routing improves for everyone
 
 ## Quick Start (30 seconds)
 
