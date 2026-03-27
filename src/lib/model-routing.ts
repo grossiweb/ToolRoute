@@ -340,3 +340,4 @@ export const TIER_DESCRIPTIONS: Record<ModelTier, { name: string; description: s
     use_case: 'Mission-critical tasks, complex multi-signal work, highest quality needed',
   },
 }
+
