@@ -11,38 +11,55 @@ const endpoints = [
   {
     method: 'POST',
     path: '/api/route',
-    title: 'Route — MCP Server Recommendation',
-    description: 'Get a confidence-scored MCP server recommendation for any task. Supports natural language task descriptions or explicit workflow slugs.',
+    title: 'Route — Unified Task Routing',
+    description: 'The primary endpoint. Returns the best model AND MCP server for any task in one call. Uses an LLM classifier to understand task context, then routes to the optimal approach: direct_llm (no tool needed), mcp_server (needs external tool), or multi_tool (needs multiple tools in sequence). Benchmarked: matched GPT-4o quality with 0 losses at 10-40x lower cost.',
     request: `{
-  "task": "extract structured pricing data from competitor websites",
-  "workflow_slug": "research-competitive-intelligence",
-  "vertical_slug": "marketing",
+  "task": "send a Slack message AND update Jira AND email the client about the deploy delay",
   "constraints": {
-    "priority": "best_value",
-    "max_cost_usd": 0.05,
-    "latency_preference": "medium",
-    "trust_floor": 7
-  }
-}`,
-    response: `{
-  "recommended_skill": "firecrawl-mcp",
-  "recommended_skill_name": "Firecrawl MCP",
-  "confidence": 0.82,
-  "reasoning": "Firecrawl MCP scores 8.7/10 value...",
-  "outcome_count": 47,
-  "alternatives": ["exa-mcp-server", "playwright-mcp"],
-  "recommended_combo": ["firecrawl-mcp", "exa-mcp-server"],
-  "fallback": "exa-mcp-server",
-  "scores": { "value_score": 8.7, "output_score": 9.0, ... },
-  "routing_metadata": {
-    "resolved_workflow": "research-competitive-intelligence",
-    "junction_table_filtered": true,
-    "candidates_evaluated": 12
+    "priority": "best_value"
   },
-  "non_mcp_alternative": { "approach": "direct_api", ... },
-  "wanted_telemetry": { "reward_multiplier": 1.5, ... }
+  "agent_identity_id": "uuid (optional, earns 2x credits)"
 }`,
-    notes: 'Either "task" or "workflow_slug" is required. Priority modes: best_value, best_quality, best_efficiency, lowest_cost, highest_trust, most_reliable.',
+    response: `// Three possible approaches:
+
+// 1. direct_llm — No tool needed, returns the best model
+{
+  "approach": "direct_llm",
+  "recommended_model": {
+    "slug": "deepseek-v3",
+    "display_name": "DeepSeek V3",
+    "provider": "deepseek",
+    "input_cost_per_mtok": 0.14,
+    "tier": "fast_code",
+    "tier_description": "Fast Code"
+  },
+  "cost_insight": "DeepSeek V3 at $0.14/1M — 21x cheaper than Claude Sonnet for equivalent code quality.",
+  "confidence": 0.95
+}
+
+// 2. mcp_server — Needs an external tool
+{
+  "approach": "mcp_server",
+  "recommended_skill": "exa-mcp-server",
+  "recommended_skill_name": "Exa MCP Server",
+  "recommended_model": { "slug": "gemini-2-0-flash-lite", ... },
+  "confidence": 0.92,
+  "alternatives": ["brave-search-mcp", "tavily-mcp"],
+  "fallback": "brave-search-mcp"
+}
+
+// 3. multi_tool — Needs multiple tools in sequence
+{
+  "approach": "multi_tool",
+  "orchestration": [
+    { "step": 1, "tool_category": "messaging", "recommended_skill": "slack-mcp", "action": "Send notification" },
+    { "step": 2, "tool_category": "ticketing", "recommended_skill": "atlassian-mcp", "action": "Update ticket" },
+    { "step": 3, "tool_category": "email", "recommended_skill": "gmail-mcp", "action": "Email client" }
+  ],
+  "recommended_model": { "slug": "gemini-2-0-flash-lite", ... },
+  "confidence": 0.87
+}`,
+    notes: 'Priority modes: lowest_cost (cheapest model always), best_value (default — balances quality and cost), highest_quality (premium models for creative/complex tasks). LLM classifier detects task type, complexity, and tool needs automatically.',
   },
   {
     method: 'GET',
@@ -294,7 +311,7 @@ const endpoints = [
   "total": 7,
   "scoring": { "completeness": "35%", "quality": "35%", "efficiency": "30%" }
 }`,
-    notes: 'Categories: research, dev-ops, content, sales, data. Difficulties: beginner, intermediate, advanced, expert. Challenges reward 3x credits — the highest multiplier.',
+    notes: 'Categories: research, dev-ops, content, sales, data, agent-web, agent-code, agent-data, agent-communication, agent-research, agent-ops. Difficulties: beginner, intermediate, advanced, expert. Challenges reward 3x credits — the highest multiplier.',
   },
   {
     method: 'POST',
@@ -328,39 +345,46 @@ const endpoints = [
     method: 'POST',
     path: '/api/route/model',
     title: 'Model Route — LLM Recommendation',
-    description: 'Get an intelligent LLM model recommendation for any task. 6 tiers, 20+ models, 6 providers. Rules-based routing with zero added cost and <50ms latency. Recommendation only — agents call the LLM themselves.',
+    description: 'Get an intelligent LLM model recommendation for any task. 7 tiers, 20+ models, 6 providers. LLM-powered task classifier understands context at $0.00001/call. Benchmarked across 132 real executions: matched GPT-4o quality at 10-40x lower cost.',
     request: `{
   "task": "write a python function to parse CSV files",
   "constraints": {
+    "priority": "best_value",
     "max_cost_per_mtok": 5.0,
-    "preferred_provider": "anthropic",
-    "exclude_providers": ["meta"]
+    "preferred_provider": "deepseek"
   },
   "agent_identity_id": "uuid (optional)"
 }`,
     response: `{
   "recommended_model": "toolroute/fast_code",
   "model_details": {
-    "slug": "claude-3-5-sonnet",
-    "display_name": "Claude 3.5 Sonnet",
-    "provider": "anthropic",
-    "provider_model_id": "claude-3-5-sonnet-20241022",
-    "input_cost_per_mtok": 3.0,
-    "output_cost_per_mtok": 15.0
+    "slug": "deepseek-v3",
+    "display_name": "DeepSeek V3",
+    "provider": "deepseek",
+    "provider_model_id": "deepseek/deepseek-chat-v3-0324",
+    "input_cost_per_mtok": 0.14,
+    "output_cost_per_mtok": 0.28
   },
   "tier": "fast_code",
-  "confidence": 0.80,
-  "estimated_cost": { "estimated_usd": 0.0135 },
+  "tier_description": "Fast Code — optimized for code generation",
+  "confidence": 0.95,
+  "signals": {
+    "task_type": "code",
+    "complexity": "medium",
+    "needs_tool": false,
+    "creative_writing": false
+  },
+  "estimated_cost": { "estimated_usd": 0.0005 },
   "fallback_chain": [
-    { "slug": "deepseek-v3", "provider": "deepseek" },
-    { "slug": "gpt-4o", "provider": "openai" }
+    { "slug": "gemini-2-0-flash", "provider": "google" },
+    { "slug": "gpt-4o-mini", "provider": "openai" }
   ],
   "escalation": {
     "tier": "reasoning_pro",
     "trigger": "Use if complex logic or multi-step planning needed"
   }
 }`,
-    notes: 'Tiers: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available. Signals: tools_needed, structured_output, code_present, complex_reasoning. Include decision_id in /api/report/model for 1.5x credit bonus.',
+    notes: 'Tiers: cheap_chat ($0.075/1M), cheap_structured ($0.10/1M), fast_code ($0.14/1M), creative_writing ($3.00/1M), reasoning_pro ($0.55/1M), tool_agent, best_available. Priority modes: lowest_cost, best_value (default), highest_quality. The LLM classifier detects task type, complexity, and whether creative/reasoning quality justifies premium models.',
   },
   {
     method: 'POST',
