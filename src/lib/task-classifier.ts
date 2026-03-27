@@ -97,6 +97,7 @@ tool_category (ONLY if needs_external_tool is true):
 - "calendar" = scheduling/managing calendar events
 - "deployment" = deploying code, CI/CD operations
 - "code_repo" = GitHub/GitLab operations (PRs, issues, commits)
+- "ticketing" = project management / issue tracking (Jira, Linear, Asana, Trello, updating tickets)
 - "crm" = CRM operations (Salesforce, HubSpot)
 - "cms" = content management (WordPress, Ghost)
 - "security_scan" = vulnerability scanning, security audits of live systems
@@ -292,6 +293,7 @@ export function toolCategoryToWorkflow(toolCategory: string | null): string {
     'calendar': 'executive-assistant-productivity',
     'deployment': 'it-devops-platform-operations',
     'code_repo': 'developer-workflow-code-management',
+    'ticketing': 'developer-workflow-code-management',
     'file_ops': 'document-processing-summarization',
     'crm': 'sales-research-outreach',
     'cms': 'content-creation-publishing',
@@ -309,6 +311,7 @@ export const TOOL_CATEGORY_SKILL_PREFERENCE: Record<string, { slug: string; name
   'messaging': { slug: 'slack-mcp', name: 'Slack MCP Server' },
   'calendar': { slug: 'google-calendar-mcp', name: 'Google Calendar MCP' },
   'code_repo': { slug: 'github-mcp-server', name: 'GitHub MCP Server' },
+  'ticketing': { slug: 'atlassian-mcp', name: 'Atlassian MCP' },
   'database': { slug: 'supabase-mcp', name: 'Supabase MCP' },
   'security_scan': { slug: 'snyk-mcp', name: 'Snyk MCP' },
   'crm': { slug: 'hubspot-mcp', name: 'HubSpot MCP' },
