@@ -8,10 +8,11 @@
 
 export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
   'research-competitive-intelligence': [
-    'research', 'scrape', 'crawl', 'extract', 'competitor', 'pricing',
-    'web search', 'find information', 'look up', 'gather data', 'source finding',
+    'scrape website', 'crawl website', 'competitor analysis', 'competitor pricing',
+    'web search', 'find information online', 'look up online', 'gather data from web',
     'competitive intelligence', 'market research', 'search the web',
-    'find articles', 'search online', 'web scraping', 'data extraction',
+    'find articles online', 'search online', 'web scraping', 'data extraction from web',
+    'research report', 'industry research',
   ],
   'developer-workflow-code-management': [
     'code', 'repository', 'repo', 'pull request', 'pr', 'commit', 'branch',
@@ -26,11 +27,11 @@ export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
     'headless browser', 'web interaction', 'form submission',
   ],
   'data-analysis-reporting': [
-    'database', 'sql', 'query', 'bigquery', 'postgres', 'analytics',
-    'report', 'data analysis', 'dashboard', 'chart', 'aggregate',
-    'csv', 'dataset', 'data processing', 'parse data', 'analyze data',
-    'snowflake', 'duckdb', 'metrics', 'visualization', 'spreadsheet',
-    'parquet', 'json data', 'tabular', 'statistics',
+    'query database', 'run sql', 'bigquery', 'postgres query', 'analytics dashboard',
+    'data analysis report', 'dashboard', 'chart data', 'aggregate data',
+    'csv data', 'dataset analysis', 'data processing pipeline', 'parse data',
+    'snowflake', 'duckdb', 'data visualization', 'spreadsheet analysis',
+    'parquet', 'tabular data', 'statistical analysis', 'analyze dataset',
   ],
   'sales-research-outreach': [
     'prospect', 'lead', 'crm', 'salesforce', 'hubspot', 'enrich',
@@ -69,11 +70,11 @@ export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
     'container', 'orchestration', 'lambda', 'gcp', 'azure',
   ],
   'marketing-intelligence-campaign-management': [
-    'marketing', 'campaign', 'email marketing', 'newsletter',
-    'mailchimp', 'sendgrid', 'google ads', 'advertising',
+    'marketing campaign', 'run campaign', 'email marketing', 'newsletter campaign',
+    'mailchimp', 'google ads', 'advertising campaign',
     'semrush', 'seo analysis', 'marketing automation',
-    'ad campaign', 'audience', 'conversion', 'landing page',
-    'a/b test marketing', 'marketing analytics',
+    'ad campaign', 'audience targeting', 'conversion tracking', 'landing page optimization',
+    'a/b test marketing', 'marketing analytics', 'campaign performance',
   ],
   'finance-accounting-automation': [
     'invoice', 'payment', 'accounting', 'stripe', 'quickbooks',
@@ -100,16 +101,16 @@ export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
     'product management', 'shipping', 'returns',
   ],
   'security-operations': [
-    'security', 'vulnerability', 'snyk', 'sonarqube', 'trivy',
-    'penetration test', 'security scan', 'audit', 'compliance check',
-    'threat', 'cve', 'patch', 'security assessment',
-    'code scanning', 'dependency check',
+    'security scan', 'vulnerability scan', 'snyk', 'sonarqube', 'trivy',
+    'penetration test', 'security audit', 'compliance check',
+    'cve', 'patch vulnerability', 'security assessment',
+    'code scanning', 'dependency check', 'run security', 'scan for vulnerabilities',
   ],
   'communication-email': [
-    'email', 'gmail', 'send email', 'draft email', 'compose email',
-    'inbox', 'sendgrid', 'mail', 'forward email', 'reply email',
-    'email triage', 'email draft', 'newsletter', 'cold email',
-    'email outreach', 'mailbox',
+    'gmail', 'send email', 'draft email', 'compose email',
+    'inbox', 'sendgrid', 'forward email', 'reply email',
+    'email triage', 'email draft', 'cold email',
+    'email outreach', 'mailbox', 'read email', 'check email',
   ],
   'communication-messaging': [
     'slack', 'discord', 'teams', 'message', 'chat',
@@ -119,10 +120,10 @@ export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
     'microsoft teams', 'group chat',
   ],
   'social-forum-engagement': [
-    'forum', 'comment', 'social', 'post on', 'thread',
-    'discussion', 'community', 'social media', 'engage',
-    'write a comment', 'forum post', 'social post',
-    'online community', 'reply to thread',
+    'forum', 'post on forum', 'thread',
+    'discussion forum', 'community forum', 'social media post', 'engage on social',
+    'write a comment on', 'forum post', 'social post',
+    'online community', 'reply to thread', 'post on social',
   ],
   'document-processing-summarization': [
     'summarize', 'summary', 'pdf', 'document', 'meeting notes',
@@ -145,10 +146,10 @@ export const TASK_WORKFLOW_MAP: Record<string, string[]> = {
  * Longer keyword matches are weighted higher (more specific).
  */
 export function matchWorkflowFromTask(task: string): string {
-  if (!task) return 'research-competitive-intelligence'
+  if (!task) return 'general'
   const lower = task.toLowerCase()
 
-  let bestMatch = 'research-competitive-intelligence'
+  let bestMatch = 'general'
   let bestScore = 0
 
   for (const [workflow, keywords] of Object.entries(TASK_WORKFLOW_MAP)) {
