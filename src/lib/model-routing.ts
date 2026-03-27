@@ -60,8 +60,9 @@ export interface RoutingConstraints {
 const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]> = {
   tools_needed: [
     'tool use', 'tool_use', 'tool calling', 'function call', 'function_call',
-    'execute command', 'run command', 'call api', 'api call', 'mcp server',
-    'use tools', 'with tools', 'tool_choice', 'invoke', 'orchestrate',
+    'execute command', 'run command', 'call api', 'api call',
+    'use tools', 'with tools', 'tool_choice', 'invoke tools', 'orchestrate tools',
+    'use mcp', 'connect to mcp', 'via mcp',
   ],
   structured_output_needed: [
     'json', 'structured output', 'structured_output', 'json schema',
@@ -73,6 +74,8 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'typescript', 'python', 'javascript', 'rust', 'golang', 'java',
     'programming', 'algorithm', 'bug fix', 'unit test', 'codebase',
     'compile', 'syntax', 'import', 'module', 'library',
+    'sql query', 'sql', 'select from', 'join', 'having clause',
+    'regex', 'regular expression',
   ],
   complex_reasoning: [
     'plan', 'design', 'architect', 'analyze', 'multi-step', 'strategy',
