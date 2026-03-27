@@ -20,7 +20,7 @@ export interface TaskClassification {
   method: 'llm' | 'keyword_fallback'
 }
 
-const CLASSIFICATION_PROMPT = `You are a task routing classifier. Given a task description, classify it for an AI agent routing system.
+const CLASSIFICATION_PROMPT = `You are a task routing classifier for an AI agent system. Given a task description, classify it so we can route to the right model and tool.
 
 Respond ONLY with valid JSON, no other text:
 
@@ -32,18 +32,49 @@ Respond ONLY with valid JSON, no other text:
   "reasoning": "one sentence why"
 }
 
-Rules:
-- needs_external_tool = true ONLY if the task requires accessing an external system (web search, sending email/messages, database queries, file operations, API calls, calendar operations, deployment). Writing ABOUT these topics does NOT need a tool.
-- task_type:
-  - "code" = writing/reviewing/debugging code, SQL queries, regex, unit tests
-  - "writing" = simple text like replies, messages, basic emails, explanations
-  - "creative_writing" = persuasive/marketing content: cold outreach, blog posts, LinkedIn posts, proposals, ad copy, pitches
-  - "analysis" = comparing options, evaluating tradeoffs, decision matrices, competitive analysis
-  - "structured" = JSON schemas, CSV templates, data parsing, format conversion
-  - "translation" = language translation
-  - "general" = anything else
-- complexity: "simple" = straightforward, "medium" = needs some thought, "complex" = multi-step reasoning
-- tool_category: if needs_external_tool, specify which: "web_search", "email", "messaging", "database", "calendar", "deployment", "file_ops", "code_repo", "crm", "cms", "security_scan". null if no tool needed.
+CRITICAL RULES for needs_external_tool:
+- true ONLY if the task REQUIRES real-time access to an external system to complete
+- "Search the web for X" = TRUE (needs live web access)
+- "Fetch/summarize a URL" = TRUE (needs to retrieve a web page)
+- "Send a Slack message" = TRUE (needs Slack API)
+- "Schedule a meeting" = TRUE (needs calendar API)
+- "Deploy to production" = TRUE (needs deployment system)
+- "Write ABOUT Slack messages" = FALSE (just generating text)
+- "Draft an email" = FALSE (generating text, not sending)
+- "Create a project plan" = FALSE (generating text, not booking calendar)
+- "Write a troubleshooting guide" = FALSE (generating text from knowledge)
+- "Analyze pros and cons of databases" = FALSE (reasoning from knowledge)
+- "Explain the difference between X and Y" = FALSE (reasoning from knowledge)
+- "Create a competitive analysis" = FALSE (reasoning from knowledge, unless explicitly asking to research live data)
+- "Parse JSON data" = FALSE (text processing, no external system needed)
+
+task_type rules:
+- "code" = writing/reviewing/debugging code, SQL queries, regex, unit tests, any programming
+- "writing" = replies, messages, basic emails, explanations, guides, agendas, outlines, troubleshooting docs
+- "creative_writing" = ONLY high-stakes persuasive content: sales pitches, cold outreach to executives, marketing campaigns, ad copy. NOT simple blog outlines or LinkedIn updates.
+- "analysis" = comparing options, evaluating tradeoffs, pros/cons, decision matrices, architectural decisions
+- "structured" = JSON schemas, CSV templates, data parsing/extraction, format conversion
+- "translation" = translating between human languages
+- "general" = anything else
+
+complexity rules:
+- "simple" = single-step, straightforward task (basic email, simple function, template, translation, short message)
+- "medium" = requires domain knowledge or multi-part output (technical guide, code review, project plan)
+- "complex" = requires deep reasoning, multi-step analysis, or expert judgment (architectural decisions, competitive analysis, complex debugging, comprehensive strategy)
+
+tool_category (ONLY if needs_external_tool is true):
+- "web_search" = searching the internet for information
+- "web_fetch" = retrieving/scraping a specific URL or web page
+- "email" = sending emails via Gmail/SendGrid/etc
+- "messaging" = sending messages via Slack/Discord/Teams
+- "database" = querying a live database
+- "calendar" = scheduling/managing calendar events
+- "deployment" = deploying code, CI/CD operations
+- "code_repo" = GitHub/GitLab operations (PRs, issues, commits)
+- "crm" = CRM operations (Salesforce, HubSpot)
+- "cms" = content management (WordPress, Ghost)
+- "security_scan" = vulnerability scanning, security audits of live systems
+- null if needs_external_tool is false
 
 Task: `
 
@@ -206,14 +237,14 @@ export function classificationToModelTier(
     }
   }
 
-  // best_value (default): premium only for high-stakes creative content
+  // best_value (default): balance quality and cost
   switch (c.task_type) {
     case 'code': return 'fast_code'
     case 'creative_writing': return c.complexity === 'complex' ? 'creative_writing' : 'cheap_chat'
     case 'structured': return 'cheap_structured'
     case 'translation': return 'cheap_chat'
     case 'writing': return c.complexity === 'complex' ? 'reasoning_pro' : 'cheap_chat'
-    case 'analysis': return c.complexity === 'complex' ? 'reasoning_pro' : 'cheap_chat'
+    case 'analysis': return c.complexity !== 'simple' ? 'reasoning_pro' : 'cheap_chat'
     case 'general': return 'cheap_chat'
     default: return 'cheap_chat'
   }
@@ -225,6 +256,7 @@ export function classificationToModelTier(
 export function toolCategoryToWorkflow(toolCategory: string | null): string {
   const map: Record<string, string> = {
     'web_search': 'research-competitive-intelligence',
+    'web_fetch': 'research-competitive-intelligence',
     'email': 'communication-email',
     'messaging': 'communication-messaging',
     'database': 'data-analysis-reporting',
