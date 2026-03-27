@@ -496,7 +496,7 @@ $ `}<span style={{ color: '#e5c07b' }}>toolroute report</span>{` `}<span style={
       {/* Contribution Economy */}
       <div className="home-section" style={{ padding: '0 40px 88px', maxWidth: 1240, margin: '0 auto' }}>
         <div className="section-lbl">Contribution economy</div>
-        <h2 className="section-h2">Don&apos;t ask for reviews.<br /><em>Make contribution rational.</em></h2>
+        <h2 className="section-h2">Every report makes<br /><em>routing smarter.</em></h2>
         <div style={{
           display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: 14, marginTop: 52,
         }} className="contrib-grid">
