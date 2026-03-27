@@ -494,7 +494,9 @@ export async function POST(request: NextRequest) {
         benchmark_package: '+15 to +40 routing credits',
       },
       fields: ['latency_ms', 'cost_usd', 'quality_rating', 'outcome', 'fallback_chain'],
-      one_liner: `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
+      one_liner: approach === 'direct_llm'
+        ? `toolroute.report({ model: '${recommendedModel?.slug || 'your-model'}', outcome: 'success', quality_rating: 8, latency_ms: 1200 })`
+        : `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
     },
     agent: agentContext,
     ...(agent_identity_id ? {} : {
@@ -578,15 +580,52 @@ async function getRecommendedCombo(
 function detectMcpNeed(task: string): boolean {
   const lower = task.toLowerCase()
 
-  // Strong signals that an MCP server IS needed (external system access)
+  // CHECK LLM-ONLY SIGNALS FIRST (more specific about what user is asking)
+  const llmOnly = [
+    // Writing/generation
+    'write a', 'draft a', 'compose', 'generate a', 'create a template',
+    'write code', 'write python', 'write javascript', 'write sql',
+    'write function', 'write class', 'implement a',
+    'write unit test', 'write test', 'generate test', 'test case',
+    'write a slack', 'write a message', 'draft a message',
+    'write a reply', 'write a response', 'draft a reply',
+    // Analysis/explanation from knowledge (not external data)
+    'explain', 'summarize this', 'analyze this', 'compare', 'pros and cons',
+    'review this code', 'fix this code', 'debug this', 'refactor',
+    'translate', 'rewrite', 'improve this', 'edit this',
+    'analyze the pros', 'advantages and disadvantages', 'tradeoffs',
+    'competitive analysis', 'analysis of', 'evaluate the',
+    'difference between', 'explain the difference',
+    // Formatting/structuring
+    'format', 'convert to json', 'parse this', 'extract from this',
+    'create csv', 'generate schema', 'outline', 'parse and extract',
+    'create a template', 'generate a template',
+    // Planning/brainstorming
+    'brainstorm', 'plan for', 'strategy for', 'decision matrix',
+    'meeting agenda', 'project plan', 'choosing between',
+    'choose between', 'which is better', 'recommend a',
+    // Knowledge tasks (no external lookup needed)
+    'troubleshooting guide', 'how to guide', 'tutorial',
+    'best practices', 'checklist', 'framework for',
+    'options for', 'considerations for',
+    // Content creation
+    'blog post', 'article', 'linkedin post', 'social media',
+    'newsletter', 'report template', 'agenda',
+  ]
+
+  for (const signal of llmOnly) {
+    if (lower.includes(signal)) return false
+  }
+
+  // THEN check MCP signals (need external system access)
   const mcpRequired = [
-    // Web access
+    // Web access (specific actions, not just mentioning "web")
     'search the web', 'web search', 'scrape', 'crawl', 'fetch url', 'browse',
-    'look up online', 'find online', 'google',
-    // Database operations
-    'run query', 'execute sql', 'insert into', 'update table', 'database',
-    'supabase', 'postgres', 'mongodb', 'dynamodb',
-    // External service operations
+    'look up online', 'find online', 'google', 'search for',
+    // Database operations (actual execution, not just writing SQL)
+    'run query', 'execute sql', 'insert into', 'update table',
+    'query the database', 'connect to database',
+    // External service operations (sending/executing, not writing)
     'send email', 'send slack', 'send message', 'post to', 'publish to',
     'deploy', 'push to github', 'create pr', 'open issue', 'create ticket',
     'schedule meeting', 'add to calendar', 'set reminder',
@@ -595,7 +634,7 @@ function detectMcpNeed(task: string): boolean {
     'monitor', 'check status', 'ping',
     // API calls
     'call api', 'hit endpoint', 'make request', 'webhook',
-    // Specific tool mentions
+    // Specific tool mentions (these tools need MCP to operate)
     'figma', 'notion', 'jira', 'confluence', 'salesforce', 'hubspot',
     'stripe', 'shopify', 'zendesk', 'github', 'gitlab',
   ]
@@ -604,34 +643,8 @@ function detectMcpNeed(task: string): boolean {
     if (lower.includes(signal)) return true
   }
 
-  // Strong signals that this is a pure LLM task (no external tools needed)
-  const llmOnly = [
-    // Writing/generation
-    'write a', 'draft a', 'compose', 'generate a', 'create a template',
-    'write code', 'write python', 'write javascript', 'write sql',
-    'write function', 'write class', 'implement a',
-    'write unit test', 'write test', 'generate test', 'test case',
-    // Analysis from context (not external data)
-    'explain', 'summarize this', 'analyze this', 'compare', 'pros and cons',
-    'review this code', 'fix this code', 'debug this', 'refactor',
-    'translate', 'rewrite', 'improve this', 'edit this',
-    'analyze the pros', 'advantages and disadvantages', 'tradeoffs',
-    // Formatting/structuring
-    'format', 'convert to json', 'parse this', 'extract from this',
-    'create csv', 'generate schema', 'outline',
-    'create a template', 'generate a template',
-    // Planning/brainstorming
-    'brainstorm', 'plan for', 'strategy for', 'decision matrix',
-    'meeting agenda', 'project plan', 'choosing between',
-    'choose between', 'which is better', 'recommend a',
-  ]
-
-  for (const signal of llmOnly) {
-    if (lower.includes(signal)) return false
-  }
-
-  // Default: assume MCP is needed (conservative — better to suggest a tool than miss one)
-  return true
+  // Default: assume LLM can handle it (most tasks are generation/analysis)
+  return false
 }
 
 function getNonMcpAlternative(workflowSlug: string): object | null {
