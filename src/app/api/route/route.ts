@@ -154,8 +154,16 @@ export async function POST(request: NextRequest) {
     latency_preference = 'medium',
   } = constraints
 
-  // Detect if this task needs an MCP server or is a pure LLM task
-  const needsMcpServer = task ? detectMcpNeed(task) : true
+  // Classify task using LLM (Gemini Flash Lite, ~$0.00001 per call)
+  // Falls back to keyword detection if LLM unavailable
+  let taskClassification: import('@/lib/task-classifier').TaskClassification | null = null
+  if (task && !explicitWorkflow) {
+    const { classifyTask } = await import('@/lib/task-classifier')
+    taskClassification = await classifyTask(task)
+  }
+  const needsMcpServer = taskClassification
+    ? taskClassification.needs_external_tool
+    : (task ? detectMcpNeed(task) : true)
 
   // Require either task or workflow_slug
   if (!task && !explicitWorkflow) {
@@ -179,19 +187,30 @@ export async function POST(request: NextRequest) {
   let matchMethod: 'explicit' | 'semantic' | 'keyword' = explicitWorkflow ? 'explicit' : 'keyword'
 
   if (!explicitWorkflow && task) {
-    // Try semantic matching first
-    const semanticResult = await semanticMatchWorkflow(task)
-
-    if (semanticResult.method === 'semantic' && semanticResult.similarity > 0.3) {
-      resolvedWorkflow = semanticResult.workflow
-      // Semantic confidence: similarity score maps to 0.65-0.95 range
-      confidence = Math.min(0.95, 0.65 + semanticResult.similarity * 0.3)
-      matchMethod = 'semantic'
+    // Use LLM classification if available (most accurate)
+    if (taskClassification && taskClassification.method === 'llm') {
+      if (taskClassification.needs_external_tool && taskClassification.tool_category) {
+        const { toolCategoryToWorkflow } = await import('@/lib/task-classifier')
+        resolvedWorkflow = toolCategoryToWorkflow(taskClassification.tool_category)
+      } else {
+        resolvedWorkflow = 'general'
+      }
+      confidence = 0.90
+      matchMethod = 'llm' as any
     } else {
-      // Fall back to keyword matching (shared lib)
-      resolvedWorkflow = matchWorkflowFromTask(task)
-      confidence = calcTaskConfidence(task, resolvedWorkflow)
-      matchMethod = 'keyword'
+      // Try semantic matching
+      const semanticResult = await semanticMatchWorkflow(task)
+
+      if (semanticResult.method === 'semantic' && semanticResult.similarity > 0.3) {
+        resolvedWorkflow = semanticResult.workflow
+        confidence = Math.min(0.95, 0.65 + semanticResult.similarity * 0.3)
+        matchMethod = 'semantic'
+      } else {
+        // Fall back to keyword matching (shared lib)
+        resolvedWorkflow = matchWorkflowFromTask(task)
+        confidence = calcTaskConfidence(task, resolvedWorkflow)
+        matchMethod = 'keyword'
+      }
     }
   }
 
@@ -391,8 +410,16 @@ export async function POST(request: NextRequest) {
   if (task) {
     try {
       const { detectTaskSignals, resolveModelTier, rankModelsInTier, buildFallbackChain, estimateTaskCost, TIER_DESCRIPTIONS } = await import('@/lib/model-routing')
-      const signals = detectTaskSignals(task)
-      const tier = resolveModelTier(signals, task)
+
+      // Use LLM classifier for tier if available, fall back to signal detection
+      let tier: string
+      if (taskClassification && taskClassification.method === 'llm') {
+        const { classificationToModelTier } = await import('@/lib/task-classifier')
+        tier = classificationToModelTier(taskClassification)
+      } else {
+        const signals = detectTaskSignals(task)
+        tier = resolveModelTier(signals, task)
+      }
 
       const { data: aliasRows } = await supabase
         .from('model_aliases')
@@ -436,8 +463,8 @@ export async function POST(request: NextRequest) {
             input_cost_per_mtok: primary.input_cost_per_mtok,
             output_cost_per_mtok: primary.output_cost_per_mtok,
             tier,
-            tier_description: TIER_DESCRIPTIONS[tier]?.name || tier,
-            reason: `${TIER_DESCRIPTIONS[tier]?.name || tier} tier — best cost/quality for this task type`,
+            tier_description: (TIER_DESCRIPTIONS as any)[tier]?.name || tier,
+            reason: `${(TIER_DESCRIPTIONS as any)[tier]?.name || tier} tier — best cost/quality for this task type`,
           }
         }
       }
@@ -482,6 +509,15 @@ export async function POST(request: NextRequest) {
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
       match_method: matchMethod,
+      ...(taskClassification ? {
+        classification: {
+          task_type: taskClassification.task_type,
+          complexity: taskClassification.complexity,
+          tool_category: taskClassification.tool_category,
+          method: taskClassification.method,
+          reasoning: taskClassification.reasoning,
+        },
+      } : {}),
     },
     wanted_telemetry: {
       report_endpoint: '/api/report',
