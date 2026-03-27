@@ -36,10 +36,12 @@ export async function GET() {
       tools_needed: 'Detected keywords: tool use, function call, execute command, mcp server, etc.',
       structured_output_needed: 'Detected keywords: json, structured output, parse, extract fields, csv, etc.',
       code_present: 'Detected keywords: code, function, class, implement, refactor, debug, python, etc.',
+      creative_writing: 'Detected keywords: cold email, outreach, blog post, marketing copy, persuasive, compelling, etc.',
       complex_reasoning: 'Detected keywords: plan, design, architect, analyze, multi-step, strategy, etc.',
     },
     escalation_paths: {
       cheap_chat: 'cheap_structured → fast_code → reasoning_pro → best_available',
+      creative_writing: 'reasoning_pro → best_available',
       tool_agent: 'best_available',
       description: 'If a recommended model fails or quality is too low, escalate to the next tier',
     },

@@ -10,6 +10,7 @@ export interface TaskSignals {
   structured_output_needed: boolean
   code_present: boolean
   complex_reasoning: boolean
+  creative_writing: boolean
   signal_count: number
 }
 
@@ -17,6 +18,7 @@ export type ModelTier =
   | 'cheap_chat'
   | 'cheap_structured'
   | 'fast_code'
+  | 'creative_writing'
   | 'reasoning_pro'
   | 'tool_agent'
   | 'best_available'
@@ -78,6 +80,15 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'step by step', 'think through', 'evaluate', 'comprehensive analysis',
     'research paper', 'deep analysis', 'long-form',
   ],
+  creative_writing: [
+    'cold email', 'outreach email', 'persuasive', 'compelling', 'engaging',
+    'blog post', 'article', 'essay', 'creative', 'storytelling',
+    'marketing copy', 'sales copy', 'landing page copy', 'ad copy',
+    'pitch', 'proposal', 'cover letter', 'linkedin post',
+    'social media post', 'thread', 'newsletter',
+    'tone', 'voice', 'brand voice', 'professional email',
+    'announcement', 'press release', 'case study',
+  ],
 }
 
 const BEST_AVAILABLE_KEYWORDS = [
@@ -99,10 +110,11 @@ export function detectTaskSignals(task: string): TaskSignals {
   const structured_output_needed = SIGNAL_KEYWORDS.structured_output_needed.some(kw => lower.includes(kw))
   const code_present = SIGNAL_KEYWORDS.code_present.some(kw => lower.includes(kw))
   const complex_reasoning = SIGNAL_KEYWORDS.complex_reasoning.some(kw => lower.includes(kw))
+  const creative_writing = SIGNAL_KEYWORDS.creative_writing.some(kw => lower.includes(kw))
 
-  const signal_count = [tools_needed, structured_output_needed, code_present, complex_reasoning].filter(Boolean).length
+  const signal_count = [tools_needed, structured_output_needed, code_present, complex_reasoning, creative_writing].filter(Boolean).length
 
-  return { tools_needed, structured_output_needed, code_present, complex_reasoning, signal_count }
+  return { tools_needed, structured_output_needed, code_present, complex_reasoning, creative_writing, signal_count }
 }
 
 // ── Tier Resolution ──
@@ -122,6 +134,7 @@ export function resolveModelTier(signals: TaskSignals, task?: string): ModelTier
   // Single-signal rules (first match wins)
   if (signals.tools_needed) return 'tool_agent'
   if (signals.complex_reasoning) return 'reasoning_pro'
+  if (signals.creative_writing) return 'creative_writing'
   if (signals.code_present) return 'fast_code'
   if (signals.structured_output_needed) return 'cheap_structured'
 
@@ -224,6 +237,7 @@ const ESCALATION_MAP: Record<string, { tier: ModelTier; reason: string }> = {
   cheap_chat: { tier: 'cheap_structured', reason: 'If output format issues or quality too low' },
   cheap_structured: { tier: 'fast_code', reason: 'If quality insufficient or task needs code understanding' },
   fast_code: { tier: 'reasoning_pro', reason: 'If complex logic or multi-step planning needed' },
+  creative_writing: { tier: 'reasoning_pro', reason: 'If writing needs deep analysis or multi-step reasoning' },
   reasoning_pro: { tier: 'best_available', reason: 'If highest quality needed or task too complex' },
   tool_agent: { tier: 'best_available', reason: 'If tool orchestration too complex' },
 }
@@ -245,7 +259,8 @@ export function calcModelConfidence(
     1: 0.70,
     2: 0.80,
     3: 0.88,
-    4: 0.95,
+    4: 0.93,
+    5: 0.95,
   }
   let confidence = signalConfidence[signals.signal_count] ?? 0.55
 
@@ -303,6 +318,11 @@ export const TIER_DESCRIPTIONS: Record<ModelTier, { name: string; description: s
     name: 'Fast Code',
     description: 'High-quality code generation and editing models',
     use_case: 'Write functions, refactor code, fix bugs, generate tests, code review',
+  },
+  creative_writing: {
+    name: 'Creative Writing',
+    description: 'Premium models optimized for tone, persuasion, and nuanced writing',
+    use_case: 'Cold outreach emails, marketing copy, blog posts, proposals, social posts — where voice and quality matter',
   },
   reasoning_pro: {
     name: 'Reasoning Pro',
