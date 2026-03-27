@@ -576,16 +576,20 @@ function detectMcpNeed(task: string): boolean {
     'write a', 'draft a', 'compose', 'generate a', 'create a template',
     'write code', 'write python', 'write javascript', 'write sql',
     'write function', 'write class', 'implement a',
+    'write unit test', 'write test', 'generate test', 'test case',
     // Analysis from context (not external data)
     'explain', 'summarize this', 'analyze this', 'compare', 'pros and cons',
     'review this code', 'fix this code', 'debug this', 'refactor',
     'translate', 'rewrite', 'improve this', 'edit this',
+    'analyze the pros', 'advantages and disadvantages', 'tradeoffs',
     // Formatting/structuring
     'format', 'convert to json', 'parse this', 'extract from this',
     'create csv', 'generate schema', 'outline',
+    'create a template', 'generate a template',
     // Planning/brainstorming
     'brainstorm', 'plan for', 'strategy for', 'decision matrix',
-    'meeting agenda', 'project plan',
+    'meeting agenda', 'project plan', 'choosing between',
+    'choose between', 'which is better', 'recommend a',
   ]
 
   for (const signal of llmOnly) {
