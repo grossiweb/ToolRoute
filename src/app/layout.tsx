@@ -6,21 +6,21 @@ import { NavBar } from '@/components/NavBar'
 import { ThemeScript } from '@/components/ThemeScript'
 
 export const metadata: Metadata = {
-  title: 'ToolRoute — The best tool at the lowest price, instantly.',
-  description: 'ToolRoute finds the best output for the lowest cost. Matched GPT-4o quality with zero losses at 10-40x lower cost across 132 real benchmark runs.',
+  title: 'ToolRoute — AI Model Routing Platform | GPT-4o Quality at 10-40x Lower Cost',
+  description: 'ToolRoute is an AI model routing platform for agent developers. Automatically select the optimal model and MCP server for each task. Match GPT-4o quality at 10-40x lower cost — proven across 132 real benchmark runs.',
   metadataBase: new URL('https://toolroute.io'),
   openGraph: {
-    title: 'ToolRoute — The best tool at the lowest price, instantly.',
-    description: 'ToolRoute finds the best output for the lowest cost. Matched GPT-4o quality with zero losses at 10-40x lower cost across 132 real benchmark runs.',
+    title: 'ToolRoute — AI Model Routing Platform | GPT-4o Quality at 10-40x Lower Cost',
+    description: 'ToolRoute is an AI model routing platform for agent developers. Automatically select the optimal model and MCP server for each task. Match GPT-4o quality at 10-40x lower cost.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
-    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — The best tool at the lowest price, instantly.' }],
+    images: [{ url: '/api/og?title=ToolRoute&type=server', width: 1200, height: 630, alt: 'ToolRoute — AI Model Routing Platform' }],
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ToolRoute — The best tool at the lowest price, instantly.',
-    description: 'ToolRoute finds the best output for the lowest cost. Matched GPT-4o quality with zero losses at 10-40x lower cost across 132 real benchmark runs.',
+    title: 'ToolRoute — AI Model Routing Platform | GPT-4o Quality at 10-40x Lower Cost',
+    description: 'ToolRoute is an AI model routing platform for agent developers. Automatically select the optimal model and MCP server for each task. Match GPT-4o quality at 10-40x lower cost.',
     images: ['/api/og?title=ToolRoute&type=server'],
   },
 }

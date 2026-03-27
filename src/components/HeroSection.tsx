@@ -103,32 +103,25 @@ export function HeroSection() {
         letterSpacing: -1,
         color: 'var(--text)',
         maxWidth: 880,
-        marginBottom: 8,
-        position: 'relative',
-        zIndex: 1,
-      }}>
-        The right model,<br />the right tool,
-      </h1>
-      <div style={{
-        fontFamily: 'var(--serif)',
-        fontStyle: 'italic',
-        fontSize: 'clamp(52px, 7.5vw, 100px)',
-        lineHeight: 1.0,
-        letterSpacing: -1,
-        color: 'var(--text-2)',
         marginBottom: 28,
         position: 'relative',
         zIndex: 1,
       }}>
-        for every <em style={{ color: 'var(--amber)' }}>task.</em>
-      </div>
+        The right model,<br />the right tool,<br />
+        <span style={{
+          fontStyle: 'italic',
+          color: 'var(--text-2)',
+        }}>
+          for every <em style={{ color: 'var(--amber)' }}>task.</em>
+        </span>
+      </h1>
 
       {/* Sub */}
       <p style={{
-        fontSize: 18, color: 'var(--text-2)', maxWidth: 540,
+        fontSize: 18, color: 'var(--text-2)', maxWidth: 560,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        Matched GPT-4o quality on every task. Zero losses. 10-40x lower cost. ToolRoute picks the best model and MCP server for each step — scored on real execution data, not benchmarks.
+        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server (Model Context Protocol) for each task — matched GPT-4o quality at 10-40x lower cost across 132 real benchmark runs.
       </p>
 
       {/* CTA buttons */}
@@ -146,18 +139,17 @@ export function HeroSection() {
           }}
         >
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M8 2.5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Use ToolRoute in your agent
+          Start Routing Free →
         </a>
         <a
           href="/api-docs"
-          className="btn-ghost"
           style={{
-            padding: '14px 26px', borderRadius: 10,
-            fontSize: 15, display: 'inline-flex', alignItems: 'center', gap: 8,
+            fontSize: 14, color: 'var(--text-3)',
+            textDecoration: 'none', padding: '14px 10px',
+            display: 'inline-flex', alignItems: 'center', gap: 6,
           }}
         >
-          <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><rect x="2" y="2" width="11" height="11" rx="2" stroke="currentColor" strokeWidth="1.5"/><path d="M5 7.5h5M7.5 5v5" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round"/></svg>
-          View API docs
+          API docs →
         </a>
       </div>
 
