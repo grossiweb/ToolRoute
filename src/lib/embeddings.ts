@@ -7,7 +7,7 @@
 // Pre-computed workflow descriptions for embedding comparison
 // All 21 workflows from the database are represented here.
 const WORKFLOW_DESCRIPTIONS: Record<string, string> = {
-  'research-competitive-intelligence': 'Research competitors, scrape websites, crawl web pages, extract data from URLs, gather competitive intelligence, web search, find pricing information, search the internet, look up information online',
+  'research-competitive-intelligence': 'Scrape a competitor website, crawl web pages to extract data from URLs, competitive intelligence gathering from the internet, web search for information, find pricing data online, search the internet for articles',
   'developer-workflow-code-management': 'Write code, manage git repositories, create pull requests, review code, refactor, debug, deploy, continuous integration, GitHub GitLab operations, software development, programming, version control',
   'qa-testing-automation': 'Browser automation, navigate web pages, click buttons, fill forms, take screenshots, end-to-end testing, Playwright, Selenium, test automation, headless browser, web interaction',
   'data-analysis-reporting': 'Query databases, run SQL, BigQuery, PostgreSQL, Snowflake, DuckDB analytics, generate reports, data analysis, create dashboards, aggregate data, parse CSV files, analyze datasets, data processing, spreadsheet operations, statistics',
@@ -17,16 +17,16 @@ const WORKFLOW_DESCRIPTIONS: Record<string, string> = {
   'knowledge-management': 'Notion operations, Confluence, wiki management, knowledge base, documentation, workspace organization, note-taking, Obsidian, README, document organization',
   'design-to-code-workflow': 'Figma designs, UI components, layout implementation, mockup to code, wireframe conversion, design system, prototype, Storybook, Tailwind CSS, frontend visual design, Framer',
   'it-devops-platform-operations': 'AWS cloud, infrastructure management, DevOps, deployment, monitoring, Kubernetes, Docker, Terraform, Cloudflare, Vercel, Datadog, Grafana, PagerDuty, platform operations, containers, serverless, Lambda',
-  'marketing-intelligence-campaign-management': 'Marketing campaigns, email marketing, newsletters, Mailchimp, SendGrid, Google Ads, advertising, SEMrush, SEO analysis, marketing automation, audience targeting, conversion optimization, ad campaigns, landing pages',
+  'marketing-intelligence-campaign-management': 'Run a marketing campaign in Mailchimp or Google Ads, manage advertising campaigns, SEMrush SEO analysis, marketing automation workflows, A/B test ad campaigns, optimize landing page conversions, manage audience targeting',
   'finance-accounting-automation': 'Invoices, payments, accounting, Stripe, QuickBooks, Plaid, financial transactions, billing, expenses, revenue tracking, tax, bookkeeping, payroll, Xero, bank reconciliation, financial reports',
   'legal-research-document-management': 'Legal contracts, compliance, DocuSign, NDA, agreements, legal research, court records, regulations, terms of service, privacy policy, intellectual property, e-signatures, legal documents',
   'hr-recruiting-automation': 'Recruiting, hiring, candidates, resumes, interviews, Greenhouse, Lever, BambooHR, onboarding, job postings, applicant tracking, talent acquisition, HR management, performance reviews',
   'ecommerce-operations': 'Shopify, WooCommerce, Amazon seller, ecommerce, product listings, inventory management, order fulfillment, shopping cart, checkout, online store, product catalog, shipping, returns',
-  'security-operations': 'Security scanning, vulnerability detection, Snyk, SonarQube, Trivy, penetration testing, security audits, compliance checks, threat detection, CVE, patching, code scanning, dependency checks',
-  'communication-email': 'Send email, draft email, compose email, reply to email, forward email, inbox triage, Gmail, SendGrid, email outreach, cold email, newsletter, email automation, mailbox management',
+  'security-operations': 'Run a security scan on a codebase with Snyk or SonarQube or Trivy, execute penetration test, scan code for vulnerabilities, check dependencies for CVEs, run container security audit',
+  'communication-email': 'Send an email via Gmail or SendGrid, draft and deliver email to a recipient, compose email in inbox, forward or reply to an email in mailbox, cold email outreach delivery, manage email inbox',
   'communication-messaging': 'Send Slack message, Discord message, Microsoft Teams chat, post in channel, direct message, group chat, SMS text message, Twilio phone call, real-time messaging, notifications, team communication',
-  'social-forum-engagement': 'Post comment on forum, write social media post, engage in discussion thread, community participation, online forum, reply to thread, social engagement, community interaction',
-  'document-processing-summarization': 'Summarize PDF document, extract text from document, parse PDF, meeting notes summary, document analysis, text extraction, transcript processing, digest creation, action items from notes',
+  'social-forum-engagement': 'Post on a social media platform like Twitter or Reddit, write a forum post on an online community board, engage in a discussion thread on a forum, comment on another agent post on MoltBook, social media content creation',
+  'document-processing-summarization': 'Read and summarize a PDF file, extract text from a PDF document, parse PDF pages, convert meeting notes to action items, process document files on disk, OCR on scanned pages',
   'executive-assistant-productivity': 'Schedule meetings, calendar management, Google Calendar, Zoom calls, reminders, task management, Todoist, Calendly, appointments, booking, agenda planning, time management',
 }
 
