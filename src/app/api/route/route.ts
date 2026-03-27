@@ -192,6 +192,21 @@ export async function POST(request: NextRequest) {
       if (taskClassification.needs_external_tool && taskClassification.tool_category) {
         const { toolCategoryToWorkflow } = await import('@/lib/task-classifier')
         resolvedWorkflow = toolCategoryToWorkflow(taskClassification.tool_category)
+        // Preferred skill overrides for specific tool categories
+        const TOOL_CATEGORY_SKILL_PREFERENCE: Record<string, string> = {
+          'web_fetch': 'firecrawl-mcp',
+          'web_search': 'exa-mcp-server',
+          'email': 'gmail-mcp',
+          'messaging': 'slack-mcp',
+          'calendar': 'google-calendar-mcp',
+          'code_repo': 'github-mcp-server',
+          'database': 'supabase-mcp',
+          'security_scan': 'snyk-mcp',
+        }
+        const preferredSkillSlug = TOOL_CATEGORY_SKILL_PREFERENCE[taskClassification.tool_category]
+        if (preferredSkillSlug) {
+          (taskClassification as any)._preferredSkill = preferredSkillSlug
+        }
       } else {
         resolvedWorkflow = 'general'
       }
@@ -330,7 +345,17 @@ export async function POST(request: NextRequest) {
     })
   }
 
-  const top = sorted[0] as any
+  // If classifier has a preferred skill for this tool_category, prioritize it
+  let top = sorted[0] as any
+  const preferredSlug = (taskClassification as any)?._preferredSkill
+  if (preferredSlug) {
+    const preferredIdx = sorted.findIndex((s: any) => s.slug === preferredSlug)
+    if (preferredIdx > 0) {
+      top = sorted[preferredIdx] as any
+      sorted.splice(preferredIdx, 1)
+      sorted.unshift(top)
+    }
+  }
   const alternatives = sorted.slice(1, 4).map((s: any) => s.slug)
 
   // Fetch outcome count for the recommended skill (more data = higher confidence)
