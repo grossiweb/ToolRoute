@@ -225,11 +225,12 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 ## Next Steps — Priority Order
 
 ### NOW (In Progress)
-- Claudia MoltBook outreach — engage with Hazel_OC, flowglad, MarchBot001 daily
-- Claudia 7-day post series — 6 remaining posts queued (Hazel-inspired voice + trilingual)
-- Claudia final validation run (Round 4) — test with LLM classifier active
-- Content marketing blitz — Twitter thread, Medium, Reddit, HN with benchmark data
-- Syndicate ToolRoute to MCP directories, awesome-mcp lists, npm, ClawdHub
+- Content marketing blitz — Twitter thread, Medium, Reddit, HN with 132-execution benchmark data
+- Syndicate ToolRoute to MCP directories, awesome-mcp lists
+- Claudia MoltBook outreach — engaging with Hazel_OC, flowglad, MarchBot001 daily
+- Claudia 7-day post series — Days 5-7 remaining (Hazel-inspired voice + trilingual)
+- Run extreme stress test suite (see below) to identify next failure modes
+- Blind A/B test: ToolRoute routing vs fixed GPT-4o — the "would you bet your company" test
 
 ### SOON (Next Wave)
 - Syndicate ToolRoute MCP server to all directories — awesome-mcp lists, MCP registries, GitHub topics, npm, etc.
@@ -241,12 +242,17 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 - Contact agents/developers building other tools and show value proposition
 
 ### COMPLETED
-- LLM-based task classifier (Gemini Flash Lite, ~$0.00001/call) — 100% correct classification on all test tasks
-- Creative writing tier added — routes to Claude Sonnet 4 for persuasive/marketing content
-- Routing accuracy: 15% → 95% across 4 rounds of testing with Claudia
-- Keyword + semantic matching tightened (removed generic terms causing collisions)
-- Routing quality validated via Claudia's 96-execution A/B test (see Model Routing Matrix)
-- Merged routing response: single /api/route call returns approach (direct_llm vs mcp_server) + model + MCP server
+- LLM-based task classifier (Gemini Flash Lite, ~$0.00001/call)
+- Multi-tool orchestration — detects compound tasks, returns step-by-step tool chains
+- Routing priority modes: lowest_cost / best_value / highest_quality
+- Creative writing tier → Claude Sonnet 4 for persuasive content
+- Calculation tasks → DeepSeek V3 code model (not Supabase MCP)
+- Ticketing tool category → Atlassian MCP for Jira/Linear tasks
+- Translation+analysis detection → routes to reasoning, not cheap_chat
+- Tool category skill preferences (web_fetch→Firecrawl, web_search→Exa, etc.)
+- Routing accuracy: 15% → 92% across 6 rounds of testing (40 adversarial tasks)
+- 132 total benchmark executions (96 model A/B + 40 routing validation rounds)
+- Merged routing response: approach (direct_llm / mcp_server / multi_tool) + model + MCP server
 - Budget models seeded from benchmark data (migration 035)
 - Premium model benchmarks completed (Sonnet 4, GPT-4o, Claude 3.5 Sonnet)
 - Claude Sonnet 4 set as primary for reasoning_pro and creative_writing tiers
@@ -256,6 +262,23 @@ Currently too broad — email, Slack, forums, PDFs, calendars all route here. Go
 - ClawdHub skill grossiweb/toolroute@1.0.4 published with privacy section
 - Claudia installed ToolRoute skill on VPS
 - Competitive landscape research completed (see section below)
+- Sidebar cross-links: servers ↔ challenges (CATEGORY_TO_WORKFLOWS mapping)
+
+### NEXT: Extreme Stress Testing (from external adversarial review)
+Full test suite at `tests/routing-benchmark-v2.md`. Key categories:
+- **Long-horizon agent tasks**: 20-step autonomous tasks, infinite loop detection, memory drift
+- **Real-time constraints**: hard latency budgets (<300ms), dynamic SLA switching
+- **Economic warfare**: $0.05 budget constraint, cost vs accuracy tradeoff curves
+- **Multi-tool chaos**: tool failure recovery, tool vs model ambiguity
+- **Meta-reasoning**: self-evaluation loops, confidence-based escalation, multi-agent disagreement
+- **Adversarial/chaos**: prompt injection attacks, cost manipulation, misleading context
+- **Adaptive learning**: outcome feedback loops, per-agent personalization, skill-specific optimization
+- **Final boss tests**: "Startup simulation" (full workflow), "Impossible budget" ($0.01), 1000 concurrent requests, "Deception benchmark" (easy tasks labeled hard)
+
+Strategic insight from external review:
+- "ToolRoute Certified Agents" — agents that pass the gauntlet get a badge
+- "ToolRoute Benchmark Leaderboard" — public proof of routing quality
+- "Pass the Gauntlet" — viral growth loop through competitive benchmarking
 
 ### LATER (Explore)
 - DM strategy on MoltBook — direct messaging high-karma agents and builders
