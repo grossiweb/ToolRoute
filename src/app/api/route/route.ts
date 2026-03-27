@@ -330,18 +330,42 @@ export async function POST(request: NextRequest) {
 
   candidates = costFiltered.length > 0 ? costFiltered : filtered
 
-  // Sort by priority mode
+  // Per-agent personalization: boost skills this agent has used successfully before
+  const agentPreferredSlugs = new Set<string>()
+  if (agent_identity_id) {
+    const { data: agentHistory } = await supabase
+      .from('contribution_events')
+      .select('payload_json')
+      .eq('agent_identity_id', agent_identity_id)
+      .eq('contribution_type', 'run_telemetry')
+      .eq('accepted', true)
+      .limit(30)
+
+    if (agentHistory) {
+      for (const ev of agentHistory) {
+        const p = ev.payload_json as any
+        if ((p?.outcome_status === 'success' || p?.outcome_status === 'partial_success') && p?.skill_slug) {
+          agentPreferredSlugs.add(p.skill_slug)
+        }
+      }
+    }
+  }
+
+  // Sort by priority mode, with personalization boost for known-good skills
+  const PERSONALIZATION_BOOST = 0.5
   const sorted = [...candidates].sort((a: any, b: any) => {
     const sa = a.skill_scores
     const sb = b.skill_scores
     if (!sa || !sb) return 0
+    const boostA = agentPreferredSlugs.has(a.slug) ? PERSONALIZATION_BOOST : 0
+    const boostB = agentPreferredSlugs.has(b.slug) ? PERSONALIZATION_BOOST : 0
     switch (priority) {
-      case 'best_quality': return (sb.output_score || 0) - (sa.output_score || 0)
-      case 'best_efficiency': return (sb.efficiency_score || 0) - (sa.efficiency_score || 0)
-      case 'lowest_cost': return (sb.cost_score || 0) - (sa.cost_score || 0)
-      case 'highest_trust': return (sb.trust_score || 0) - (sa.trust_score || 0)
-      case 'most_reliable': return (sb.reliability_score || 0) - (sa.reliability_score || 0)
-      default: return (sb.value_score || sb.overall_score || 0) - (sa.value_score || sa.overall_score || 0)
+      case 'best_quality': return ((sb.output_score || 0) + boostB) - ((sa.output_score || 0) + boostA)
+      case 'best_efficiency': return ((sb.efficiency_score || 0) + boostB) - ((sa.efficiency_score || 0) + boostA)
+      case 'lowest_cost': return ((sb.cost_score || 0) + boostB) - ((sa.cost_score || 0) + boostA)
+      case 'highest_trust': return ((sb.trust_score || 0) + boostB) - ((sa.trust_score || 0) + boostA)
+      case 'most_reliable': return ((sb.reliability_score || 0) + boostB) - ((sa.reliability_score || 0) + boostA)
+      default: return ((sb.value_score || sb.overall_score || 0) + boostB) - ((sa.value_score || sa.overall_score || 0) + boostA)
     }
   })
 
@@ -409,6 +433,10 @@ export async function POST(request: NextRequest) {
         agent_name: agent.agent_name,
         trust_tier: agent.trust_tier,
         recognized: true,
+        ...(agentPreferredSlugs.size > 0 && {
+          personalized: true,
+          personalization_note: `Routing personalized — boosted ${agentPreferredSlugs.size} skill(s) you've used successfully before.`,
+        }),
       }
 
       // Check for recent verification approval (within last hour) to notify agent
