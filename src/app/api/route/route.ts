@@ -415,7 +415,8 @@ export async function POST(request: NextRequest) {
       let tier: string
       if (taskClassification && taskClassification.method === 'llm') {
         const { classificationToModelTier } = await import('@/lib/task-classifier')
-        tier = classificationToModelTier(taskClassification)
+        const routingPriority = (priority === 'lowest_cost' || priority === 'highest_quality') ? priority : 'best_value'
+        tier = classificationToModelTier(taskClassification, routingPriority as any)
       } else {
         const signals = detectTaskSignals(task)
         tier = resolveModelTier(signals, task)
@@ -484,7 +485,7 @@ export async function POST(request: NextRequest) {
       recommended_skill: null,
       recommended_skill_name: null,
       cost_insight: recommendedModel
-        ? `Use ${recommendedModel.display_name} (${recommendedModel.provider}) at $${recommendedModel.input_cost_per_mtok}/1M tokens — ${recommendedModel.tier_description || recommendedModel.tier} tier, best cost/quality ratio for this task type.`
+        ? `Use ${recommendedModel.display_name} (${recommendedModel.provider}) at $${recommendedModel.input_cost_per_mtok}/1M tokens — ${recommendedModel.tier_description || recommendedModel.tier} tier. Priority: ${priority}. Pass constraints.priority = "lowest_cost" or "highest_quality" to adjust.`
         : 'Use your current model — this is a standard LLM task.',
     } : {
       recommended_skill: top.slug,

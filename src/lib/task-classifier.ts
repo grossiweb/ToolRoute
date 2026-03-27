@@ -168,14 +168,48 @@ function keywordFallback(task: string): TaskClassification {
 }
 
 /**
- * Map task classification to model tier.
+ * Map task classification to model tier, respecting agent's routing priority.
+ *
+ * Priority modes:
+ *   lowest_cost    → always cheapest model, even for creative tasks
+ *   best_value     → creative_writing only for complex creative (proposals, campaigns)
+ *   highest_quality → creative_writing for ALL writing, reasoning_pro for analysis
  */
-export function classificationToModelTier(c: TaskClassification): string {
+export type RoutingPriority = 'lowest_cost' | 'best_value' | 'highest_quality'
+
+export function classificationToModelTier(
+  c: TaskClassification,
+  priority: RoutingPriority = 'best_value'
+): string {
   if (c.needs_external_tool) return 'tool_agent'
 
+  // lowest_cost: always use cheapest tier regardless of task type
+  if (priority === 'lowest_cost') {
+    switch (c.task_type) {
+      case 'code': return 'fast_code'  // DeepSeek V3 is already cheap ($0.14)
+      case 'structured': return 'cheap_structured'
+      default: return 'cheap_chat'
+    }
+  }
+
+  // highest_quality: premium models for all writing + analysis
+  if (priority === 'highest_quality') {
+    switch (c.task_type) {
+      case 'code': return 'fast_code'
+      case 'creative_writing': return 'creative_writing'
+      case 'writing': return c.complexity === 'complex' ? 'reasoning_pro' : 'creative_writing'
+      case 'analysis': return 'reasoning_pro'
+      case 'structured': return 'cheap_structured'
+      case 'translation': return 'cheap_chat'
+      case 'general': return 'cheap_chat'
+      default: return 'cheap_chat'
+    }
+  }
+
+  // best_value (default): premium only for high-stakes creative content
   switch (c.task_type) {
     case 'code': return 'fast_code'
-    case 'creative_writing': return 'creative_writing'
+    case 'creative_writing': return c.complexity === 'complex' ? 'creative_writing' : 'cheap_chat'
     case 'structured': return 'cheap_structured'
     case 'translation': return 'cheap_chat'
     case 'writing': return c.complexity === 'complex' ? 'reasoning_pro' : 'cheap_chat'
