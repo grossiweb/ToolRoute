@@ -316,7 +316,7 @@ export async function POST(request: NextRequest) {
     case 'initialize':
       return jsonRpcResult(id, {
         protocolVersion: '2024-11-05',
-        capabilities: { tools: {} },
+        capabilities: { tools: {}, resources: {}, prompts: {} },
         serverInfo: {
           name: 'toolroute',
           version: '1.5.0',
@@ -329,6 +329,18 @@ export async function POST(request: NextRequest) {
 
     case 'tools/call':
       return handleToolCall(id, params)
+
+    case 'resources/list':
+      return jsonRpcResult(id, { resources: [] })
+
+    case 'resources/read':
+      return jsonRpcError(id, -32602, 'No resources available')
+
+    case 'prompts/list':
+      return jsonRpcResult(id, { prompts: [] })
+
+    case 'prompts/get':
+      return jsonRpcError(id, -32602, 'No prompts available')
 
     case 'ping':
       return jsonRpcResult(id, {})
