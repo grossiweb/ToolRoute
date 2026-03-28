@@ -1,5 +1,6 @@
 {
-  "$schema": "https://glama.ai/mcp/glama.json",
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["grossiweb"],
   "name": "ToolRoute",
   "description": "Route any AI agent task to the best MCP server or LLM — automatically. Scored on 132+ real benchmark executions. Get GPT-4o quality at 10–40× lower cost. Works with Claude Code, Cursor, Windsurf, Cline, and any MCP client.",
   "license": "MIT",
