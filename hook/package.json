@@ -1,6 +1,6 @@
 {
   "name": "@toolroute/hook",
-  "version": "1.0.0",
+  "version": "1.0.1",
   "description": "Auto-route every agent task through ToolRoute. Install once, every task gets the best tool and model recommendation.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -12,12 +12,24 @@
       "require": "./dist/index.js"
     }
   },
-  "files": ["dist"],
+  "files": [
+    "dist"
+  ],
   "scripts": {
     "build": "tsup src/index.ts --format cjs,esm --dts",
     "prepublishOnly": "npm run build"
   },
-  "keywords": ["toolroute", "mcp", "ai-agent", "hook", "routing", "auto-route", "openclaw", "tool-selection", "cost-optimization"],
+  "keywords": [
+    "toolroute",
+    "mcp",
+    "ai-agent",
+    "hook",
+    "routing",
+    "auto-route",
+    "openclaw",
+    "tool-selection",
+    "cost-optimization"
+  ],
   "author": "Grossi Consulting",
   "license": "MIT",
   "homepage": "https://toolroute.io",

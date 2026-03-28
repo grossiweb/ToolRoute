@@ -727,6 +727,49 @@ async function handleToolCall(id: any, params: any) {
     case 'toolroute_route': {
       const { task, workflow_slug, priority = 'best_value', trust_floor = 0, agent_identity_id } = args || {}
 
+      // Classify task — detect multi-tool compound requests
+      let taskClassification: import('@/lib/task-classifier').TaskClassification | null = null
+      if (task) {
+        const { classifyTask } = await import('@/lib/task-classifier')
+        taskClassification = await classifyTask(task)
+      }
+
+      // Multi-tool path: return orchestration chain instead of a single skill
+      if (taskClassification?.is_multi_tool && (taskClassification.tool_categories?.length ?? 0) >= 2) {
+        const { buildOrchestrationChain } = await import('@/lib/task-classifier')
+        const orchestration = buildOrchestrationChain(taskClassification.tool_categories!, task || '')
+
+        let modelSuggestion: any = null
+        if (task) {
+          try {
+            const baseUrl = getBaseUrl()
+            const modelRes = await fetch(`${baseUrl}/api/route/model`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task, agent_identity_id: agent_identity_id || null }),
+            })
+            if (modelRes.ok) {
+              const modelData = await modelRes.json()
+              modelSuggestion = {
+                recommended_model: modelData.recommended_model || modelData.model_details?.slug,
+                tier: modelData.tier,
+                estimated_cost: modelData.estimated_cost,
+                decision_id: modelData.decision_id,
+              }
+            }
+          } catch { /* model routing is optional */ }
+        }
+
+        return toolResult(id, JSON.stringify({
+          approach: 'multi_tool',
+          orchestration,
+          recommended_model: modelSuggestion,
+          confidence: 0.85,
+          reasoning: taskClassification.reasoning,
+          next_step: `Execute this ${orchestration.length}-step tool chain in sequence, then call toolroute_report for each step completed.`,
+        }, null, 2))
+      }
+
       // Fetch skills with scores
       const { data: skills, error: skillsError } = await supabase
         .from('skills')
