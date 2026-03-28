@@ -19,6 +19,7 @@
   "files": ["dist"],
   "scripts": {
     "build": "tsup",
+    "postbuild": "node -e \"const fs=require('fs');const c=fs.readFileSync('dist/cli.js','utf8');fs.writeFileSync('dist/cli.js',c.replace(/\\r\\n/g,'\\n'),'utf8');console.log('cli.js: CRLF → LF')\"",
     "prepublishOnly": "npm run build"
   },
   "keywords": ["toolroute", "mcp", "ai-agent", "tool-routing", "telemetry", "benchmark"],

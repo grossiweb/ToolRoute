@@ -12,7 +12,7 @@ export default defineConfig([
   {
     entry: { cli: 'src/cli.ts' },
     format: ['cjs'],
-    banner: { js: '#!/usr/bin/env node' },
+    banner: { js: '#!/usr/bin/env node\n' },
     dts: false,
   },
 ])
