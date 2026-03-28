@@ -559,6 +559,20 @@ async function handleToolCall(id: any, params: any) {
       const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family, webhook_url } = args || {}
       if (!agent_name) return toolResult(id, 'Error: agent_name is required.')
 
+      // Validate agent_name quality
+      const trimmedName = String(agent_name).trim()
+      const nameErrors: string[] = []
+      if (trimmedName.length < 3) nameErrors.push('agent_name must be at least 3 characters.')
+      if (trimmedName.length > 64) nameErrors.push('agent_name must be 64 characters or fewer.')
+      if (!/[a-zA-Z]/.test(trimmedName)) nameErrors.push('agent_name must contain at least one letter.')
+      if (/^(.)\1{2,}$/.test(trimmedName)) nameErrors.push('agent_name cannot be a repeated character.')
+      if (/^[\[{]/.test(trimmedName)) nameErrors.push('agent_name cannot be a JSON value.')
+      if (/[;<>'"]/.test(trimmedName)) nameErrors.push('agent_name contains invalid characters.')
+      if (['test', 'null', 'undefined', 'true', 'false', 'admin', 'root'].includes(trimmedName.toLowerCase()))
+        nameErrors.push('agent_name is reserved. Choose a unique name for your agent.')
+      if (nameErrors.length > 0)
+        return toolResult(id, `Error: Invalid agent_name — ${nameErrors.join(' ')} Choose a descriptive name like "MyBot-v2" or "ResearchAgent-Claude".`)
+
       // Check for existing agent
       let existingQuery = supabase
         .from('agent_identities')

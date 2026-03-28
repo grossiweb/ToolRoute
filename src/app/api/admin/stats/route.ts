@@ -29,7 +29,7 @@ export async function GET(request: Request) {
     challengesResult,
     challengeSubmissionsResult,
   ] = await Promise.all([
-    supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at'),
+    supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at').eq('is_active', true),
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
     supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at'),
     supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at'),
