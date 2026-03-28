@@ -6,16 +6,16 @@
     "url": "https://github.com/grossiweb/ToolRoute",
     "source": "github"
   },
-  "version": "0.2.1",
+  "version": "0.2.2",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@toolroute/sdk",
-      "version": "0.2.1",
+      "version": "0.2.2",
       "transport": {
         "type": "stdio",
         "command": "npx",
-        "args": ["-y", "@toolroute/sdk", "--mcp"]
+        "args": ["-y", "@toolroute/sdk@0.2.2", "toolroute-mcp"]
       }
     }
   ]

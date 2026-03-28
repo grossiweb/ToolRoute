@@ -1,11 +1,14 @@
 {
   "name": "@toolroute/sdk",
-  "version": "0.2.1",
+  "version": "0.2.2",
   "mcpName": "io.github.grossiweb/toolroute",
   "description": "ToolRoute SDK — route, execute, report. Two-line agent integration.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
+  "bin": {
+    "toolroute-mcp": "./dist/cli.js"
+  },
   "exports": {
     ".": {
       "types": "./dist/index.d.ts",
@@ -15,7 +18,7 @@
   },
   "files": ["dist"],
   "scripts": {
-    "build": "tsup src/index.ts --format cjs,esm --dts",
+    "build": "tsup",
     "prepublishOnly": "npm run build"
   },
   "keywords": ["toolroute", "mcp", "ai-agent", "tool-routing", "telemetry", "benchmark"],
