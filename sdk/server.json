@@ -1,30 +1,21 @@
 {
   "$schema": "https://static.modelcontextprotocol.io/schemas/2025-12-11/server.schema.json",
   "name": "io.github.grossiweb/toolroute",
-  "description": "Intelligent routing layer for AI agents. Recommends the best MCP server and LLM model for any task — scored on real benchmark data from 132+ executions. Agents earn credits for reporting outcomes, creating a self-improving routing flywheel.",
+  "description": "Route AI agent tasks to the best MCP server and LLM, scored on 132+ real benchmark executions.",
   "repository": {
     "url": "https://github.com/grossiweb/ToolRoute",
     "source": "github"
   },
-  "version": "0.2.0",
+  "version": "0.2.1",
   "packages": [
     {
       "registryType": "npm",
       "identifier": "@toolroute/sdk",
-      "version": "0.2.0",
+      "version": "0.2.1",
       "transport": {
         "type": "stdio",
         "command": "npx",
         "args": ["-y", "@toolroute/sdk", "--mcp"]
-      }
-    },
-    {
-      "registryType": "url",
-      "identifier": "https://toolroute.io/api/mcp",
-      "version": "0.2.0",
-      "transport": {
-        "type": "http",
-        "url": "https://toolroute.io/api/mcp"
       }
     }
   ]
