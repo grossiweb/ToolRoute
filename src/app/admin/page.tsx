@@ -80,6 +80,13 @@ export default function AdminPage() {
   }
 
   const s = stats?.summary || {}
+  const g = stats?.growth || {}
+
+  function healthColor(val: number, green: number, yellow: number) {
+    if (val >= green) return 'var(--green)'
+    if (val >= yellow) return 'var(--amber)'
+    return '#ef4444'
+  }
 
   return (
     <div style={{ maxWidth: 1200, margin: '0 auto', padding: '80px 24px 60px' }}>
@@ -116,8 +123,48 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Growth Health — top-line signals */}
+      <div style={{ marginBottom: 32 }}>
+        <h2 style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+          Growth Health
+        </h2>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 10 }}>
+          <HealthCard label="New Agents (7d)" value={g.new_agents_7d ?? 0} unit="" color="var(--amber)" />
+          <HealthCard label="New Agents (30d)" value={g.new_agents_30d ?? 0} unit="" color="var(--amber)" />
+          <HealthCard label="Active Agents (7d)" value={g.active_agents_7d ?? 0} unit="" color={healthColor(g.active_agents_7d ?? 0, 5, 1)} />
+          <HealthCard label="Retention Rate" value={g.retention_rate_pct ?? 0} unit="%" color={healthColor(g.retention_rate_pct ?? 0, 30, 10)} />
+          <HealthCard label="Telemetry Rate" value={g.platform_telemetry_rate_pct ?? 0} unit="%" color={healthColor(g.platform_telemetry_rate_pct ?? 0, 40, 20)} note="target 40–60%" />
+          <HealthCard label="Acceptance Rate" value={g.acceptance_rate_pct ?? 0} unit="%" color={healthColor(g.acceptance_rate_pct ?? 0, 70, 50)} />
+          <HealthCard label="Avg Quality" value={g.avg_quality_rating ?? '—'} unit={g.avg_quality_rating ? '/10' : ''} color={healthColor(g.avg_quality_rating ?? 0, 7, 5)} />
+          <HealthCard label="Verified Agents" value={g.verified_agents ?? 0} unit="" color="var(--blue)" />
+        </div>
+      </div>
+
+      {/* Trust Tier + Top Skills side by side */}
+      {(g.trust_tier_breakdown || g.top_skills) && (
+        <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
+          <Section title="Trust Tier Breakdown">
+            <Table
+              headers={['Tier', 'Agents']}
+              rows={Object.entries(g.trust_tier_breakdown || {}).sort(([,a],[,b]) => (b as number) - (a as number)).map(([k, v]: any) => [k, v])}
+            />
+          </Section>
+          <Section title="Top Skills by Usage">
+            <Table
+              headers={['Skill', 'Outcomes']}
+              rows={(g.top_skills || []).map((sk: any) => [sk.slug, sk.count])}
+            />
+          </Section>
+        </div>
+      )}
+
       {/* Summary Cards */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(180px, 1fr))', gap: 12, marginBottom: 32 }}>
+      <div style={{ marginBottom: 12 }}>
+        <h2 style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+          Platform Totals
+        </h2>
+      </div>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 32 }}>
         <StatCard label="Registered Agents" value={s.registered_agents} />
         <StatCard label="Contributors" value={s.total_contributors} />
         <StatCard label="Outcome Records" value={s.total_outcome_records} />
@@ -220,6 +267,21 @@ export default function AdminPage() {
           />
         </Section>
       </div>
+    </div>
+  )
+}
+
+function HealthCard({ label, value, unit, color, note }: { label: string; value: any; unit: string; color: string; note?: string }) {
+  return (
+    <div style={{
+      background: 'var(--bg2)', border: `1px solid ${color}33`, borderRadius: 12,
+      padding: '14px 16px', display: 'flex', flexDirection: 'column', gap: 2,
+    }}>
+      <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)', textTransform: 'uppercase', letterSpacing: 0.5 }}>{label}</span>
+      <span style={{ fontSize: 26, fontFamily: 'var(--serif)', fontWeight: 400, color }}>
+        {value}{unit}
+      </span>
+      {note && <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>{note}</span>}
     </div>
   )
 }

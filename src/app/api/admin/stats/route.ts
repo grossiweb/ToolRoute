@@ -91,9 +91,64 @@ export async function GET(request: Request) {
     return acc
   }, {} as Record<string, number>)
 
+  // Growth metrics
+  const now = Date.now()
+  const ms7d = 7 * 24 * 60 * 60 * 1000
+  const ms30d = 30 * 24 * 60 * 60 * 1000
+  const newAgents7d = agents.filter((a: any) => a.created_at && (now - new Date(a.created_at).getTime()) < ms7d).length
+  const newAgents30d = agents.filter((a: any) => a.created_at && (now - new Date(a.created_at).getTime()) < ms30d).length
+  const activeAgentIds7d = new Set(
+    contributions
+      .filter((c: any) => c.created_at && (now - new Date(c.created_at).getTime()) < ms7d && c.agent_identity_id)
+      .map((c: any) => c.agent_identity_id)
+  )
+  const activeAgents7d = activeAgentIds7d.size
+  const acceptedContributions = contributions.filter((c: any) => c.accepted).length
+  const acceptanceRate = contributions.length > 0 ? Math.round((acceptedContributions / contributions.length) * 100) : 0
+  const qualityRatings = outcomes.map((o: any) => o.output_quality_rating).filter((r: any) => r != null)
+  const avgQualityRating = qualityRatings.length > 0
+    ? Math.round((qualityRatings.reduce((s: number, r: number) => s + r, 0) / qualityRatings.length) * 10) / 10
+    : null
+  const trustTierBreakdown = agents.reduce((acc: any, a: any) => {
+    const t = a.trust_tier || 'unverified'
+    acc[t] = (acc[t] || 0) + 1
+    return acc
+  }, {} as Record<string, number>)
+  const verifiedAgents = agents.filter((a: any) => a.trust_tier === 'trusted' || a.trust_tier === 'production' || a.trust_tier === 'enterprise').length
+
+  // Platform-wide telemetry rate
+  const totalRecs = telemetryRate.reduce((s: number, t: any) => s + (t.total_recommendations || 0), 0)
+  const totalReported = telemetryRate.reduce((s: number, t: any) => s + (t.total_reported_runs || 0), 0)
+  const platformTelemetryRate = totalRecs > 0 ? Math.round((totalReported / totalRecs) * 100) : 0
+
+  // Top skills by outcome count
+  const skillUsage: Record<string, number> = {}
+  outcomes.forEach((o: any) => {
+    if (o.skill_id) skillUsage[o.skill_id] = (skillUsage[o.skill_id] || 0) + 1
+  })
+  const topSkills = Object.entries(skillUsage)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 5)
+    .map(([skillId, count]) => {
+      const skill = skills.find((s: any) => s.id === skillId)
+      return { slug: skill?.slug || skillId, name: skill?.canonical_name || skillId, count }
+    })
+
   return NextResponse.json({
     generated_at: new Date().toISOString(),
     query_errors: Object.keys(queryErrors).length > 0 ? queryErrors : null,
+    growth: {
+      new_agents_7d: newAgents7d,
+      new_agents_30d: newAgents30d,
+      active_agents_7d: activeAgents7d,
+      retention_rate_pct: agents.length > 0 ? Math.round((activeAgents7d / agents.length) * 100) : 0,
+      platform_telemetry_rate_pct: platformTelemetryRate,
+      acceptance_rate_pct: acceptanceRate,
+      avg_quality_rating: avgQualityRating,
+      verified_agents: verifiedAgents,
+      trust_tier_breakdown: trustTierBreakdown,
+      top_skills: topSkills,
+    },
     summary: {
       registered_agents: agents.length,
       total_contributors: contributors.length,
