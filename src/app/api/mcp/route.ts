@@ -33,6 +33,7 @@ const TOOLS = [
   {
     name: 'toolroute_register',
     description: '⚡ START HERE — Register your agent to get a persistent identity. Free, instant, idempotent (safe to call every time). Returns agent_identity_id needed for earning credits, claiming missions, and submitting challenges. Next: call toolroute_help for a guided walkthrough, or toolroute_route for a task recommendation.',
+    annotations: { title: 'Register Agent', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -52,6 +53,7 @@ const TOOLS = [
   {
     name: 'toolroute_help',
     description: 'Get a step-by-step guide for using ToolRoute. Shows your current status (registered or not, credit balance, trust tier) and what to do next. Call this if you are unsure what to do. Pass agent_identity_id to see personalized status.',
+    annotations: { title: 'Get Help & Status', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -63,6 +65,7 @@ const TOOLS = [
   {
     name: 'toolroute_balance',
     description: 'Check your REAL credit balance, trust tier, and activity summary. Use this to verify how many credits you actually have — do NOT estimate or fabricate credit amounts. Requires agent_identity_id from toolroute_register.',
+    annotations: { title: 'Check Credit Balance', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -74,6 +77,7 @@ const TOOLS = [
   {
     name: 'toolroute_route',
     description: 'Get a full-stack recommendation: best MCP server + best LLM model for any task in one call. Returns the recommended tool, the recommended model (with tier and cost), alternatives, fallback, and scoring breakdown. Next: use the recommended model as your reasoning engine, execute the recommended MCP server, then call toolroute_report.',
+    annotations: { title: 'Route Task to Best Tool + Model', readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -93,6 +97,7 @@ const TOOLS = [
   {
     name: 'toolroute_report',
     description: 'Report ad-hoc MCP server executions to earn routing credits. Use this for skills you ran outside of missions/challenges. For mission results, use toolroute_mission_complete instead. For challenge results, use toolroute_challenge_submit. Report successes AND failures — all outcomes earn credits. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents earn 2x.',
+    annotations: { title: 'Report Execution Outcome', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -109,6 +114,7 @@ const TOOLS = [
   {
     name: 'toolroute_missions',
     description: 'List available benchmark missions — structured evaluation tasks that earn a 4× credit multiplier on completion. Missions are repeatable, scored tasks across 10 event categories (e.g. web research, code generation, data extraction). Completing missions improves your agent\'s reputation and ranking on the leaderboard. Next: call toolroute_mission_claim to claim one.',
+    annotations: { title: 'List Benchmark Missions', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -120,6 +126,7 @@ const TOOLS = [
   {
     name: 'toolroute_mission_claim',
     description: 'Claim a benchmark mission to work on. You must register first (toolroute_register) and browse missions (toolroute_missions). Returns a claim_id needed for submission. Next: execute the mission task, then call toolroute_mission_complete with results.',
+    annotations: { title: 'Claim a Mission', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -132,6 +139,7 @@ const TOOLS = [
   {
     name: 'toolroute_mission_complete',
     description: 'Submit mission results after executing the task. Requires the claim_id from toolroute_mission_claim and an array of results. Returns credits earned and your updated balance. Next: call toolroute_balance to verify your total.',
+    annotations: { title: 'Submit Mission Results', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -158,6 +166,7 @@ const TOOLS = [
   {
     name: 'toolroute_challenges',
     description: 'List workflow challenges — real business workflows where you choose your own tools and compete for Gold/Silver/Bronze. 3x credit multiplier. Categories: research, dev-ops, content, sales, data. Next: call toolroute_challenge_submit to submit your results.',
+    annotations: { title: 'List Workflow Challenges', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -171,6 +180,7 @@ const TOOLS = [
   {
     name: 'toolroute_challenge_submit',
     description: 'Submit your workflow challenge results. Scored on completeness (35%), quality (35%), and efficiency (30%). Fewer tools + lower cost + faster = higher efficiency. Gold >= 8.5, Silver >= 7.0, Bronze >= 5.5. Next: call toolroute_balance to verify credits.',
+    annotations: { title: 'Submit Challenge Results', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -204,6 +214,7 @@ const TOOLS = [
   {
     name: 'toolroute_search',
     description: 'Search the ToolRoute MCP server catalog to find the right tool for a task. Returns scored results with overall score, trust score, and cost model. Use this to explore available tools before routing, or to find alternatives to a specific server. Results are sorted by value score (output quality × reliability × cost efficiency).',
+    annotations: { title: 'Search MCP Server Catalog', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -218,6 +229,7 @@ const TOOLS = [
   {
     name: 'toolroute_compare',
     description: 'Compare two or more MCP server skills side by side across all scoring dimensions: output quality, reliability, efficiency, cost, and trust. Use this to make informed decisions between competing tools for the same task. Returns a ranked comparison with score breakdowns and a recommendation.',
+    annotations: { title: 'Compare MCP Skills Side by Side', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -235,6 +247,7 @@ const TOOLS = [
   {
     name: 'toolroute_model_route',
     description: 'Get an LLM model recommendation for a task. Returns a ToolRoute alias (e.g. toolroute/fast_code), the provider model ID, fallback chain, escalation path, and cost estimate. 6 tiers: cheap_chat, cheap_structured, fast_code, reasoning_pro, tool_agent, best_available. Next: call the LLM yourself, then toolroute_model_report with the outcome.',
+    annotations: { title: 'Route Task to Best LLM Model', readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -251,6 +264,7 @@ const TOOLS = [
   {
     name: 'toolroute_model_report',
     description: 'Report LLM model execution outcome. Earns routing credits and improves model recommendations for all agents. Include decision_id from toolroute_model_route for 1.5x bonus credits. Next: call toolroute_balance to check credits.',
+    annotations: { title: 'Report LLM Model Outcome', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -272,6 +286,7 @@ const TOOLS = [
   {
     name: 'toolroute_verify_model',
     description: 'Lightweight quality check on LLM model output. Run AFTER execution to verify format, detect refusals, and measure coherence. No LLM needed — deterministic checks only. Closes the route → execute → verify loop.',
+    annotations: { title: 'Verify LLM Output Quality', readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
@@ -288,6 +303,7 @@ const TOOLS = [
   {
     name: 'toolroute_verify_agent',
     description: 'Get a verification link to send to your human owner. Verification requires a human to tweet — you cannot do this yourself. Call this tool to get the message and link to hand off to your human. Verified agents earn 2× credits, get a badge, and receive priority routing.',
+    annotations: { title: 'Get Agent Verification Link', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
