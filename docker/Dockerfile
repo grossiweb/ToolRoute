@@ -1,92 +1,11 @@
-# ToolRoute MCP Server — Glama Docker image
-# Stdio bridge: reads JSON-RPC from stdin → POSTs to toolroute.io/api/mcp → writes to stdout
-# This lets any MCP client connect to ToolRoute via stdio transport.
+# ToolRoute MCP Server — stdio bridge image
+# Proxies JSON-RPC stdio ↔ https://toolroute.io/api/mcp
+# No npm install needed — uses only Node.js built-ins.
 
 FROM node:20-alpine
 
 WORKDIR /app
 
-# Write the stdio ↔ HTTP bridge as a single self-contained script
-RUN cat > bridge.js << 'EOF'
-#!/usr/bin/env node
-/**
- * ToolRoute stdio MCP bridge
- * Reads newline-delimited JSON-RPC 2.0 messages from stdin,
- * forwards each to https://toolroute.io/api/mcp, writes the
- * response back to stdout. Compatible with any MCP client that
- * uses stdio transport (Claude Desktop, Cursor, Windsurf, Cline).
- */
-
-const https = require('https')
-const readline = require('readline')
-
-const HOST = 'toolroute.io'
-const PATH = '/api/mcp'
-
-function post(body) {
-  return new Promise((resolve, reject) => {
-    const data = JSON.stringify(body)
-    const options = {
-      hostname: HOST,
-      path: PATH,
-      method: 'POST',
-      headers: {
-        'Content-Type': 'application/json',
-        'Content-Length': Buffer.byteLength(data),
-        'User-Agent': 'toolroute-stdio-bridge/1.0',
-      },
-    }
-    const req = https.request(options, (res) => {
-      let buf = ''
-      res.on('data', (chunk) => { buf += chunk })
-      res.on('end', () => {
-        try { resolve(JSON.parse(buf)) }
-        catch { reject(new Error('Invalid JSON response: ' + buf.slice(0, 200))) }
-      })
-    })
-    req.on('error', reject)
-    req.setTimeout(30000, () => {
-      req.destroy(new Error('Request timed out after 30s'))
-    })
-    req.write(data)
-    req.end()
-  })
-}
-
-const rl = readline.createInterface({ input: process.stdin, terminal: false })
-
-rl.on('line', async (line) => {
-  const trimmed = line.trim()
-  if (!trimmed) return
-  let msg
-  try {
-    msg = JSON.parse(trimmed)
-  } catch (e) {
-    process.stderr.write('[bridge] JSON parse error: ' + e.message + '\n')
-    return
-  }
-  try {
-    const result = await post(msg)
-    process.stdout.write(JSON.stringify(result) + '\n')
-  } catch (e) {
-    process.stderr.write('[bridge] HTTP error: ' + e.message + '\n')
-    // Return a JSON-RPC error so the client doesn't hang
-    const errResponse = {
-      jsonrpc: '2.0',
-      id: msg.id ?? null,
-      error: { code: -32000, message: 'ToolRoute bridge error: ' + e.message },
-    }
-    process.stdout.write(JSON.stringify(errResponse) + '\n')
-  }
-})
-
-rl.on('close', () => {
-  process.exit(0)
-})
-
-process.stderr.write('[bridge] ToolRoute MCP stdio bridge ready — routing to https://toolroute.io/api/mcp\n')
-EOF
-
-# No npm install needed — bridge uses only Node built-ins (https, readline)
+COPY bridge.js .
 
 CMD ["node", "bridge.js"]
