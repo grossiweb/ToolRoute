@@ -32,7 +32,7 @@ export async function GET(request: Request) {
     supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at').eq('is_active', true),
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
     supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at'),
-    supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at'),
+    supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at').order('created_at', { ascending: false }).limit(100),
     supabase.from('benchmark_missions').select('id, title, status, max_claims, claimed_count'),
     supabase.from('mission_claims').select('id, mission_id, agent_identity_id, status, claimed_at, completed_at, reward_routing_credits'),
     supabase.from('agent_runs').select('id, agent_identity_id, skill_id, outcome, latency_ms, created_at'),
@@ -40,7 +40,7 @@ export async function GET(request: Request) {
     supabase.from('contributors').select('id, contributor_type, display_name, created_at'),
     supabase.from('telemetry_rate_tracking').select('*'),
     supabase.from('model_routing_decisions').select('id, task_snippet, resolved_tier, recommended_alias, confidence, agent_identity_id, created_at').order('created_at', { ascending: false }).limit(20),
-    supabase.from('model_outcome_records').select('id, model_id, outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, created_at').order('created_at', { ascending: false }).limit(20),
+    supabase.from('model_outcome_records').select('id, model_id, agent_identity_id, outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, created_at').order('created_at', { ascending: false }).limit(20),
     supabase.from('workflow_challenges').select('id, title, slug, category, submission_count, status'),
     supabase.from('challenge_submissions').select('id, challenge_id, agent_identity_id, tier, overall_score, scored_at, agent_identities(agent_name), workflow_challenges(title, slug)').order('scored_at', { ascending: false }).limit(20),
   ])
@@ -97,11 +97,18 @@ export async function GET(request: Request) {
   const ms30d = 30 * 24 * 60 * 60 * 1000
   const newAgents7d = agents.filter((a: any) => a.created_at && (now - new Date(a.created_at).getTime()) < ms7d).length
   const newAgents30d = agents.filter((a: any) => a.created_at && (now - new Date(a.created_at).getTime()) < ms30d).length
-  const activeAgentIds7d = new Set(
-    contributions
+  // Active = any agent who made a routing call, model decision, or contribution in the last 7 days
+  const activeAgentIds7d = new Set([
+    ...contributions
       .filter((c: any) => c.created_at && (now - new Date(c.created_at).getTime()) < ms7d && c.agent_identity_id)
-      .map((c: any) => c.agent_identity_id)
-  )
+      .map((c: any) => c.agent_identity_id),
+    ...modelDecisions
+      .filter((d: any) => d.created_at && (now - new Date(d.created_at).getTime()) < ms7d && d.agent_identity_id)
+      .map((d: any) => d.agent_identity_id),
+    ...modelOutcomes
+      .filter((o: any) => o.created_at && (now - new Date(o.created_at).getTime()) < ms7d && (o as any).agent_identity_id)
+      .map((o: any) => (o as any).agent_identity_id),
+  ])
   const activeAgents7d = activeAgentIds7d.size
   const acceptedContributions = contributions.filter((c: any) => c.accepted).length
   const acceptanceRate = contributions.length > 0 ? Math.round((acceptedContributions / contributions.length) * 100) : 0
@@ -178,7 +185,7 @@ export async function GET(request: Request) {
     contribution_breakdown: contributionTypes,
     recent_outcomes: outcomes.slice(-10).reverse(),
     recent_contributions: contributions.slice(-10).reverse(),
-    recent_rewards: rewards.slice(-10).reverse(),
+    recent_rewards: rewards.slice(0, 10),
     missions: missions.map((m: any) => ({
       id: m.id,
       title: m.title,
