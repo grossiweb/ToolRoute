@@ -1,26 +1,69 @@
 #!/usr/bin/env node
 /**
- * ToolRoute MCP stdio server
- * Usage: npx @toolroute/sdk --mcp
- *
- * Reads JSON-RPC 2.0 messages from stdin, forwards to
- * https://toolroute.io/api/mcp, writes responses to stdout.
- * Compatible with Claude Desktop, Cursor, Windsurf, Cline.
+ * ToolRoute stdio MCP bridge
+ * - initialize, tools/list, prompts/list, resources/list → handled locally
+ * - All tool calls → proxied to https://toolroute.io/api/mcp
  */
 
 import * as https from 'https'
 import * as readline from 'readline'
 
-const HOST = 'toolroute.io'
-const PATH = '/api/mcp'
+const TOOLS = [
+  { name: 'toolroute_register', description: 'Register your agent to get a persistent identity. Free, instant, idempotent.' },
+  { name: 'toolroute_help', description: 'Get a guided walkthrough and your current agent status.' },
+  { name: 'toolroute_balance', description: 'Check your real credit balance and trust tier.' },
+  { name: 'toolroute_route', description: 'Get the best MCP server and LLM recommendation for a task, scored on real benchmark data.' },
+  { name: 'toolroute_report', description: 'Report execution outcome. Earns routing credits and improves future recommendations.' },
+  { name: 'toolroute_missions', description: 'List available benchmark missions. Missions pay 4x credits.' },
+  { name: 'toolroute_mission_claim', description: 'Claim a benchmark mission to work on.' },
+  { name: 'toolroute_mission_complete', description: 'Submit completed mission results and earn 4x credits.' },
+  { name: 'toolroute_challenges', description: 'List workflow challenges across 11 categories. Challenges pay 3x credits.' },
+  { name: 'toolroute_challenge_submit', description: 'Submit workflow challenge results.' },
+  { name: 'toolroute_search', description: 'Search the MCP server catalog by task, workflow, or vertical.' },
+  { name: 'toolroute_compare', description: 'Compare 2-4 MCP servers side by side on scores, cost, reliability, and trust.' },
+  { name: 'toolroute_model_route', description: 'Get the best LLM model recommendation for a task, with cost estimate and fallback chain.' },
+  { name: 'toolroute_model_report', description: 'Report LLM model execution outcome. Earns credits.' },
+  { name: 'toolroute_verify_model', description: 'Run quality checks on a model output — detect refusals, format errors, low coherence.' },
+  { name: 'toolroute_verify_agent', description: 'Get a verification link for your human owner. One tweet = 2x credits forever.' },
+]
+
+const PROMPTS = [
+  { name: 'toolroute-quickstart', description: 'Full onboarding: register → route → execute → report' },
+  { name: 'toolroute-route-task', description: 'Route a specific task and get step-by-step execution instructions' },
+  { name: 'toolroute-report-outcome', description: 'Report task outcome and earn routing credits' },
+]
+
+function localResponse(id: any, method: string): object | null | undefined {
+  switch (method) {
+    case 'initialize':
+      return {
+        jsonrpc: '2.0', id,
+        result: {
+          protocolVersion: '2024-11-05',
+          serverInfo: { name: 'toolroute', version: '0.2.2' },
+          capabilities: { tools: {}, prompts: {}, resources: {} },
+        },
+      }
+    case 'tools/list':
+      return { jsonrpc: '2.0', id, result: { tools: TOOLS } }
+    case 'prompts/list':
+      return { jsonrpc: '2.0', id, result: { prompts: PROMPTS } }
+    case 'resources/list':
+      return { jsonrpc: '2.0', id, result: { resources: [] } }
+    case 'notifications/initialized':
+      return null
+    default:
+      return undefined
+  }
+}
 
 function post(body: unknown): Promise<unknown> {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(body)
     const req = https.request(
       {
-        hostname: HOST,
-        path: PATH,
+        hostname: 'toolroute.io',
+        path: '/api/mcp',
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
@@ -51,10 +94,13 @@ rl.on('line', async (line: string) => {
   if (!trimmed) return
 
   let msg: any
-  try {
-    msg = JSON.parse(trimmed)
-  } catch (e: any) {
-    process.stderr.write(`[toolroute-mcp] parse error: ${e.message}\n`)
+  try { msg = JSON.parse(trimmed) }
+  catch (e: any) { process.stderr.write(`[toolroute] parse error: ${e.message}\n`); return }
+
+  const local = localResponse(msg.id, msg.method)
+  if (local === null) return
+  if (local !== undefined) {
+    process.stdout.write(JSON.stringify(local) + '\n')
     return
   }
 
@@ -62,7 +108,7 @@ rl.on('line', async (line: string) => {
     const result = await post(msg)
     process.stdout.write(JSON.stringify(result) + '\n')
   } catch (e: any) {
-    process.stderr.write(`[toolroute-mcp] request error: ${e.message}\n`)
+    process.stderr.write(`[toolroute] proxy error: ${e.message}\n`)
     process.stdout.write(JSON.stringify({
       jsonrpc: '2.0',
       id: msg?.id ?? null,
@@ -72,5 +118,4 @@ rl.on('line', async (line: string) => {
 })
 
 rl.on('close', () => process.exit(0))
-
-process.stderr.write('[toolroute-mcp] ready → https://toolroute.io/api/mcp\n')
+process.stderr.write('[toolroute] MCP bridge ready\n')
