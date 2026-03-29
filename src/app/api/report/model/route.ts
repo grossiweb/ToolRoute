@@ -192,15 +192,24 @@ export async function POST(request: NextRequest) {
   const credits = accepted ? calcRoutingCredits(8, overallScore, multiplier * trustMod) : 0
   const reputation = Math.round(credits * 0.5)
 
-  // Issue rewards (fire-and-forget)
+  // Issue rewards — requires contributor_id (NOT NULL in reward_ledgers)
   if (accepted && agent_identity_id) {
-    supabase.from('reward_ledgers').insert({
-      agent_identity_id,
-      routing_credits: credits,
-      reputation_points: reputation,
-      economic_credits_usd: parseFloat((0.008 * overallScore * multiplier * trustMod).toFixed(4)),
-      reason: `model_telemetry for ${model_slug} (score: ${overallScore.toFixed(2)})`,
-    }).then(() => {})
+    const { data: agentRow } = await supabase
+      .from('agent_identities')
+      .select('contributor_id')
+      .eq('id', agent_identity_id)
+      .maybeSingle()
+
+    if (agentRow?.contributor_id) {
+      supabase.from('reward_ledgers').insert({
+        contributor_id: agentRow.contributor_id,
+        agent_identity_id,
+        routing_credits: credits,
+        reputation_points: reputation,
+        economic_credits_usd: parseFloat((0.008 * overallScore * multiplier * trustMod).toFixed(4)),
+        reason: `model_telemetry:${model_slug} (score: ${overallScore.toFixed(2)})`,
+      }).then(() => {})
+    }
 
     supabase.rpc('update_agent_stats', {
       p_agent_id: agent_identity_id,

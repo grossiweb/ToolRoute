@@ -121,7 +121,9 @@ export async function GET(request: Request) {
     acc[t] = (acc[t] || 0) + 1
     return acc
   }, {} as Record<string, number>)
+  // Human-verified = completed the tweet verification flow (trust_tier promoted above baseline)
   const verifiedAgents = agents.filter((a: any) => a.trust_tier === 'trusted' || a.trust_tier === 'production' || a.trust_tier === 'enterprise').length
+  const humanVerifiedAgents = agents.filter((a: any) => a.trust_tier === 'trusted' || a.trust_tier === 'production' || a.trust_tier === 'enterprise').length
 
   // Platform-wide telemetry rate
   const totalRecs = telemetryRate.reduce((s: number, t: any) => s + (t.total_recommendations || 0), 0)
@@ -153,6 +155,7 @@ export async function GET(request: Request) {
       acceptance_rate_pct: acceptanceRate,
       avg_quality_rating: avgQualityRating,
       verified_agents: verifiedAgents,
+      human_verified_agents: humanVerifiedAgents,
       trust_tier_breakdown: trustTierBreakdown,
       top_skills: topSkills,
     },
