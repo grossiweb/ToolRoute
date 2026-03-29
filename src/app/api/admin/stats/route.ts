@@ -31,7 +31,7 @@ export async function GET(request: Request) {
   ] = await Promise.all([
     supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at').eq('is_active', true),
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
-    supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at'),
+    supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at').gte('created_at', new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString()).order('created_at', { ascending: false }).limit(500),
     supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at').order('created_at', { ascending: false }).limit(100),
     supabase.from('benchmark_missions').select('id, title, status, max_claims, claimed_count'),
     supabase.from('mission_claims').select('id, mission_id, agent_identity_id, status, claimed_at, completed_at, reward_routing_credits'),
@@ -39,7 +39,7 @@ export async function GET(request: Request) {
     supabase.from('skills').select('id, slug, canonical_name').eq('status', 'active'),
     supabase.from('contributors').select('id, contributor_type, display_name, created_at'),
     supabase.from('telemetry_rate_tracking').select('*'),
-    supabase.from('model_routing_decisions').select('id, task_snippet, resolved_tier, recommended_alias, confidence, agent_identity_id, created_at').order('created_at', { ascending: false }).limit(20),
+    supabase.from('model_routing_decisions').select('id, task_snippet, resolved_tier, recommended_alias, confidence, agent_identity_id, created_at').order('created_at', { ascending: false }).limit(200),
     supabase.from('model_outcome_records').select('id, model_id, agent_identity_id, outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, created_at').order('created_at', { ascending: false }).limit(20),
     supabase.from('workflow_challenges').select('id, title, slug, category, submission_count, status'),
     supabase.from('challenge_submissions').select('id, challenge_id, agent_identity_id, tier, overall_score, scored_at, agent_identities(agent_name), workflow_challenges(title, slug)').order('scored_at', { ascending: false }).limit(20),
