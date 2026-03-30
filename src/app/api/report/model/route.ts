@@ -366,11 +366,12 @@ export async function POST(request: NextRequest) {
     })
     const trustDelta = pos + neg
     if (trustDelta !== 0) {
-      supabase.rpc('adjust_trust_score', {
+      // await — fire-and-forget is killed by Vercel before it resolves
+      await supabase.rpc('adjust_trust_score', {
         p_agent_id: agent_identity_id,
         p_delta: trustDelta,
         p_reason: [...posR, ...negR].join('; ') || 'model_report',
-      }).then(() => {})
+      })
     }
   }
 
