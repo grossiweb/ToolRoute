@@ -45,6 +45,7 @@ export interface ModelCandidate {
   avg_quality_rating?: number | null
   success_rate?: number | null
   sample_size?: number | null
+  trust_weighted_quality?: number | null
 }
 
 export interface RoutingConstraints {
@@ -184,13 +185,14 @@ export function rankModelsInTier(
   // Prevents pre-launch benchmark noise (few dozen runs) from overriding deliberate tier design.
   const withOutcomes = filtered.filter(m => m.sample_size != null && m.sample_size >= 25)
   if (withOutcomes.length >= 2) {
-    const maxQuality = Math.max(...withOutcomes.map(m => m.avg_quality_rating ?? 0))
+    const maxQuality = Math.max(...withOutcomes.map(m => m.trust_weighted_quality ?? m.avg_quality_rating ?? 0))
     const maxSuccess = Math.max(...withOutcomes.map(m => m.success_rate ?? 0))
     const maxCost = Math.max(...withOutcomes.map(m => m.input_cost_per_mtok || 1))
 
     const scored = filtered.map(m => {
       if (m.sample_size == null || m.sample_size < 5) return { model: m, score: -1 }
-      const normQuality = maxQuality > 0 ? (m.avg_quality_rating ?? 0) / maxQuality : 0
+      const effectiveQuality = m.trust_weighted_quality ?? m.avg_quality_rating ?? 0
+      const normQuality = maxQuality > 0 ? effectiveQuality / maxQuality : 0
       const normSuccess = maxSuccess > 0 ? (m.success_rate ?? 0) / maxSuccess : 0
       const normCostEff = maxCost > 0 ? Math.max(0, 1 - (m.input_cost_per_mtok / maxCost)) : 0
       const normLatency = m.avg_latency_ms ? 1 - Math.min(m.avg_latency_ms / 5000, 1) : 0.5

@@ -10,6 +10,7 @@ import {
   getChallengeCredits,
   TRUST_TIER_MODIFIERS,
 } from '@/lib/scoring'
+import { TRUST_DELTAS } from '@/lib/trust-score'
 
 export async function POST(request: NextRequest) {
   const rlKey = getRateLimitKey(request)
@@ -212,6 +213,21 @@ export async function POST(request: NextRequest) {
     p_credits_delta: credits,
     p_rep_delta: reputation,
   }).then(() => {})
+
+  // ── Trust score delta on challenge completion ──────────────────────────────
+
+  const tierDelta = tier === 'gold'   ? TRUST_DELTAS.CHALLENGE_GOLD
+    : tier === 'silver' ? TRUST_DELTAS.CHALLENGE_SILVER
+    : tier === 'bronze' ? TRUST_DELTAS.CHALLENGE_BRONZE
+    : null
+
+  if (tierDelta != null) {
+    supabase.rpc('adjust_trust_score', {
+      p_agent_id: agent_identity_id,
+      p_delta: tierDelta,
+      p_reason: `challenge_${challenge_slug}_${tier}`,
+    }).then(() => {})
+  }
 
   // ── Get rank ───────────────────────────────
 

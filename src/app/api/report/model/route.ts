@@ -7,6 +7,7 @@ import {
   detectAntiGamingPatterns,
 } from '@/lib/quality-verifier'
 import { verifyCommitment, validateTimestamp } from '@/lib/commitment'
+import { reportAcceptedDelta, detectGamingPatterns } from '@/lib/trust-score'
 
 // GET /api/report/model — Self-documenting guide
 export async function GET() {
@@ -299,7 +300,7 @@ export async function POST(request: NextRequest) {
   if (agent_identity_id) {
     const { data: agent } = await supabase
       .from('agent_identities')
-      .select('trust_tier')
+      .select('trust_tier, trust_score, contributor_id')
       .eq('id', agent_identity_id)
       .maybeSingle()
 
@@ -341,6 +342,34 @@ export async function POST(request: NextRequest) {
       p_credits_delta: credits,
       p_rep_delta: reputation,
     }).then(() => {})
+
+    // Fire-and-forget trust score adjustment
+    supabase.from('model_outcome_records')
+      .select('outcome_status, output_quality_rating, latency_ms')
+      .eq('agent_identity_id', agent_identity_id)
+      .order('created_at', { ascending: false })
+      .limit(25)
+      .then(({ data: recent }) => {
+        const { delta: pos, reasons: posR } = reportAcceptedDelta({
+          hasDecisionId: !!validDecisionId,
+          qualityRating: output_quality_rating,
+        })
+        const { totalDelta: neg, reasons: negR } = detectGamingPatterns({
+          outcomeStatus: outcome_status,
+          qualityRating: output_quality_rating,
+          latencyMs: latency_ms,
+          hallucination: hallucination_detected,
+          recentReports: recent ?? [],
+        })
+        const delta = pos + neg
+        if (delta !== 0) {
+          supabase.rpc('adjust_trust_score', {
+            p_agent_id: agent_identity_id,
+            p_delta: delta,
+            p_reason: [...posR, ...negR].join('; ') || 'model_report',
+          }).then(() => {})
+        }
+      })
   }
 
   // Build response
