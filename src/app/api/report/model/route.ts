@@ -343,33 +343,35 @@ export async function POST(request: NextRequest) {
       p_rep_delta: reputation,
     }).then(() => {})
 
-    // Fire-and-forget trust score adjustment
-    supabase.from('model_outcome_records')
+    // Trust score delta — await recent reports before return so the
+    // single-level adjust_trust_score fire-and-forget actually executes
+    // (nested .then inside .then is killed by Vercel before it runs)
+    const { data: recentReports } = await supabase
+      .from('model_outcome_records')
       .select('outcome_status, output_quality_rating, latency_ms')
       .eq('agent_identity_id', agent_identity_id)
       .order('created_at', { ascending: false })
       .limit(25)
-      .then(({ data: recent }) => {
-        const { delta: pos, reasons: posR } = reportAcceptedDelta({
-          hasDecisionId: !!validDecisionId,
-          qualityRating: output_quality_rating,
-        })
-        const { totalDelta: neg, reasons: negR } = detectGamingPatterns({
-          outcomeStatus: outcome_status,
-          qualityRating: output_quality_rating,
-          latencyMs: latency_ms,
-          hallucination: hallucination_detected,
-          recentReports: recent ?? [],
-        })
-        const delta = pos + neg
-        if (delta !== 0) {
-          supabase.rpc('adjust_trust_score', {
-            p_agent_id: agent_identity_id,
-            p_delta: delta,
-            p_reason: [...posR, ...negR].join('; ') || 'model_report',
-          }).then(() => {})
-        }
-      })
+
+    const { delta: pos, reasons: posR } = reportAcceptedDelta({
+      hasDecisionId: !!validDecisionId,
+      qualityRating: output_quality_rating,
+    })
+    const { totalDelta: neg, reasons: negR } = detectGamingPatterns({
+      outcomeStatus: outcome_status,
+      qualityRating: output_quality_rating,
+      latencyMs: latency_ms,
+      hallucination: hallucination_detected,
+      recentReports: recentReports ?? [],
+    })
+    const trustDelta = pos + neg
+    if (trustDelta !== 0) {
+      supabase.rpc('adjust_trust_score', {
+        p_agent_id: agent_identity_id,
+        p_delta: trustDelta,
+        p_reason: [...posR, ...negR].join('; ') || 'model_report',
+      }).then(() => {})
+    }
   }
 
   // Build response
