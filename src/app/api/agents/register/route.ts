@@ -2,6 +2,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { getVerificationNudge } from '@/lib/verification-nudge'
+import { validatePublicKey } from '@/lib/commitment'
 
 export async function POST(request: NextRequest) {
   const rlKey = getRateLimitKey(request)
@@ -27,7 +28,20 @@ export async function POST(request: NextRequest) {
     environment_label,
     display_name,
     webhook_url,
+    public_key,
   } = body
+
+  // Validate public key if provided
+  let validatedPublicKey: string | null = null
+  if (public_key) {
+    validatedPublicKey = validatePublicKey(public_key)
+    if (!validatedPublicKey) {
+      return NextResponse.json(
+        { error: 'Invalid public_key. Must be a PEM-encoded Ed25519 public key.' },
+        { status: 400 }
+      )
+    }
+  }
 
   if (!agent_name) {
     return NextResponse.json(
@@ -97,6 +111,7 @@ export async function POST(request: NextRequest) {
       model_family: model_family || null,
       environment_label: environment_label || null,
       webhook_url: webhook_url || null,
+      public_key: validatedPublicKey || null,
       trust_tier: 'baseline',
       is_active: true,
     })
@@ -121,6 +136,19 @@ export async function POST(request: NextRequest) {
     is_active: agent.is_active,
     created_at: agent.created_at,
     already_registered: false,
+    signing_enabled: !!validatedPublicKey,
+    ...(validatedPublicKey ? {
+      signing: {
+        algorithm: 'ed25519',
+        status: 'active',
+        effect: 'Signed reports earn proof_type: client_signed — anti-gaming penalties bypassed, full credit multiplier always applied.',
+        commitment_format: 'SHA256("{model_slug}:{outcome_status}:{unix_timestamp_seconds}:{SHA256(output_snippet||\'\')}") ',
+        replay_window_seconds: 300,
+        include_in_reports: { commitment_hash: 'hex string', report_signature: 'base64 string', report_timestamp: 'unix seconds' },
+      },
+    } : {
+      signing_note: 'Add public_key (PEM Ed25519) to registration to enable signed reports and lock anti-gaming multiplier at 1.0',
+    }),
     message: 'Agent registered successfully. Use agent_identity_id for routing and telemetry.',
     next_steps: {
       verify: 'Ask your human owner to visit https://toolroute.io/verify and tweet — you earn 2x credits forever',
@@ -152,6 +180,7 @@ export async function GET(request: NextRequest) {
           host_client_slug: '(optional) cursor | claude-desktop | vscode | custom',
           model_family: '(optional) claude | gpt | gemini | llama',
           webhook_url: '(optional) URL to receive notifications (credits earned, verification approved, etc.)',
+          public_key: '(optional) PEM-encoded Ed25519 public key — enables signed reports (proof_type: client_signed, anti-gaming bypassed)',
         },
         returns: 'agent_identity_id — use in /api/route and /api/report',
       },

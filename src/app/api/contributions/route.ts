@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
+import { detectAntiGamingPatterns } from '@/lib/quality-verifier'
 
 // GET /api/contributions — Self-documenting guide for advanced telemetry
 export async function GET() {
@@ -228,7 +229,13 @@ export async function POST(request: NextRequest) {
   const usefulness = estimateUsefulness(payload, contribution_type)
   const novelty = await estimateNovelty(supabase, payload, contribution_type)
   const consistency = await estimateConsistency(supabase, contributorId)
-  const antiGaming = estimateAntiGaming(payload, contribution_type)
+
+  // Anti-gaming: combine payload heuristics with pattern detection for registered agents
+  let antiGaming = estimateAntiGaming(payload, contribution_type)
+  if (agent_identity_id) {
+    const gaming = await detectAntiGamingPatterns(supabase, agent_identity_id)
+    antiGaming = Math.min(antiGaming, gaming.multiplier)
+  }
 
   const overallScore = calcContributionScore({
     validity, usefulness, novelty, consistency, antiGaming,

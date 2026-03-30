@@ -1,6 +1,12 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
+import {
+  computeStructuralQuality,
+  scheduleVerifiedQualityUpdate,
+  detectAntiGamingPatterns,
+} from '@/lib/quality-verifier'
+import { verifyCommitment, validateTimestamp } from '@/lib/commitment'
 
 // GET /api/report/model — Self-documenting guide
 export async function GET() {
@@ -18,13 +24,35 @@ export async function GET() {
       input_tokens: 'Input tokens consumed',
       output_tokens: 'Output tokens generated',
       estimated_cost_usd: 'Estimated cost in USD',
-      output_quality_rating: 'Output quality 0-10',
+      output_quality_rating: 'Agent-asserted quality 0-10 (lowest trust weight — prefer output_snippet)',
+      output_snippet: 'First 500 chars of model output — enables LLM quality verification (highest trust)',
+      task: 'The task/prompt you sent to the model — used by LLM evaluator alongside output_snippet',
+      retry_count: 'How many retries were needed before success (0 = clean run)',
       structured_output_valid: 'Did the model produce valid structured output? (boolean)',
       tool_calls_succeeded: 'Did tool calls succeed? (boolean)',
       hallucination_detected: 'Was hallucination detected? (boolean)',
       fallback_used: 'Did you fall back to a different model? (boolean)',
       fallback_model_slug: 'Which model did you fall back to?',
       agent_identity_id: 'Your agent UUID for credit tracking',
+    },
+    quality_verification: {
+      note: 'Quality is verified independently — self-reported ratings have 50% weight vs 100% for LLM-verified',
+      tiers: {
+        verified: 'LLM evaluator (Gemini Flash Lite) scores your output_snippet against the task — weight 1.0',
+        computed: 'Structural signals: latency, snippet length, structured validity, retry count — weight 0.85',
+        self_reported: 'output_quality_rating you provide — weight 0.50',
+      },
+      recommendation: 'Include output_snippet + task for highest-quality verification and maximum credits',
+    },
+    cryptographic_signing: {
+      note: 'Register with a public_key to enable signed reports. Signed reports bypass anti-gaming penalties entirely.',
+      fields: {
+        commitment_hash: 'SHA256("{model_slug}:{outcome_status}:{unix_timestamp_seconds}:{SHA256(output_snippet||\'\')}") — hex',
+        report_signature: 'Ed25519 signature over commitment_hash — base64',
+        report_timestamp: 'Unix timestamp in seconds (must be within 300s of server time)',
+      },
+      effect: 'proof_type becomes client_signed, anti_gaming.multiplier locked at 1.0',
+      setup: 'Generate keypair with Node.js crypto.generateKeyPairSync("ed25519") and include public key in POST /api/agents/register',
     },
     credit_rewards: {
       basic_report: '3-8 routing credits (model_slug + outcome only)',
@@ -34,7 +62,7 @@ export async function GET() {
     },
     examples: [
       {
-        description: 'Report after using a routed model',
+        description: 'Full report with LLM verification (recommended)',
         body: {
           decision_id: 'uuid-from-route-response',
           model_slug: 'claude-3-5-sonnet',
@@ -43,16 +71,18 @@ export async function GET() {
           input_tokens: 3400,
           output_tokens: 890,
           estimated_cost_usd: 0.0235,
-          output_quality_rating: 8.5,
+          task: 'Write a Python function to parse CSV files with custom delimiters',
+          output_snippet: 'def parse_csv(filepath, delimiter=","):\n    import csv\n    with open(filepath) as f:\n        reader = csv.DictReader(f, delimiter=delimiter)...',
+          retry_count: 0,
+          structured_output_valid: true,
         },
       },
       {
-        description: 'Report any model you used independently',
+        description: 'Minimal report (no verification)',
         body: {
           model_slug: 'gpt-4o-mini',
           outcome_status: 'success',
           latency_ms: 450,
-          output_quality_rating: 7,
         },
       },
     ],
@@ -79,13 +109,55 @@ export async function POST(request: NextRequest) {
     output_tokens,
     estimated_cost_usd,
     output_quality_rating,
+    output_snippet,
+    task,
+    retry_count,
     structured_output_valid,
     tool_calls_succeeded,
     hallucination_detected,
     fallback_used,
     fallback_model_slug,
     agent_identity_id,
+    // Cryptographic commitment fields (Option B)
+    commitment_hash,
+    report_signature,
+    report_timestamp,
   } = body
+
+  // ── Signature verification ──────────────────────────────────────────────────
+  let proofType: 'client_signed' | 'self_reported' = 'self_reported'
+  let sigVerified = false
+
+  if (commitment_hash && report_signature && report_timestamp && agent_identity_id) {
+    // Replay protection: reject stale timestamps
+    const tsCheck = validateTimestamp(Number(report_timestamp))
+    if (!tsCheck.valid) {
+      return NextResponse.json({
+        error: 'report_timestamp expired',
+        hint: `Timestamp is ${tsCheck.age_seconds}s old. Window is 300s. Regenerate your commitment.`,
+      }, { status: 400 })
+    }
+
+    // Look up the agent's stored public key
+    const { data: agentKeyRow } = await supabase
+      .from('agent_identities')
+      .select('public_key')
+      .eq('id', agent_identity_id)
+      .maybeSingle()
+
+    if (agentKeyRow?.public_key) {
+      const valid = verifyCommitment(agentKeyRow.public_key, commitment_hash, report_signature)
+      if (!valid) {
+        return NextResponse.json({
+          error: 'Invalid signature',
+          hint: 'Verify commitment hash construction: SHA256("{model_slug}:{outcome_status}:{unix_ts}:{SHA256(output_snippet||\'\')}") then sign with Ed25519 private key.',
+        }, { status: 400 })
+      }
+      proofType = 'client_signed'
+      sigVerified = true
+    }
+    // If agent has no public key registered, fall through to self_reported silently
+  }
 
   if (!model_slug || !outcome_status) {
     return NextResponse.json({
@@ -127,6 +199,18 @@ export async function POST(request: NextRequest) {
     if (decision) validDecisionId = decision.id
   }
 
+  // Compute structural quality from objective signals
+  const computedQuality = computeStructuralQuality({
+    outcome_status,
+    latency_ms,
+    output_snippet,
+    structured_output_valid,
+    tool_calls_succeeded,
+    hallucination_detected,
+    retry_count,
+    fallback_used,
+  })
+
   // Insert outcome record
   const { data: outcome, error: outcomeError } = await supabase
     .from('model_outcome_records')
@@ -139,13 +223,19 @@ export async function POST(request: NextRequest) {
       output_tokens: output_tokens ?? null,
       estimated_cost_usd: estimated_cost_usd ?? null,
       output_quality_rating: output_quality_rating ?? null,
+      output_snippet: output_snippet ? String(output_snippet).slice(0, 500) : null,
+      task_context: task ? String(task).slice(0, 300) : null,
+      computed_quality: parseFloat(computedQuality.toFixed(2)),
+      retry_count: retry_count ?? 0,
       structured_output_valid: structured_output_valid ?? null,
       tool_calls_succeeded: tool_calls_succeeded ?? null,
       hallucination_detected: hallucination_detected ?? null,
       fallback_used: fallback_used ?? false,
       fallback_model_slug: fallback_model_slug ?? null,
       agent_identity_id: agent_identity_id ?? null,
-      proof_type: 'self_reported',
+      proof_type: proofType,
+      commitment_hash: commitment_hash ?? null,
+      report_signature: report_signature ?? null,
     })
     .select('id')
     .single()
@@ -154,7 +244,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Failed to record outcome', details: outcomeError?.message }, { status: 500 })
   }
 
-  // Score the contribution
+  // Score the contribution — richer reports earn more
   let fieldCount = 0
   if (latency_ms != null) fieldCount++
   if (input_tokens != null) fieldCount++
@@ -163,20 +253,42 @@ export async function POST(request: NextRequest) {
   if (output_quality_rating != null) fieldCount++
   if (structured_output_valid != null) fieldCount++
   if (tool_calls_succeeded != null) fieldCount++
+  if (output_snippet != null) fieldCount += 2  // snippet = +2 (enables LLM verification)
+  if (task != null) fieldCount++
 
-  const validity = Math.min(0.3 + fieldCount * 0.1, 1.0)
-  const usefulness = Math.min(0.4 + fieldCount * 0.08, 0.9)
+  const validity = Math.min(0.3 + fieldCount * 0.08, 1.0)
+  const usefulness = Math.min(0.4 + fieldCount * 0.07, 0.9)
   const novelty = 0.7 // moderate for model telemetry
-  const consistency = 0.7 // new system, neutral
-  const antiGaming = outcome_status === 'failure' ? 0.95 : 0.85 // failures are more trustworthy
 
-  const overallScore = calcContributionScore({ validity, usefulness, novelty, consistency, antiGaming })
+  // Anti-gaming: signed reports are trusted — no behavioral penalty
+  // Unsigned reports from registered agents are subject to pattern detection
+  let antiGamingMultiplier = outcome_status === 'failure' ? 0.95 : 0.85
+  let antiGamingNote: string | null = null
+  if (sigVerified) {
+    antiGamingMultiplier = 1.0
+    antiGamingNote = 'signature_verified'
+  } else if (agent_identity_id) {
+    const gaming = await detectAntiGamingPatterns(supabase, agent_identity_id)
+    antiGamingMultiplier = Math.min(antiGamingMultiplier, gaming.multiplier)
+    if (gaming.flags.length > 0) {
+      antiGamingNote = `flags: ${gaming.flags.join(', ')}`
+    }
+  }
+
+  const overallScore = calcContributionScore({
+    validity,
+    usefulness,
+    novelty,
+    consistency: 0.7,
+    antiGaming: antiGamingMultiplier,
+  })
   const accepted = overallScore >= 0.3 // lower threshold for model telemetry to bootstrap data
 
   // Calculate rewards
   let multiplier = 1.0
   if (validDecisionId) multiplier *= 1.5 // bonus for linked decisions
   let trustMod = 1.0
+  let agentTier: string | null = null
   if (agent_identity_id) {
     const { data: agent } = await supabase
       .from('agent_identities')
@@ -185,12 +297,18 @@ export async function POST(request: NextRequest) {
       .maybeSingle()
 
     if (agent?.trust_tier) {
+      agentTier = agent.trust_tier
       trustMod = TRUST_TIER_MODIFIERS[agent.trust_tier as keyof typeof TRUST_TIER_MODIFIERS] || 1.0
     }
   }
 
   const credits = accepted ? calcRoutingCredits(8, overallScore, multiplier * trustMod) : 0
   const reputation = Math.round(credits * 0.5)
+
+  // Schedule async LLM quality verification if snippet + task provided
+  if (accepted && output_snippet && task) {
+    scheduleVerifiedQualityUpdate(supabase, outcome.id, 'model_outcome_records', task, output_snippet)
+  }
 
   // Issue rewards — requires contributor_id (NOT NULL in reward_ledgers)
   if (accepted && agent_identity_id) {
@@ -224,8 +342,20 @@ export async function POST(request: NextRequest) {
     outcome_id: outcome.id,
     model_slug,
     outcome_status,
+    proof_type: proofType,
     contribution_score: parseFloat(overallScore.toFixed(2)),
     accepted,
+    quality: {
+      computed: parseFloat(computedQuality.toFixed(1)),
+      verified: output_snippet && task ? 'pending_async' : null,
+      note: output_snippet && task
+        ? 'LLM verification queued — verified_quality will update within seconds.'
+        : 'Add output_snippet + task for independent LLM quality verification (+credits)',
+    },
+    anti_gaming: {
+      multiplier: parseFloat(antiGamingMultiplier.toFixed(2)),
+      ...(antiGamingNote ? { note: antiGamingNote } : {}),
+    },
     rewards: {
       routing_credits: credits,
       reputation_points: reputation,

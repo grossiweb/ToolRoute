@@ -187,7 +187,7 @@ export async function GET(request: Request) {
     outcome_breakdown: outcomeCounts,
     contribution_breakdown: contributionTypes,
     recent_outcomes: outcomes.slice(-10).reverse(),
-    recent_contributions: contributions.slice(-10).reverse(),
+    recent_contributions: contributions.slice(0, 10),
     recent_rewards: rewards.slice(0, 10),
     missions: missions.map((m: any) => ({
       id: m.id,
