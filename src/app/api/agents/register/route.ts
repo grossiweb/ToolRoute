@@ -200,7 +200,7 @@ export async function GET(request: NextRequest) {
 
   let query = supabase
     .from('agent_identities')
-    .select('id, agent_name, agent_kind, host_client_slug, model_family, trust_tier, is_active, created_at')
+    .select('id, agent_name, agent_kind, host_client_slug, model_family, trust_tier, trust_score, shadow_mode, trust_score_updated_at, is_active, created_at')
 
   if (id) {
     query = query.eq('id', id)
