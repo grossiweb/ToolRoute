@@ -241,6 +241,13 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (outcomeError || !outcome) {
+    // Postgres unique violation on commitment_hash = replay attack
+    if (outcomeError?.code === '23505' && commitment_hash) {
+      return NextResponse.json({
+        error: 'Duplicate commitment',
+        hint: 'This commitment_hash has already been submitted. Each report requires a unique timestamp.',
+      }, { status: 400 })
+    }
     return NextResponse.json({ error: 'Failed to record outcome', details: outcomeError?.message }, { status: 500 })
   }
 
