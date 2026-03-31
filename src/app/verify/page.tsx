@@ -1,10 +1,10 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, Suspense } from 'react'
 import { useSearchParams } from 'next/navigation'
 import Link from 'next/link'
 
-export default function VerifyPage() {
+function VerifyContent() {
   const searchParams = useSearchParams()
   const codeFromUrl = searchParams.get('code') || ''
 
@@ -283,5 +283,13 @@ export default function VerifyPage() {
         {' '}to get started.
       </div>
     </div>
+  )
+}
+
+export default function VerifyPage() {
+  return (
+    <Suspense fallback={<div className="max-w-2xl mx-auto px-4 py-10 text-center" style={{ color: 'var(--text-2)' }}>Loading...</div>}>
+      <VerifyContent />
+    </Suspense>
   )
 }

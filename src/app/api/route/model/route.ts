@@ -180,6 +180,7 @@ export async function POST(request: NextRequest) {
       const candidate = candidates.find(c => c.id === stat.model_id)
       if (candidate) {
         candidate.avg_quality_rating = stat.avg_quality
+        candidate.trust_weighted_quality = stat.trust_weighted_quality ?? null
         candidate.success_rate = stat.success_rate
         candidate.sample_size = stat.sample_size
       }

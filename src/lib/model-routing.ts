@@ -45,6 +45,7 @@ export interface ModelCandidate {
   avg_quality_rating?: number | null
   success_rate?: number | null
   sample_size?: number | null
+  trust_weighted_quality?: number | null
 }
 
 export interface RoutingConstraints {
@@ -82,6 +83,8 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'trade-off', 'compare options', 'complex', 'reasoning', 'chain of thought',
     'step by step', 'think through', 'evaluate', 'comprehensive analysis',
     'research paper', 'deep analysis', 'long-form',
+    'comprehensive', 'in-depth', 'detailed analysis', 'technical analysis',
+    'worked example', 'case study analysis', 'tradeoff analysis',
   ],
   creative_writing: [
     'cold email', 'outreach email', 'persuasive', 'compelling', 'engaging',
@@ -98,6 +101,11 @@ const BEST_AVAILABLE_KEYWORDS = [
   'best model', 'best possible', 'highest quality', 'most capable',
   'strongest model', 'premium', 'top tier', 'no cost limit',
   'spare no expense', 'maximum quality',
+  // Long-form complex documents that need the strongest model
+  'whitepaper', 'white paper', 'technical whitepaper',
+  'formal proof', 'mathematical proof',
+  'dissertation', 'thesis',
+  'comprehensive technical', 'in-depth report',
 ]
 
 // ── Signal Detection ──
@@ -172,16 +180,19 @@ export function rankModelsInTier(
   // 3. Sort by priority
   filtered.sort((a, b) => a.priority - b.priority)
 
-  // 4. If outcome data exists, re-rank by weighted composite
-  const withOutcomes = filtered.filter(m => m.sample_size != null && m.sample_size >= 5)
+  // 4. If sufficient outcome data exists, re-rank by weighted composite.
+  // Threshold is 25 — curated priorities hold until statistically meaningful real-world data exists.
+  // Prevents pre-launch benchmark noise (few dozen runs) from overriding deliberate tier design.
+  const withOutcomes = filtered.filter(m => m.sample_size != null && m.sample_size >= 25)
   if (withOutcomes.length >= 2) {
-    const maxQuality = Math.max(...withOutcomes.map(m => m.avg_quality_rating ?? 0))
+    const maxQuality = Math.max(...withOutcomes.map(m => m.trust_weighted_quality ?? m.avg_quality_rating ?? 0))
     const maxSuccess = Math.max(...withOutcomes.map(m => m.success_rate ?? 0))
     const maxCost = Math.max(...withOutcomes.map(m => m.input_cost_per_mtok || 1))
 
     const scored = filtered.map(m => {
       if (m.sample_size == null || m.sample_size < 5) return { model: m, score: -1 }
-      const normQuality = maxQuality > 0 ? (m.avg_quality_rating ?? 0) / maxQuality : 0
+      const effectiveQuality = m.trust_weighted_quality ?? m.avg_quality_rating ?? 0
+      const normQuality = maxQuality > 0 ? effectiveQuality / maxQuality : 0
       const normSuccess = maxSuccess > 0 ? (m.success_rate ?? 0) / maxSuccess : 0
       const normCostEff = maxCost > 0 ? Math.max(0, 1 - (m.input_cost_per_mtok / maxCost)) : 0
       const normLatency = m.avg_latency_ms ? 1 - Math.min(m.avg_latency_ms / 5000, 1) : 0.5

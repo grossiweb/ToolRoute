@@ -559,6 +559,20 @@ async function handleToolCall(id: any, params: any) {
       const { agent_name, agent_kind = 'autonomous', host_client_slug, model_family, webhook_url } = args || {}
       if (!agent_name) return toolResult(id, 'Error: agent_name is required.')
 
+      // Validate agent_name quality
+      const trimmedName = String(agent_name).trim()
+      const nameErrors: string[] = []
+      if (trimmedName.length < 3) nameErrors.push('agent_name must be at least 3 characters.')
+      if (trimmedName.length > 64) nameErrors.push('agent_name must be 64 characters or fewer.')
+      if (!/[a-zA-Z]/.test(trimmedName)) nameErrors.push('agent_name must contain at least one letter.')
+      if (/^(.)\1{2,}$/.test(trimmedName)) nameErrors.push('agent_name cannot be a repeated character.')
+      if (/^[\[{]/.test(trimmedName)) nameErrors.push('agent_name cannot be a JSON value.')
+      if (/[;<>'"]/.test(trimmedName)) nameErrors.push('agent_name contains invalid characters.')
+      if (['test', 'null', 'undefined', 'true', 'false', 'admin', 'root'].includes(trimmedName.toLowerCase()))
+        nameErrors.push('agent_name is reserved. Choose a unique name for your agent.')
+      if (nameErrors.length > 0)
+        return toolResult(id, `Error: Invalid agent_name — ${nameErrors.join(' ')} Choose a descriptive name like "MyBot-v2" or "ResearchAgent-Claude".`)
+
       // Check for existing agent
       let existingQuery = supabase
         .from('agent_identities')
@@ -577,7 +591,12 @@ async function handleToolCall(id: any, params: any) {
           already_registered: true,
           credit_balance: balance ? balance.total_routing_credits : 0,
           message: 'Agent already registered. Use agent_identity_id in all subsequent calls.',
-          next_step: 'Call toolroute_help for a guided walkthrough, or toolroute_missions / toolroute_challenges to start earning credits.',
+          next_step: {
+            action: 'Call toolroute_route — your agent_identity_id is already filled in below. Run this now:',
+            tool: 'toolroute_route',
+            args: { task: 'Scrape product pricing from a competitor website', agent_identity_id: existing.id },
+            why: 'Gets you a skill + LLM recommendation in <50ms and earns routing credits.',
+          },
           ...(nudge ? { verify_for_2x: nudge } : {}),
         }, null, 2))
       }
@@ -616,7 +635,13 @@ async function handleToolCall(id: any, params: any) {
         already_registered: false,
         credit_balance: 0,
         message: 'Registered! Use agent_identity_id in all subsequent calls to earn credits and build your trust tier.',
-        next_step: 'Call toolroute_help for a guided walkthrough, or toolroute_missions / toolroute_challenges to start earning credits.',
+        next_step: {
+          action: 'Call toolroute_route right now — your agent_identity_id is already filled in below:',
+          tool: 'toolroute_route',
+          args: { task: 'Scrape product pricing from a competitor website', agent_identity_id: agent.id },
+          why: 'Gets you a skill + LLM recommendation in <50ms. Report the outcome with toolroute_report to earn your first credits.',
+          after_that: 'toolroute_missions for 4x credits, toolroute_challenges for 3x credits.',
+        },
         ...(registerNudge ? { verify_for_2x: registerNudge } : {}),
       }, null, 2))
     }
@@ -713,6 +738,49 @@ async function handleToolCall(id: any, params: any) {
     /* ── toolroute_route ── */
     case 'toolroute_route': {
       const { task, workflow_slug, priority = 'best_value', trust_floor = 0, agent_identity_id } = args || {}
+
+      // Classify task — detect multi-tool compound requests
+      let taskClassification: import('@/lib/task-classifier').TaskClassification | null = null
+      if (task) {
+        const { classifyTask } = await import('@/lib/task-classifier')
+        taskClassification = await classifyTask(task)
+      }
+
+      // Multi-tool path: return orchestration chain instead of a single skill
+      if (taskClassification?.is_multi_tool && (taskClassification.tool_categories?.length ?? 0) >= 2) {
+        const { buildOrchestrationChain } = await import('@/lib/task-classifier')
+        const orchestration = buildOrchestrationChain(taskClassification.tool_categories!, task || '')
+
+        let modelSuggestion: any = null
+        if (task) {
+          try {
+            const baseUrl = getBaseUrl()
+            const modelRes = await fetch(`${baseUrl}/api/route/model`, {
+              method: 'POST',
+              headers: { 'Content-Type': 'application/json' },
+              body: JSON.stringify({ task, agent_identity_id: agent_identity_id || null }),
+            })
+            if (modelRes.ok) {
+              const modelData = await modelRes.json()
+              modelSuggestion = {
+                recommended_model: modelData.recommended_model || modelData.model_details?.slug,
+                tier: modelData.tier,
+                estimated_cost: modelData.estimated_cost,
+                decision_id: modelData.decision_id,
+              }
+            }
+          } catch { /* model routing is optional */ }
+        }
+
+        return toolResult(id, JSON.stringify({
+          approach: 'multi_tool',
+          orchestration,
+          recommended_model: modelSuggestion,
+          confidence: 0.85,
+          reasoning: taskClassification.reasoning,
+          next_step: `Execute this ${orchestration.length}-step tool chain in sequence, then call toolroute_report for each step completed.`,
+        }, null, 2))
+      }
 
       // Fetch skills with scores
       const { data: skills, error: skillsError } = await supabase

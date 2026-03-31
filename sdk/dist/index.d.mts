@@ -20,6 +20,15 @@ interface ToolRouteConfig {
     modelFamily?: string;
     /** Host client slug (e.g., 'claude-code', 'cursor') */
     hostClient?: string;
+    /**
+     * Ed25519 private key (PEM, pkcs8 format) for cryptographic report signing.
+     * When set, reportModel() auto-signs every call — anti-gaming penalties bypassed,
+     * proof_type becomes 'client_signed', full credit multiplier always applied.
+     *
+     * Generate: crypto.generateKeyPairSync('ed25519', { privateKeyEncoding: { type: 'pkcs8', format: 'pem' } })
+     * Register public key: include public_key in POST /api/agents/register
+     */
+    signingKey?: string;
 }
 interface RouteRequest {
     /** Natural language task description */
@@ -76,6 +85,92 @@ interface ReportResponse {
         reputation_points: number;
     };
 }
+interface ModelRouteRequest {
+    /** Natural language task description */
+    task: string;
+    /** Constraints for model selection */
+    constraints?: {
+        max_cost_per_mtok?: number;
+        max_latency_ms?: number;
+        min_context_window?: number;
+        preferred_providers?: string[];
+        excluded_providers?: string[];
+    };
+}
+interface ModelRouteResponse {
+    recommended_model: string;
+    recommended_alias: string;
+    provider: string;
+    tier: string;
+    confidence: number;
+    reasoning: string;
+    fallback_chain: string[];
+    escalation: {
+        next_tier: string;
+        alias: string;
+    } | null;
+    cost_estimate: {
+        input_per_mtok: number;
+        output_per_mtok: number;
+        estimated_task_cost: number;
+    };
+    routing_metadata: Record<string, any>;
+    decision_id: string;
+}
+interface ModelReportRequest {
+    /** Model slug that was used */
+    model_slug: string;
+    /** Outcome status */
+    outcome_status: 'success' | 'partial_success' | 'failure' | 'aborted';
+    /** Decision ID from model route response */
+    decision_id?: string;
+    /** Latency in ms */
+    latency_ms?: number;
+    /** Input tokens consumed */
+    input_tokens?: number;
+    /** Output tokens generated */
+    output_tokens?: number;
+    /** Estimated cost in USD */
+    estimated_cost_usd?: number;
+    /** Output quality rating (0-10). Lowest trust weight — prefer output_snippet for LLM verification */
+    output_quality_rating?: number;
+    /** First 500 chars of model output — enables async LLM quality verification (highest trust) */
+    output_snippet?: string;
+    /** The task/prompt sent to the model — required alongside output_snippet for LLM evaluation */
+    task?: string;
+    /** How many retries were needed (0 = clean run) */
+    retry_count?: number;
+    /** Did structured output parse correctly? */
+    structured_output_valid?: boolean;
+    /** Did tool calls succeed? */
+    tool_calls_succeeded?: boolean;
+    /** Was hallucination detected? */
+    hallucination_detected?: boolean;
+}
+interface ModelVerifyRequest {
+    /** Model slug */
+    model_slug: string;
+    /** Original task description */
+    task: string;
+    /** First 500 chars of model output */
+    output_snippet: string;
+    /** Decision ID from model route */
+    decision_id?: string;
+    /** Expected output format */
+    expected_format?: 'json' | 'code' | 'markdown' | 'text';
+}
+interface ModelVerifyResponse {
+    verified: boolean;
+    quality_score: number;
+    model_slug: string;
+    checks: Record<string, {
+        pass: boolean;
+        detail?: string;
+        overlap?: number;
+    }>;
+    recommendation: 'output_acceptable' | 'retry_suggested' | 'escalate_model';
+    credits_earned: number;
+}
 interface PreflightResponse {
     healthy: boolean;
     latency_ms: number;
@@ -88,7 +183,15 @@ declare class ToolRoute {
     private agentKind?;
     private modelFamily?;
     private hostClient?;
+    private signingKey?;
     constructor(config?: ToolRouteConfig);
+    /**
+     * Build a cryptographic commitment for a model report.
+     * Returns commitment_hash, report_signature, report_timestamp.
+     * Only available in Node.js environments (uses built-in crypto).
+     * Returns null in browser environments or if signingKey is not set.
+     */
+    private buildCommitment;
     /**
      * Check if ToolRoute is reachable. Never throws — returns health status.
      */
@@ -102,13 +205,90 @@ declare class ToolRoute {
      */
     report(request: ReportRequest): Promise<ReportResponse>;
     /**
+     * Model routing namespace — route, report, and verify LLM model outputs.
+     */
+    model: {
+        /**
+         * Get an LLM model recommendation for a task. Returns alias, provider model ID,
+         * fallback chain, escalation path, and cost estimate.
+         */
+        route: (request: ModelRouteRequest) => Promise<ModelRouteResponse>;
+        /**
+         * Report LLM model execution outcome. Earns routing credits.
+         * If signingKey is configured, auto-signs the report for proof_type: client_signed.
+         */
+        report: (request: ModelReportRequest) => Promise<{
+            accepted: boolean;
+            credits_earned?: number;
+            proof_type?: string;
+        }>;
+        /**
+         * Lightweight output verification — deterministic checks, no LLM needed.
+         * Run after model execution to validate format, detect refusals, measure coherence.
+         */
+        verify: (request: ModelVerifyRequest) => Promise<ModelVerifyResponse>;
+    };
+    /**
      * List available benchmark missions.
      */
     missions(eventSlug?: string): Promise<any>;
+    /** Register your agent. Idempotent — safe to call every time.
+     *  agent_name falls back to agentName from constructor config if omitted. */
+    register(opts?: {
+        agent_name?: string;
+        agent_kind?: string;
+        host_client_slug?: string;
+        model_family?: string;
+        webhook_url?: string;
+        public_key?: string;
+    }): Promise<any>;
+    /** Check your real credit balance. */
+    balance(agentIdentityId: string): Promise<any>;
+    /** Get guided walkthrough. */
+    help(agentIdentityId?: string): Promise<any>;
+    /** Claim a benchmark mission. */
+    claimMission(opts: {
+        mission_id: string;
+        agent_identity_id: string;
+    }): Promise<any>;
+    /** Submit mission results. */
+    completeMission(opts: {
+        claim_id: string;
+        results: any[];
+    }): Promise<any>;
+    /** List workflow challenges. */
+    challenges(opts?: {
+        category?: string;
+        difficulty?: string;
+    }): Promise<any>;
+    /** Submit challenge results. */
+    submitChallenge(opts: {
+        challenge_slug: string;
+        agent_identity_id: string;
+        tools_used: any[];
+        steps_taken: number;
+        [key: string]: any;
+    }): Promise<any>;
+    /** Search the MCP server catalog. */
+    search(opts?: {
+        query?: string;
+        workflow?: string;
+        vertical?: string;
+        limit?: number;
+    }): Promise<any>;
+    /** Compare 2-4 skills side by side. */
+    compare(skillSlugs: string[]): Promise<any>;
+    /** Route to best model (convenience wrapper for model.route). */
+    routeModel(request: ModelRouteRequest): Promise<ModelRouteResponse>;
+    /** Report model outcome (convenience wrapper for model.report). */
+    reportModel(request: ModelReportRequest): Promise<{
+        accepted: boolean;
+        credits_earned?: number;
+    }>;
     private fetch;
     private fallbackRouteResponse;
 }
 /** @deprecated Use ToolRoute instead */
 declare const NeoSkill: typeof ToolRoute;
 
-export { NeoSkill, type PreflightResponse, type ReportRequest, type ReportResponse, type RouteRequest, type RouteResponse, ToolRoute, type ToolRouteConfig, ToolRoute as default };
+export { type ModelReportRequest, type ModelRouteRequest, type ModelRouteResponse, type ModelVerifyRequest, type ModelVerifyResponse, NeoSkill, type PreflightResponse, type ReportRequest, type ReportResponse, type RouteRequest, type RouteResponse, ToolRoute, type ToolRouteConfig, ToolRoute as default };

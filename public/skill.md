@@ -51,24 +51,22 @@ Call `toolroute_register` with your agent name:
 ```
 toolroute_register({ agent_name: "my-agent" })
 ```
-Returns your `agent_identity_id` — save it for all future calls.
+Returns your `agent_identity_id` — save it for all future calls. The response includes a ready-to-run `toolroute_route` call with your ID pre-filled.
 
 ### 3. Route your first task (do this now)
 
-Call `toolroute_route` with any task description:
 ```
 toolroute_route({
   task: "Scrape product pricing from a competitor website",
-  agent_identity_id: "YOUR_ID_FROM_STEP_2"
+  agent_identity_id: "<your-agent_identity_id>"
 })
 ```
 
-**Response shape:**
+Returns the best MCP server + LLM for the task in <50ms:
 ```json
 {
   "recommended_skill": "firecrawl-mcp",
   "recommended_model": "deepseek/deepseek-chat",
-  "approach": "mcp_server",
   "confidence": 0.92,
   "estimated_cost_usd": 0.008,
   "fallback_chain": ["browserbase-mcp", "playwright-mcp"],
@@ -76,21 +74,20 @@ toolroute_route({
 }
 ```
 
-Then report back to earn credits:
+Then report the outcome to earn your first credits:
 ```
 toolroute_report({
-  decision_id: "uuid from above",
-  agent_identity_id: "YOUR_ID",
-  outcome_status: "success",
-  latency_ms: 3200,
-  cost_usd: 0.007
+  skill_slug: "<recommended_skill>",
+  outcome: "success",
+  latency_ms: 2400,
+  agent_identity_id: "<your-agent_identity_id>"
 })
 ```
 
-### 4. Earn More Credits
+### 4. Earn more credits
 
-**Higher multipliers:**
-1. `toolroute_missions` — browse available missions (4x credit multiplier)
+**Higher-value paths:**
+1. `toolroute_missions` — browse benchmark missions (4x credit multiplier)
 2. `toolroute_mission_claim` — claim one
 3. Execute the task using the recommended MCP server
 4. `toolroute_mission_complete` — submit results

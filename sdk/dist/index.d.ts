@@ -7,7 +7,7 @@
  *   // ... execute the tool ...
  *   await tr.report({ skill: route.recommended_skill, outcome: 'success', latency_ms: 1200 })
  */
-export interface ToolRouteConfig {
+interface ToolRouteConfig {
     /** Base URL of the ToolRoute API. Default: https://toolroute.io */
     baseUrl?: string;
     /** Hard timeout in ms. Default: 800. ToolRoute never blocks your agent. */
@@ -20,8 +20,17 @@ export interface ToolRouteConfig {
     modelFamily?: string;
     /** Host client slug (e.g., 'claude-code', 'cursor') */
     hostClient?: string;
+    /**
+     * Ed25519 private key (PEM, pkcs8 format) for cryptographic report signing.
+     * When set, reportModel() auto-signs every call — anti-gaming penalties bypassed,
+     * proof_type becomes 'client_signed', full credit multiplier always applied.
+     *
+     * Generate: crypto.generateKeyPairSync('ed25519', { privateKeyEncoding: { type: 'pkcs8', format: 'pem' } })
+     * Register public key: include public_key in POST /api/agents/register
+     */
+    signingKey?: string;
 }
-export interface RouteRequest {
+interface RouteRequest {
     /** Natural language task description */
     task?: string;
     /** Explicit workflow slug */
@@ -36,7 +45,7 @@ export interface RouteRequest {
         latency_preference?: 'low' | 'medium' | 'high';
     };
 }
-export interface RouteResponse {
+interface RouteResponse {
     recommended_skill: string | null;
     recommended_skill_name?: string;
     confidence: number;
@@ -49,7 +58,7 @@ export interface RouteResponse {
     routing_metadata: Record<string, any>;
     wanted_telemetry: Record<string, any>;
 }
-export interface ReportRequest {
+interface ReportRequest {
     /** Skill slug that was used */
     skill: string;
     /** Outcome status */
@@ -67,7 +76,7 @@ export interface ReportRequest {
     /** Whether human correction was needed */
     human_correction_minutes?: number;
 }
-export interface ReportResponse {
+interface ReportResponse {
     accepted: boolean;
     contribution_score?: number;
     rewards?: {
@@ -76,7 +85,7 @@ export interface ReportResponse {
         reputation_points: number;
     };
 }
-export interface ModelRouteRequest {
+interface ModelRouteRequest {
     /** Natural language task description */
     task: string;
     /** Constraints for model selection */
@@ -88,7 +97,7 @@ export interface ModelRouteRequest {
         excluded_providers?: string[];
     };
 }
-export interface ModelRouteResponse {
+interface ModelRouteResponse {
     recommended_model: string;
     recommended_alias: string;
     provider: string;
@@ -108,7 +117,7 @@ export interface ModelRouteResponse {
     routing_metadata: Record<string, any>;
     decision_id: string;
 }
-export interface ModelReportRequest {
+interface ModelReportRequest {
     /** Model slug that was used */
     model_slug: string;
     /** Outcome status */
@@ -123,8 +132,14 @@ export interface ModelReportRequest {
     output_tokens?: number;
     /** Estimated cost in USD */
     estimated_cost_usd?: number;
-    /** Output quality rating (0-10) */
+    /** Output quality rating (0-10). Lowest trust weight — prefer output_snippet for LLM verification */
     output_quality_rating?: number;
+    /** First 500 chars of model output — enables async LLM quality verification (highest trust) */
+    output_snippet?: string;
+    /** The task/prompt sent to the model — required alongside output_snippet for LLM evaluation */
+    task?: string;
+    /** How many retries were needed (0 = clean run) */
+    retry_count?: number;
     /** Did structured output parse correctly? */
     structured_output_valid?: boolean;
     /** Did tool calls succeed? */
@@ -132,7 +147,7 @@ export interface ModelReportRequest {
     /** Was hallucination detected? */
     hallucination_detected?: boolean;
 }
-export interface ModelVerifyRequest {
+interface ModelVerifyRequest {
     /** Model slug */
     model_slug: string;
     /** Original task description */
@@ -144,7 +159,7 @@ export interface ModelVerifyRequest {
     /** Expected output format */
     expected_format?: 'json' | 'code' | 'markdown' | 'text';
 }
-export interface ModelVerifyResponse {
+interface ModelVerifyResponse {
     verified: boolean;
     quality_score: number;
     model_slug: string;
@@ -156,19 +171,27 @@ export interface ModelVerifyResponse {
     recommendation: 'output_acceptable' | 'retry_suggested' | 'escalate_model';
     credits_earned: number;
 }
-export interface PreflightResponse {
+interface PreflightResponse {
     healthy: boolean;
     latency_ms: number;
     version: string;
 }
-export declare class ToolRoute {
+declare class ToolRoute {
     private baseUrl;
     private timeoutMs;
     private agentName?;
     private agentKind?;
     private modelFamily?;
     private hostClient?;
+    private signingKey?;
     constructor(config?: ToolRouteConfig);
+    /**
+     * Build a cryptographic commitment for a model report.
+     * Returns commitment_hash, report_signature, report_timestamp.
+     * Only available in Node.js environments (uses built-in crypto).
+     * Returns null in browser environments or if signingKey is not set.
+     */
+    private buildCommitment;
     /**
      * Check if ToolRoute is reachable. Never throws — returns health status.
      */
@@ -192,10 +215,12 @@ export declare class ToolRoute {
         route: (request: ModelRouteRequest) => Promise<ModelRouteResponse>;
         /**
          * Report LLM model execution outcome. Earns routing credits.
+         * If signingKey is configured, auto-signs the report for proof_type: client_signed.
          */
         report: (request: ModelReportRequest) => Promise<{
             accepted: boolean;
             credits_earned?: number;
+            proof_type?: string;
         }>;
         /**
          * Lightweight output verification — deterministic checks, no LLM needed.
@@ -207,13 +232,15 @@ export declare class ToolRoute {
      * List available benchmark missions.
      */
     missions(eventSlug?: string): Promise<any>;
-    /** Register your agent. Idempotent — safe to call every time. */
-    register(opts: {
-        agent_name: string;
+    /** Register your agent. Idempotent — safe to call every time.
+     *  agent_name falls back to agentName from constructor config if omitted. */
+    register(opts?: {
+        agent_name?: string;
         agent_kind?: string;
         host_client_slug?: string;
         model_family?: string;
         webhook_url?: string;
+        public_key?: string;
     }): Promise<any>;
     /** Check your real credit balance. */
     balance(agentIdentityId: string): Promise<any>;
@@ -262,5 +289,6 @@ export declare class ToolRoute {
     private fallbackRouteResponse;
 }
 /** @deprecated Use ToolRoute instead */
-export declare const NeoSkill: typeof ToolRoute;
-export default ToolRoute;
+declare const NeoSkill: typeof ToolRoute;
+
+export { type ModelReportRequest, type ModelRouteRequest, type ModelRouteResponse, type ModelVerifyRequest, type ModelVerifyResponse, NeoSkill, type PreflightResponse, type ReportRequest, type ReportResponse, type RouteRequest, type RouteResponse, ToolRoute, type ToolRouteConfig, ToolRoute as default };

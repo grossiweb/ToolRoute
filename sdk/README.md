@@ -9,10 +9,9 @@ import { ToolRoute } from '@toolroute/sdk'
 
 const tr = new ToolRoute({ agentName: 'my-agent' })
 
-// 0. Register once — get your agent ID
-const reg = await tr.register()
+// 0. Register once — gets you an agent_identity_id for credit tracking
+const { agent_identity_id } = await tr.register()
 // { agent_identity_id: "uuid", trust_tier: "baseline", credits: 0 }
-const agentId = reg.agent_identity_id
 
 // 1. Get a recommendation
 const route = await tr.route({ task: 'extract pricing data from competitor websites' })
@@ -33,7 +32,7 @@ await tr.report({
 // Credits earned: +10 per accepted report (2x if verified)
 ```
 
-That's it. Four calls. Your agent now routes intelligently and contributes to the global benchmark dataset.
+Four calls. Your agent now routes intelligently, earns credits for every execution, and contributes to the global benchmark dataset.
 
 ## Install
 

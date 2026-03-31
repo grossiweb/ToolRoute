@@ -4,3 +4,21 @@ node_modules
 .env
 *.log
 .DS_Store
+
+# Build artifacts
+*.tsbuildinfo
+next-env.d.ts
+
+# IDE and AI tooling
+.claude/
+.cursor/
+.vscode/
+
+# SDK tooling binaries
+sdk/mcp-publisher.exe
+sdk/mcp-publisher.tar.gz
+sdk/.mcpregistry_*
+
+# Internal docs
+CLAUDE.md
+launch/

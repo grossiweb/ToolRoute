@@ -1,6 +1,7 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcValueScore } from '@/lib/scoring'
+import { weightedAverageQuality } from '@/lib/trust-score'
 
 export async function GET(request: NextRequest) {
   const authHeader = request.headers.get('authorization')
@@ -51,6 +52,8 @@ interface OutcomeRow {
   human_correction_required: boolean
   human_correction_minutes: number | null
   fallback_used_skill_id: string | null
+  agent_identity_id: string | null
+  reporter_trust_score: number | null
 }
 
 interface SkillScoreRow {
@@ -69,22 +72,28 @@ async function manualRecalculation(supabase: ReturnType<typeof createServerSupab
   let rollupsUpdated = 0
   const errors: string[] = []
 
-  // Fetch all outcome records
-  const { data: records, error: fetchErr } = await supabase
+  // Fetch all outcome records (join trust_score for weighted quality)
+  const { data: rawRecords, error: fetchErr } = await supabase
     .from('outcome_records')
-    .select('id, skill_id, benchmark_profile_id, outcome_status, latency_ms, estimated_cost_usd, retries, output_quality_rating, structured_output_valid, human_correction_required, human_correction_minutes, fallback_used_skill_id')
+    .select('id, skill_id, benchmark_profile_id, outcome_status, latency_ms, estimated_cost_usd, retries, output_quality_rating, structured_output_valid, human_correction_required, human_correction_minutes, fallback_used_skill_id, agent_identity_id, agent_identities(trust_score)')
     .order('created_at', { ascending: false })
 
-  if (fetchErr || !records) {
+  if (fetchErr || !rawRecords) {
     return NextResponse.json({
       error: 'Failed to fetch outcome records',
       detail: fetchErr?.message,
     }, { status: 500 })
   }
 
+  // Normalize: flatten joined trust_score into reporter_trust_score
+  const records = (rawRecords as any[]).map(r => ({
+    ...r,
+    reporter_trust_score: r.agent_identities?.trust_score ?? null,
+  })) as OutcomeRow[]
+
   // Group records by skill_id
   const bySkill = new Map<string, OutcomeRow[]>()
-  for (const r of records as OutcomeRow[]) {
+  for (const r of records) {
     const list = bySkill.get(r.skill_id) || []
     list.push(r)
     bySkill.set(r.skill_id, list)
@@ -211,10 +220,17 @@ function computeScoresFromOutcomes(rows: OutcomeRow[]): ComputedScores {
     aborted: 0.0,
   }
   const avgCompletion = rows.reduce((s, r) => s + (outcomeValues[r.outcome_status] ?? 0.5), 0) / n
+  // Use trust-weighted quality when reporter trust scores are available; fall back to simple mean
+  const twq = weightedAverageQuality(rows.map(r => ({
+    output_quality_rating: r.output_quality_rating,
+    trust_score: r.reporter_trust_score,
+  })))
   const qualityRatings = rows.filter(r => r.output_quality_rating != null).map(r => Number(r.output_quality_rating))
-  const avgQuality = qualityRatings.length > 0
-    ? qualityRatings.reduce((s, v) => s + v, 0) / qualityRatings.length / 10
-    : 0.5
+  const avgQuality = twq != null
+    ? twq / 10
+    : qualityRatings.length > 0
+      ? qualityRatings.reduce((s, v) => s + v, 0) / qualityRatings.length / 10
+      : 0.5
   const structuredValid = rows.filter(r => r.structured_output_valid === true).length / n
   const avgCorrectionMin = rows.reduce((s, r) => s + (Number(r.human_correction_minutes) || 0), 0) / n
   const correctionBurden = Math.min(avgCorrectionMin / 60, 1)

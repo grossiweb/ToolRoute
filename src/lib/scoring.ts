@@ -111,6 +111,9 @@ export const TRUST_TIER_MODIFIERS = {
   enterprise: 1.50,
 } as const
 
+export const SHADOW_MODE_THRESHOLD = 25.0
+export const TRUST_SCORE_BASELINE  = 50.0  // weight = trust_score / TRUST_SCORE_BASELINE
+
 /** Score color for badges/rings (text + bg + border) */
 export function getScoreColor(score: number): string {
   if (score >= 9.0) return 'text-emerald-700 bg-emerald-50 border-emerald-300'

@@ -21,6 +21,15 @@ export interface ToolRouteConfig {
   modelFamily?: string
   /** Host client slug (e.g., 'claude-code', 'cursor') */
   hostClient?: string
+  /**
+   * Ed25519 private key (PEM, pkcs8 format) for cryptographic report signing.
+   * When set, reportModel() auto-signs every call — anti-gaming penalties bypassed,
+   * proof_type becomes 'client_signed', full credit multiplier always applied.
+   *
+   * Generate: crypto.generateKeyPairSync('ed25519', { privateKeyEncoding: { type: 'pkcs8', format: 'pem' } })
+   * Register public key: include public_key in POST /api/agents/register
+   */
+  signingKey?: string
 }
 
 export interface RouteRequest {
@@ -124,8 +133,14 @@ export interface ModelReportRequest {
   output_tokens?: number
   /** Estimated cost in USD */
   estimated_cost_usd?: number
-  /** Output quality rating (0-10) */
+  /** Output quality rating (0-10). Lowest trust weight — prefer output_snippet for LLM verification */
   output_quality_rating?: number
+  /** First 500 chars of model output — enables async LLM quality verification (highest trust) */
+  output_snippet?: string
+  /** The task/prompt sent to the model — required alongside output_snippet for LLM evaluation */
+  task?: string
+  /** How many retries were needed (0 = clean run) */
+  retry_count?: number
   /** Did structured output parse correctly? */
   structured_output_valid?: boolean
   /** Did tool calls succeed? */
@@ -169,6 +184,7 @@ export class ToolRoute {
   private agentKind?: string
   private modelFamily?: string
   private hostClient?: string
+  private signingKey?: string
 
   constructor(config: ToolRouteConfig = {}) {
     this.baseUrl = (config.baseUrl || 'https://toolroute.io').replace(/\/$/, '')
@@ -177,6 +193,43 @@ export class ToolRoute {
     this.agentKind = config.agentKind
     this.modelFamily = config.modelFamily
     this.hostClient = config.hostClient
+    this.signingKey = config.signingKey
+  }
+
+  /**
+   * Build a cryptographic commitment for a model report.
+   * Returns commitment_hash, report_signature, report_timestamp.
+   * Only available in Node.js environments (uses built-in crypto).
+   * Returns null in browser environments or if signingKey is not set.
+   */
+  private buildCommitment(
+    modelSlug: string,
+    outcomeStatus: string,
+    outputSnippet?: string
+  ): { commitment_hash: string; report_signature: string; report_timestamp: number } | null {
+    if (!this.signingKey) return null
+
+    try {
+      // Dynamic import for Node.js — keeps SDK browser-compatible
+      // eslint-disable-next-line @typescript-eslint/no-require-imports
+      const { createHash, sign: cryptoSign, createPrivateKey } = require('crypto')
+
+      const timestamp = Math.floor(Date.now() / 1000)
+      const outputHash = createHash('sha256').update(outputSnippet || '', 'utf8').digest('hex')
+      const commitment = `${modelSlug}:${outcomeStatus}:${timestamp}:${outputHash}`
+      const commitmentHash = createHash('sha256').update(commitment, 'utf8').digest('hex')
+
+      const privKey = createPrivateKey(this.signingKey)
+      const sig = cryptoSign(null, Buffer.from(commitmentHash, 'utf8'), privKey)
+
+      return {
+        commitment_hash: commitmentHash,
+        report_signature: sig.toString('base64'),
+        report_timestamp: timestamp,
+      }
+    } catch {
+      return null
+    }
   }
 
   /**
@@ -305,10 +358,25 @@ export class ToolRoute {
 
     /**
      * Report LLM model execution outcome. Earns routing credits.
+     * If signingKey is configured, auto-signs the report for proof_type: client_signed.
      */
-    report: async (request: ModelReportRequest): Promise<{ accepted: boolean; credits_earned?: number }> => {
+    report: async (request: ModelReportRequest): Promise<{ accepted: boolean; credits_earned?: number; proof_type?: string }> => {
       try {
-        const res = await this.fetch('POST', '/api/report/model', request)
+        const body: Record<string, any> = { ...request }
+
+        // Auto-sign if private key is configured
+        const commitment = this.buildCommitment(
+          request.model_slug,
+          request.outcome_status,
+          request.output_snippet
+        )
+        if (commitment) {
+          body.commitment_hash = commitment.commitment_hash
+          body.report_signature = commitment.report_signature
+          body.report_timestamp = commitment.report_timestamp
+        }
+
+        const res = await this.fetch('POST', '/api/report/model', body)
         if (!res.ok) return { accepted: false }
         return await res.json()
       } catch {
@@ -347,8 +415,9 @@ export class ToolRoute {
     }
   }
 
-  /** Register your agent. Idempotent — safe to call every session. If agentName was passed to the constructor, opts can be omitted. */
-  async register(opts?: { agent_name?: string; agent_kind?: string; host_client_slug?: string; model_family?: string; webhook_url?: string }): Promise<any> {
+  /** Register your agent. Idempotent — safe to call every session.
+   *  agent_name falls back to agentName from constructor config if omitted. */
+  async register(opts?: { agent_name?: string; agent_kind?: string; host_client_slug?: string; model_family?: string; webhook_url?: string; public_key?: string }): Promise<any> {
     const name = opts?.agent_name || this.agentName
     if (!name) return { error: 'agent_name required — pass it here or set agentName in the ToolRoute constructor' }
     try {
@@ -358,6 +427,7 @@ export class ToolRoute {
         host_client_slug: opts?.host_client_slug || this.hostClient,
         model_family: opts?.model_family || this.modelFamily,
         webhook_url: opts?.webhook_url,
+        public_key: opts?.public_key,
       })
       if (!res.ok) return { error: 'Registration failed' }
       return await res.json()

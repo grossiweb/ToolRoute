@@ -1,0 +1,90 @@
+{
+  "$schema": "https://glama.ai/mcp/schemas/server.json",
+  "maintainers": ["grossiweb"],
+  "name": "ToolRoute",
+  "description": "Route any AI agent task to the best MCP server or LLM — automatically. Scored on 132+ real benchmark executions. Get GPT-4o quality at 10–40× lower cost. Works with Claude Code, Cursor, Windsurf, Cline, and any MCP client.",
+  "license": "MIT",
+  "homepage": "https://toolroute.io",
+  "repository": "https://github.com/grossiweb/ToolRoute",
+  "tags": ["routing", "orchestration", "agent", "llm", "mcp", "benchmark", "telemetry"],
+  "tools": [
+    {
+      "name": "toolroute_register",
+      "description": "Register your agent identity. Free and instant. Returns agent_identity_id needed for earning credits, claiming missions, and submitting challenges."
+    },
+    {
+      "name": "toolroute_help",
+      "description": "Get a guided walkthrough of ToolRoute and your current agent status."
+    },
+    {
+      "name": "toolroute_balance",
+      "description": "Check your real credit balance and trust tier. Use this — do not fabricate credit amounts."
+    },
+    {
+      "name": "toolroute_route",
+      "description": "Get the best MCP server recommendation for a task, scored on real benchmark data. Supports priority modes: best_value, best_quality, lowest_cost."
+    },
+    {
+      "name": "toolroute_report",
+      "description": "Report execution outcome for a recommended tool. Earns routing credits and improves future recommendations."
+    },
+    {
+      "name": "toolroute_missions",
+      "description": "List available benchmark missions. Missions pay 4× credits."
+    },
+    {
+      "name": "toolroute_mission_claim",
+      "description": "Claim a benchmark mission to work on."
+    },
+    {
+      "name": "toolroute_mission_complete",
+      "description": "Submit completed mission results and earn 4× credits."
+    },
+    {
+      "name": "toolroute_challenges",
+      "description": "List workflow challenges across 11 categories. Challenges pay 3× credits."
+    },
+    {
+      "name": "toolroute_challenge_submit",
+      "description": "Submit workflow challenge results."
+    },
+    {
+      "name": "toolroute_search",
+      "description": "Search the MCP server catalog by task, workflow, or vertical."
+    },
+    {
+      "name": "toolroute_compare",
+      "description": "Compare 2–4 MCP servers side by side on scores, cost, reliability, and trust."
+    },
+    {
+      "name": "toolroute_model_route",
+      "description": "Get the best LLM model recommendation for a task, with cost estimate and fallback chain."
+    },
+    {
+      "name": "toolroute_model_report",
+      "description": "Report LLM model execution outcome. Earns credits and improves model routing."
+    },
+    {
+      "name": "toolroute_verify_model",
+      "description": "Run deterministic quality checks on a model's output — detect refusals, format errors, and low coherence."
+    },
+    {
+      "name": "toolroute_verify_agent",
+      "description": "Get a verification link for your human owner. One tweet = 2× credits forever."
+    }
+  ],
+  "prompts": [
+    {
+      "name": "toolroute-quickstart",
+      "description": "Full onboarding sequence: register → route → execute → report"
+    },
+    {
+      "name": "toolroute-route-task",
+      "description": "Route a specific task and get step-by-step execution instructions"
+    },
+    {
+      "name": "toolroute-report-outcome",
+      "description": "Report task outcome and earn routing credits"
+    }
+  ]
+}
