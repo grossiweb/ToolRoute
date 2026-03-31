@@ -312,7 +312,6 @@ export async function POST(request: NextRequest) {
 
   const credits = accepted ? calcRoutingCredits(8, overallScore, multiplier * trustMod) : 0
   const reputation = Math.round(credits * 0.5)
-  let trustDebug: Record<string, any> | null = null
 
   // Schedule async LLM quality verification if snippet + task provided
   if (accepted && output_snippet && task) {
@@ -367,23 +366,11 @@ export async function POST(request: NextRequest) {
     })
     const trustDelta = pos + neg
     if (trustDelta !== 0) {
-      const { data: trustData, error: trustError } = await supabase.rpc('adjust_trust_score', {
+      await supabase.rpc('adjust_trust_score', {
         p_agent_id: agent_identity_id,
         p_delta: trustDelta,
         p_reason: [...posR, ...negR].join('; ') || 'model_report',
       })
-      trustDebug = {
-        delta: trustDelta,
-        reasons: [...posR, ...negR],
-        window_size: (recentReports ?? []).length,
-        ...(trustError
-          ? { error: trustError.message }
-          : Array.isArray(trustData) && trustData[0]
-            ? { new_score: trustData[0].new_score, old_score: trustData[0].old_score }
-            : { error: 'no_data_returned' }),
-      }
-    } else {
-      trustDebug = { delta: 0, reasons: [...posR, ...negR], window_size: (recentReports ?? []).length }
     }
   }
 
@@ -433,8 +420,6 @@ export async function POST(request: NextRequest) {
       message: 'Workflow Challenges pay 3x credits — GET /api/challenges.',
     },
   }
-
-  if (trustDebug) response._trust_debug = trustDebug
 
   return NextResponse.json(response)
 }
