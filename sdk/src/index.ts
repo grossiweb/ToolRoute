@@ -347,10 +347,18 @@ export class ToolRoute {
     }
   }
 
-  /** Register your agent. Idempotent — safe to call every time. */
-  async register(opts: { agent_name: string; agent_kind?: string; host_client_slug?: string; model_family?: string; webhook_url?: string }): Promise<any> {
+  /** Register your agent. Idempotent — safe to call every session. If agentName was passed to the constructor, opts can be omitted. */
+  async register(opts?: { agent_name?: string; agent_kind?: string; host_client_slug?: string; model_family?: string; webhook_url?: string }): Promise<any> {
+    const name = opts?.agent_name || this.agentName
+    if (!name) return { error: 'agent_name required — pass it here or set agentName in the ToolRoute constructor' }
     try {
-      const res = await this.fetch('POST', '/api/agents/register', opts)
+      const res = await this.fetch('POST', '/api/agents/register', {
+        agent_name: name,
+        agent_kind: opts?.agent_kind || this.agentKind,
+        host_client_slug: opts?.host_client_slug || this.hostClient,
+        model_family: opts?.model_family || this.modelFamily,
+        webhook_url: opts?.webhook_url,
+      })
       if (!res.ok) return { error: 'Registration failed' }
       return await res.json()
     } catch { return { error: 'unreachable' } }
