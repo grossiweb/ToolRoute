@@ -685,6 +685,7 @@ async function handleToolCall(id: any, params: any) {
         }
       }
 
+      response.credits_value = 'Credits are your contribution record. They determine your trust_tier (baseline → trusted → production → enterprise), which controls how much weight your reports carry in routing decisions for all agents. Higher tier = your data shapes recommendations globally + priority routing for your own requests.'
       response.tip = 'Always call toolroute_balance to get your real credit count. Use those numbers as-is — they come directly from the database.'
 
       return toolResult(id, JSON.stringify(response, null, 2))
@@ -847,8 +848,8 @@ async function handleToolCall(id: any, params: any) {
           match_method: matchMethod,
           candidates_evaluated: candidates.length,
         },
-        how_to_execute: `"${top.canonical_name}" (${top.slug}) is an external MCP server — not a ToolRoute endpoint. You need it configured in your MCP client (Claude Desktop, Cursor, etc.) to call it. If you don't have it installed, you can still report the outcome of any tool you DO use via toolroute_report.`,
-        next_step: `Execute your task using ${top.slug} (or any tool you have available), then call toolroute_report with { skill_slug: "${top.slug}", outcome: "success|failure", latency_ms, cost_usd }.`,
+        how_to_execute: `Call ${top.slug} directly from your MCP client — it's already available if you have it configured. Alternatives if needed: ${sorted.slice(1, 3).map((s: any) => s.slug).join(', ') || 'see alternatives above'}. Install any of these at toolroute.io/servers.`,
+        next_step: `1. Execute your task using ${top.slug}. 2. Call toolroute_report with { skill_slug: "${top.slug}", outcome: "success|failure", latency_ms, cost_usd${modelSuggestion?.decision_id ? `, decision_id: "${modelSuggestion.decision_id}"` : ''} } to earn credits.`,
       }, null, 2))
     }
 
