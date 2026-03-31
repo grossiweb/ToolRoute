@@ -415,11 +415,11 @@ export class ToolRoute {
     }
   }
 
-  /** Register your agent. Idempotent — safe to call every time.
+  /** Register your agent. Idempotent — safe to call every session.
    *  agent_name falls back to agentName from constructor config if omitted. */
   async register(opts?: { agent_name?: string; agent_kind?: string; host_client_slug?: string; model_family?: string; webhook_url?: string; public_key?: string }): Promise<any> {
     const name = opts?.agent_name || this.agentName
-    if (!name) return { error: 'agent_name required (pass it here or set agentName in constructor)' }
+    if (!name) return { error: 'agent_name required — pass it here or set agentName in the ToolRoute constructor' }
     try {
       const res = await this.fetch('POST', '/api/agents/register', {
         agent_name: name,

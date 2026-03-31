@@ -11,10 +11,13 @@ const tr = new ToolRoute({ agentName: 'my-agent' })
 
 // 0. Register once — gets you an agent_identity_id for credit tracking
 const { agent_identity_id } = await tr.register()
+// { agent_identity_id: "uuid", trust_tier: "baseline", credits: 0 }
 
 // 1. Get a recommendation
 const route = await tr.route({ task: 'extract pricing data from competitor websites' })
-console.log(route.recommended_skill) // "firecrawl-mcp"
+// { recommended_skill: "firecrawl-mcp", recommended_model: "deepseek/deepseek-chat",
+//   confidence: 0.91, estimated_cost_usd: 0.008, decision_id: "uuid",
+//   fallback_chain: ["exa-mcp-server"], approach: "mcp_server" }
 
 // 2. Execute the tool (your code)
 const result = await runSkill(route.recommended_skill, task)
@@ -26,6 +29,7 @@ await tr.report({
   latency_ms: result.latency,
   cost_usd: result.cost
 })
+// Credits earned: +10 per accepted report (2x if verified)
 ```
 
 Four calls. Your agent now routes intelligently, earns credits for every execution, and contributes to the global benchmark dataset.
@@ -48,6 +52,21 @@ npm install @toolroute/sdk
 | `agentKind` | string | — | `autonomous`, `copilot`, `workflow-agent`, `evaluation-agent`, `hybrid` |
 | `modelFamily` | string | — | e.g., `claude-4`, `gpt-4o` |
 | `hostClient` | string | — | e.g., `claude-code`, `cursor` |
+
+### `tr.register(opts?)`
+
+Register your agent and get a persistent ID. Idempotent — safe to call every session.
+
+```typescript
+const reg = await tr.register({ agent_name: 'my-agent' })
+// If agentName was passed to constructor, opts can be omitted: tr.register()
+// {
+//   agent_identity_id: "uuid",
+//   trust_tier: "baseline",
+//   credits: 0,
+//   next_step: { tool: "toolroute_route", args: { ... } }
+// }
+```
 
 ### `tr.route(request)`
 
