@@ -20,6 +20,15 @@ interface ToolRouteConfig {
     modelFamily?: string;
     /** Host client slug (e.g., 'claude-code', 'cursor') */
     hostClient?: string;
+    /**
+     * Ed25519 private key (PEM, pkcs8 format) for cryptographic report signing.
+     * When set, reportModel() auto-signs every call — anti-gaming penalties bypassed,
+     * proof_type becomes 'client_signed', full credit multiplier always applied.
+     *
+     * Generate: crypto.generateKeyPairSync('ed25519', { privateKeyEncoding: { type: 'pkcs8', format: 'pem' } })
+     * Register public key: include public_key in POST /api/agents/register
+     */
+    signingKey?: string;
 }
 interface RouteRequest {
     /** Natural language task description */
@@ -123,8 +132,14 @@ interface ModelReportRequest {
     output_tokens?: number;
     /** Estimated cost in USD */
     estimated_cost_usd?: number;
-    /** Output quality rating (0-10) */
+    /** Output quality rating (0-10). Lowest trust weight — prefer output_snippet for LLM verification */
     output_quality_rating?: number;
+    /** First 500 chars of model output — enables async LLM quality verification (highest trust) */
+    output_snippet?: string;
+    /** The task/prompt sent to the model — required alongside output_snippet for LLM evaluation */
+    task?: string;
+    /** How many retries were needed (0 = clean run) */
+    retry_count?: number;
     /** Did structured output parse correctly? */
     structured_output_valid?: boolean;
     /** Did tool calls succeed? */
@@ -168,7 +183,15 @@ declare class ToolRoute {
     private agentKind?;
     private modelFamily?;
     private hostClient?;
+    private signingKey?;
     constructor(config?: ToolRouteConfig);
+    /**
+     * Build a cryptographic commitment for a model report.
+     * Returns commitment_hash, report_signature, report_timestamp.
+     * Only available in Node.js environments (uses built-in crypto).
+     * Returns null in browser environments or if signingKey is not set.
+     */
+    private buildCommitment;
     /**
      * Check if ToolRoute is reachable. Never throws — returns health status.
      */
@@ -192,10 +215,12 @@ declare class ToolRoute {
         route: (request: ModelRouteRequest) => Promise<ModelRouteResponse>;
         /**
          * Report LLM model execution outcome. Earns routing credits.
+         * If signingKey is configured, auto-signs the report for proof_type: client_signed.
          */
         report: (request: ModelReportRequest) => Promise<{
             accepted: boolean;
             credits_earned?: number;
+            proof_type?: string;
         }>;
         /**
          * Lightweight output verification — deterministic checks, no LLM needed.
@@ -207,13 +232,15 @@ declare class ToolRoute {
      * List available benchmark missions.
      */
     missions(eventSlug?: string): Promise<any>;
-    /** Register your agent. Idempotent — safe to call every time. */
-    register(opts: {
-        agent_name: string;
+    /** Register your agent. Idempotent — safe to call every time.
+     *  agent_name falls back to agentName from constructor config if omitted. */
+    register(opts?: {
+        agent_name?: string;
         agent_kind?: string;
         host_client_slug?: string;
         model_family?: string;
         webhook_url?: string;
+        public_key?: string;
     }): Promise<any>;
     /** Check your real credit balance. */
     balance(agentIdentityId: string): Promise<any>;

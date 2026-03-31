@@ -28,15 +28,60 @@ var __toESM = (mod, isNodeMode, target) => (target = mod != null ? __create(__ge
 // src/cli.ts
 var https = __toESM(require("https"));
 var readline = __toESM(require("readline"));
-var HOST = "toolroute.io";
-var PATH = "/api/mcp";
+var TOOLS = [
+  { name: "toolroute_register", description: "Register your agent to get a persistent identity. Free, instant, idempotent." },
+  { name: "toolroute_help", description: "Get a guided walkthrough and your current agent status." },
+  { name: "toolroute_balance", description: "Check your real credit balance and trust tier." },
+  { name: "toolroute_route", description: "Get the best MCP server and LLM recommendation for a task, scored on real benchmark data." },
+  { name: "toolroute_report", description: "Report execution outcome. Earns routing credits and improves future recommendations." },
+  { name: "toolroute_missions", description: "List available benchmark missions. Missions pay 4x credits." },
+  { name: "toolroute_mission_claim", description: "Claim a benchmark mission to work on." },
+  { name: "toolroute_mission_complete", description: "Submit completed mission results and earn 4x credits." },
+  { name: "toolroute_challenges", description: "List workflow challenges across 11 categories. Challenges pay 3x credits." },
+  { name: "toolroute_challenge_submit", description: "Submit workflow challenge results." },
+  { name: "toolroute_search", description: "Search the MCP server catalog by task, workflow, or vertical." },
+  { name: "toolroute_compare", description: "Compare 2-4 MCP servers side by side on scores, cost, reliability, and trust." },
+  { name: "toolroute_model_route", description: "Get the best LLM model recommendation for a task, with cost estimate and fallback chain." },
+  { name: "toolroute_model_report", description: "Report LLM model execution outcome. Earns credits." },
+  { name: "toolroute_verify_model", description: "Run quality checks on a model output \u2014 detect refusals, format errors, low coherence." },
+  { name: "toolroute_verify_agent", description: "Get a verification link for your human owner. One tweet = 2x credits forever." }
+];
+var PROMPTS = [
+  { name: "toolroute-quickstart", description: "Full onboarding: register \u2192 route \u2192 execute \u2192 report" },
+  { name: "toolroute-route-task", description: "Route a specific task and get step-by-step execution instructions" },
+  { name: "toolroute-report-outcome", description: "Report task outcome and earn routing credits" }
+];
+function localResponse(id, method) {
+  switch (method) {
+    case "initialize":
+      return {
+        jsonrpc: "2.0",
+        id,
+        result: {
+          protocolVersion: "2024-11-05",
+          serverInfo: { name: "toolroute", version: "0.2.2" },
+          capabilities: { tools: {}, prompts: {}, resources: {} }
+        }
+      };
+    case "tools/list":
+      return { jsonrpc: "2.0", id, result: { tools: TOOLS } };
+    case "prompts/list":
+      return { jsonrpc: "2.0", id, result: { prompts: PROMPTS } };
+    case "resources/list":
+      return { jsonrpc: "2.0", id, result: { resources: [] } };
+    case "notifications/initialized":
+      return null;
+    default:
+      return void 0;
+  }
+}
 function post(body) {
   return new Promise((resolve, reject) => {
     const data = JSON.stringify(body);
     const req = https.request(
       {
-        hostname: HOST,
-        path: PATH,
+        hostname: "toolroute.io",
+        path: "/api/mcp",
         method: "POST",
         headers: {
           "Content-Type": "application/json",
@@ -72,15 +117,21 @@ rl.on("line", async (line) => {
   try {
     msg = JSON.parse(trimmed);
   } catch (e) {
-    process.stderr.write(`[toolroute-mcp] parse error: ${e.message}
+    process.stderr.write(`[toolroute] parse error: ${e.message}
 `);
+    return;
+  }
+  const local = localResponse(msg.id, msg.method);
+  if (local === null) return;
+  if (local !== void 0) {
+    process.stdout.write(JSON.stringify(local) + "\n");
     return;
   }
   try {
     const result = await post(msg);
     process.stdout.write(JSON.stringify(result) + "\n");
   } catch (e) {
-    process.stderr.write(`[toolroute-mcp] request error: ${e.message}
+    process.stderr.write(`[toolroute] proxy error: ${e.message}
 `);
     process.stdout.write(JSON.stringify({
       jsonrpc: "2.0",
@@ -90,4 +141,4 @@ rl.on("line", async (line) => {
   }
 });
 rl.on("close", () => process.exit(0));
-process.stderr.write("[toolroute-mcp] ready \u2192 https://toolroute.io/api/mcp\n");
+process.stderr.write("[toolroute] MCP bridge ready\n");

@@ -1,3 +1,10 @@
+var __require = /* @__PURE__ */ ((x) => typeof require !== "undefined" ? require : typeof Proxy !== "undefined" ? new Proxy(x, {
+  get: (a, b) => (typeof require !== "undefined" ? require : a)[b]
+}) : x)(function(x) {
+  if (typeof require !== "undefined") return require.apply(this, arguments);
+  throw Error('Dynamic require of "' + x + '" is not supported');
+});
+
 // src/index.ts
 var ToolRoute = class {
   constructor(config = {}) {
@@ -46,10 +53,22 @@ var ToolRoute = class {
       },
       /**
        * Report LLM model execution outcome. Earns routing credits.
+       * If signingKey is configured, auto-signs the report for proof_type: client_signed.
        */
       report: async (request) => {
         try {
-          const res = await this.fetch("POST", "/api/report/model", request);
+          const body = { ...request };
+          const commitment = this.buildCommitment(
+            request.model_slug,
+            request.outcome_status,
+            request.output_snippet
+          );
+          if (commitment) {
+            body.commitment_hash = commitment.commitment_hash;
+            body.report_signature = commitment.report_signature;
+            body.report_timestamp = commitment.report_timestamp;
+          }
+          const res = await this.fetch("POST", "/api/report/model", body);
           if (!res.ok) return { accepted: false };
           return await res.json();
         } catch {
@@ -78,6 +97,32 @@ var ToolRoute = class {
     this.agentKind = config.agentKind;
     this.modelFamily = config.modelFamily;
     this.hostClient = config.hostClient;
+    this.signingKey = config.signingKey;
+  }
+  /**
+   * Build a cryptographic commitment for a model report.
+   * Returns commitment_hash, report_signature, report_timestamp.
+   * Only available in Node.js environments (uses built-in crypto).
+   * Returns null in browser environments or if signingKey is not set.
+   */
+  buildCommitment(modelSlug, outcomeStatus, outputSnippet) {
+    if (!this.signingKey) return null;
+    try {
+      const { createHash, sign: cryptoSign, createPrivateKey } = __require("crypto");
+      const timestamp = Math.floor(Date.now() / 1e3);
+      const outputHash = createHash("sha256").update(outputSnippet || "", "utf8").digest("hex");
+      const commitment = `${modelSlug}:${outcomeStatus}:${timestamp}:${outputHash}`;
+      const commitmentHash = createHash("sha256").update(commitment, "utf8").digest("hex");
+      const privKey = createPrivateKey(this.signingKey);
+      const sig = cryptoSign(null, Buffer.from(commitmentHash, "utf8"), privKey);
+      return {
+        commitment_hash: commitmentHash,
+        report_signature: sig.toString("base64"),
+        report_timestamp: timestamp
+      };
+    } catch {
+      return null;
+    }
   }
   /**
    * Check if ToolRoute is reachable. Never throws — returns health status.
@@ -179,10 +224,20 @@ var ToolRoute = class {
       return { missions: [], total: 0 };
     }
   }
-  /** Register your agent. Idempotent — safe to call every time. */
+  /** Register your agent. Idempotent — safe to call every time.
+   *  agent_name falls back to agentName from constructor config if omitted. */
   async register(opts) {
+    const name = opts?.agent_name || this.agentName;
+    if (!name) return { error: "agent_name required (pass it here or set agentName in constructor)" };
     try {
-      const res = await this.fetch("POST", "/api/agents/register", opts);
+      const res = await this.fetch("POST", "/api/agents/register", {
+        agent_name: name,
+        agent_kind: opts?.agent_kind || this.agentKind,
+        host_client_slug: opts?.host_client_slug || this.hostClient,
+        model_family: opts?.model_family || this.modelFamily,
+        webhook_url: opts?.webhook_url,
+        public_key: opts?.public_key
+      });
       if (!res.ok) return { error: "Registration failed" };
       return await res.json();
     } catch {
