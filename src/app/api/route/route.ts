@@ -152,7 +152,16 @@ export async function POST(request: NextRequest) {
     max_cost_usd,
     trust_floor = 0,
     latency_preference = 'medium',
+    data_residency,
+    require_effort_level,
+    exclude_workload_tags,
   } = constraints
+
+  const {
+    estimated_input_tokens,
+    estimated_output_tokens,
+    us_only,
+  } = body
 
   // Classify task using LLM (Gemini Flash Lite, ~$0.00001 per call)
   // Falls back to keyword detection if LLM unavailable
@@ -535,6 +544,97 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Enrich model recommendation with new models table fields (constraint filtering + cost estimation)
+  let modelDetails: any = null
+  let costEstimate: any = null
+  let actionableNotes: string[] | null = null
+
+  if (recommendedModel) {
+    try {
+      // Query the models table for enriched fields — is_routable + not deprecated
+      const { data: modelRows } = await supabase
+        .from('models')
+        .select(`
+          id, provider, display_name, tier,
+          input_price_per_m, output_price_per_m, input_price_tiered,
+          cache_read_multiplier, context_window, max_output_tokens,
+          supports_vision, supports_tool_use, supports_reasoning,
+          supports_task_budgets, max_image_resolution_px,
+          effort_levels, tokenizer_inflation_vs_baseline,
+          data_residency, us_only_multiplier, exclude_for_workloads,
+          editorial_notes, best_for, avoid_for,
+          is_routable, deprecated_at
+        `)
+        .eq('is_routable', true)
+        .is('deprecated_at', null)
+
+      if (modelRows && modelRows.length > 0) {
+        // Apply constraint filters to the full candidate set
+        const constraintsForFilter = { data_residency, require_effort_level, exclude_workload_tags }
+        const filtered031 = filterByConstraints(modelRows, constraintsForFilter)
+
+        if (filtered031.length === 0 && (data_residency?.length || require_effort_level || exclude_workload_tags?.length)) {
+          // Constraints produced an empty set — return actionable empty response
+          return NextResponse.json({
+            approach: null,
+            recommended_skill: null,
+            recommended_model: null,
+            confidence: 0,
+            model_details: null,
+            cost_estimate: null,
+            actionable_notes: [
+              'No models match the provided constraints. Relax data_residency, require_effort_level, or exclude_workload_tags and try again.',
+            ],
+          })
+        }
+
+        // Find the enriched record matching our recommended model (by slug or display_name)
+        const enriched = filtered031.find((m: any) =>
+          m.display_name?.toLowerCase() === recommendedModel.display_name?.toLowerCase() ||
+          m.provider?.toLowerCase() === recommendedModel.provider?.toLowerCase()
+        ) || filtered031[0]
+
+        if (enriched) {
+          modelDetails = {
+            id: enriched.id,
+            provider: enriched.provider,
+            tier: enriched.tier,
+            context_window: enriched.context_window,
+            effort_levels: enriched.effort_levels,
+            data_residency: enriched.data_residency || 'global',
+            supports_task_budgets: enriched.supports_task_budgets,
+          }
+
+          // Tokenizer-aware cost estimate (only when token counts are provided)
+          if (estimated_input_tokens != null && estimated_output_tokens != null && enriched.input_price_per_m != null) {
+            costEstimate = estimateEffectiveCostUsd(enriched, estimated_input_tokens, estimated_output_tokens, { usOnly: us_only })
+          }
+
+          // Build actionable notes
+          const notes: string[] = []
+          const inflation = enriched.tokenizer_inflation_vs_baseline || 1.0
+          if (inflation > 1.0) {
+            const pct = ((inflation - 1) * 100).toFixed(0)
+            notes.push(`Tokenizer produces up to ${pct}% more tokens than baseline. Effective cost reflects this.`)
+          }
+          const taskKind = body.task?.kind
+          if (taskKind && enriched.best_for?.includes(taskKind)) {
+            notes.push(`Model is explicitly tuned for: ${taskKind}.`)
+          }
+          if (taskKind && enriched.avoid_for?.includes(taskKind)) {
+            notes.push(`Caution: model is marked avoid-for "${taskKind}". Consider a lighter model.`)
+          }
+          if (enriched.editorial_notes?.length) {
+            notes.push(...enriched.editorial_notes.slice(0, 2))
+          }
+          actionableNotes = notes.length > 0 ? notes : null
+        }
+      }
+    } catch {
+      // models table enrichment is optional — never block skill routing
+    }
+  }
+
   // Determine approach: multi-tool, single MCP server, or direct LLM?
   // Re-read needs_external_tool from taskClassification — it may have been overridden
   // (e.g. calculation tasks are redirected to direct LLM after initial classification)
@@ -617,6 +717,9 @@ export async function POST(request: NextRequest) {
         ? `toolroute.report({ model: '${recommendedModel?.slug || 'your-model'}', outcome: 'success', quality_rating: 8, latency_ms: 1200 })`
         : `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
     },
+    model_details: modelDetails,
+    cost_estimate: costEstimate,
+    actionable_notes: actionableNotes,
     agent: agentContext,
     ...(agent_identity_id ? {} : {
       register_hint: {
@@ -794,6 +897,80 @@ function getNonMcpAlternative(workflowSlug: string): object | null {
     },
   }
   return alternatives[workflowSlug] || null
+}
+
+function filterByConstraints(candidates: any[], constraints: {
+  data_residency?: string[]
+  require_effort_level?: string
+  exclude_workload_tags?: string[]
+}): any[] {
+  if (!constraints) return candidates
+
+  return candidates.filter(model => {
+    // Data residency
+    if (constraints.data_residency && constraints.data_residency.length > 0) {
+      const modelResidency = model.data_residency || 'global'
+      if (!constraints.data_residency.includes(modelResidency)) return false
+    }
+
+    // Effort level pin
+    if (constraints.require_effort_level) {
+      if (!model.effort_levels?.includes(constraints.require_effort_level)) return false
+    }
+
+    // Workload exclusion
+    if (constraints.exclude_workload_tags && constraints.exclude_workload_tags.length > 0) {
+      const excluded: string[] = model.exclude_for_workloads || []
+      const hasConflict = constraints.exclude_workload_tags.some((tag: string) =>
+        excluded.includes(tag)
+      )
+      if (hasConflict) return false
+    }
+
+    return true
+  })
+}
+
+function estimateEffectiveCostUsd(
+  model: any,
+  estimatedInputTokensBaseline: number,
+  estimatedOutputTokensBaseline: number,
+  options?: { usOnly?: boolean }
+): {
+  effective_input_tokens: number
+  effective_output_tokens: number
+  estimated_cost_usd: number
+  sticker_cost_usd: number
+  inflation_factor: number
+  us_only_premium: number
+} {
+  const inflation = model.tokenizer_inflation_vs_baseline || 1.0
+  const effectiveInput = Math.ceil(estimatedInputTokensBaseline * inflation)
+  const effectiveOutput = Math.ceil(estimatedOutputTokensBaseline * inflation)
+
+  const stickerCost =
+    (estimatedInputTokensBaseline * (model.input_price_per_m || 0)) / 1_000_000 +
+    (estimatedOutputTokensBaseline * (model.output_price_per_m || 0)) / 1_000_000
+
+  let estimatedCost =
+    (effectiveInput * (model.input_price_per_m || 0)) / 1_000_000 +
+    (effectiveOutput * (model.output_price_per_m || 0)) / 1_000_000
+
+  let usOnlyPremium = 0
+  if (options?.usOnly && model.us_only_multiplier) {
+    const premium = estimatedCost * (model.us_only_multiplier - 1)
+    estimatedCost += premium
+    usOnlyPremium = premium
+  }
+
+  return {
+    effective_input_tokens: effectiveInput,
+    effective_output_tokens: effectiveOutput,
+    estimated_cost_usd: Number(estimatedCost.toFixed(6)),
+    sticker_cost_usd: Number(stickerCost.toFixed(6)),
+    inflation_factor: inflation,
+    us_only_premium: Number(usOnlyPremium.toFixed(6)),
+  }
 }
 
 async function trackRecommendation(supabase: any) {
