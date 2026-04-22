@@ -475,13 +475,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Get model recommendation directly (no self-fetch — fails on Vercel)
+  // Get model recommendation using in-code tier resolution (Strategy D Phase 1)
+  // Tier-to-model mapping lives in src/lib/routing/tiers.ts — no model_aliases query.
   let recommendedModel: any = null
+  let tierResolution: { primary: string; fallbacks: string[]; required_effort_level?: string } | null = null
   if (task) {
     try {
-      const { detectTaskSignals, resolveModelTier, rankModelsInTier, buildFallbackChain, estimateTaskCost, TIER_DESCRIPTIONS } = await import('@/lib/model-routing')
+      const { detectTaskSignals, resolveModelTier } = await import('@/lib/model-routing')
 
-      // Use LLM classifier for tier if available, fall back to signal detection
+      // Compute tier string — LLM classifier or keyword fallback, unchanged
       let tier: string
       if (taskClassification && taskClassification.method === 'llm') {
         const { classificationToModelTier } = await import('@/lib/task-classifier')
@@ -492,51 +494,35 @@ export async function POST(request: NextRequest) {
         tier = resolveModelTier(signals, task)
       }
 
-      const { data: aliasRows } = await supabase
-        .from('model_aliases')
-        .select(`
-          priority, is_fallback, alias_name,
-          model_registry (
-            id, slug, display_name, provider, provider_model_id,
-            input_cost_per_mtok, output_cost_per_mtok,
-            context_window, supports_tool_calling, supports_structured_output
-          )
-        `)
-        .eq('tier', tier)
-        .eq('active', true)
-        .order('priority', { ascending: true })
+      // Resolve tier to model IDs in code — no model_aliases query
+      const { resolveTierToModel } = await import('@/lib/routing/tiers')
+      const resolution = resolveTierToModel(tier as any)
+      tierResolution = resolution
 
-      if (aliasRows && aliasRows.length > 0) {
-        const candidates = aliasRows.map((a: any) => {
-          const m = Array.isArray(a.model_registry) ? a.model_registry[0] : a.model_registry
-          return {
-            id: m.id, slug: m.slug, display_name: m.display_name,
-            provider: m.provider, provider_model_id: m.provider_model_id,
-            priority: a.priority, is_fallback: a.is_fallback,
-            input_cost_per_mtok: parseFloat(m.input_cost_per_mtok || '0'),
-            output_cost_per_mtok: parseFloat(m.output_cost_per_mtok || '0'),
-            context_window: m.context_window,
-            supports_tool_calling: m.supports_tool_calling,
-            supports_structured_output: m.supports_structured_output,
-            avg_latency_ms: null, supports_vision: false,
-            reasoning_strength: 'medium', code_strength: 'medium',
-            deprecation_date: null,
-          }
-        })
-        const ranked = rankModelsInTier(candidates, {})
-        if (ranked.length > 0) {
-          const primary = ranked[0]
+      // Fetch primary from models table; walk fallbacks if primary not found
+      const candidateIds = [resolution.primary, ...resolution.fallbacks]
+      for (const modelId of candidateIds) {
+        const { data: modelRow } = await supabase
+          .from('models')
+          .select('id, provider, display_name, tier, input_price_per_m, output_price_per_m')
+          .eq('id', modelId)
+          .eq('is_routable', true)
+          .is('deprecated_at', null)
+          .maybeSingle()
+
+        if (modelRow) {
           recommendedModel = {
-            slug: primary.slug,
-            display_name: primary.display_name,
-            provider: primary.provider,
-            provider_model_id: primary.provider_model_id,
-            input_cost_per_mtok: primary.input_cost_per_mtok,
-            output_cost_per_mtok: primary.output_cost_per_mtok,
+            slug: modelRow.id,
+            display_name: modelRow.display_name,
+            provider: modelRow.provider,
+            provider_model_id: `${modelRow.provider}/${modelRow.id}`,
+            input_cost_per_mtok: modelRow.input_price_per_m,
+            output_cost_per_mtok: modelRow.output_price_per_m,
             tier,
-            tier_description: (TIER_DESCRIPTIONS as any)[tier]?.name || tier,
-            reason: `${(TIER_DESCRIPTIONS as any)[tier]?.name || tier} tier — best cost/quality for this task type`,
+            tier_description: TIER_DISPLAY_NAMES[tier] || tier,
+            reason: `${TIER_DISPLAY_NAMES[tier] || tier} tier — best cost/quality for this task type`,
           }
+          break
         }
       }
     } catch {
@@ -726,6 +712,10 @@ export async function POST(request: NextRequest) {
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
       match_method: matchMethod,
+      ...(tierResolution ? {
+        tier_fallback_chain: tierResolution.fallbacks,
+        ...(tierResolution.required_effort_level ? { tier_required_effort_level: tierResolution.required_effort_level } : {}),
+      } : {}),
       ...(taskClassification ? {
         classification: {
           task_type: taskClassification.task_type,
