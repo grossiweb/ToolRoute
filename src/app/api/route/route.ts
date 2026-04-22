@@ -544,14 +544,17 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Enrich model recommendation with new models table fields (constraint filtering + cost estimation)
+  // ── Pipeline reconciliation: models table + legacy tier classifier ──────────
+  // Goal: one winning model. recommended_model and model_details must always
+  // describe the same model. The models table is authoritative when constraints
+  // are active; the legacy tier classifier wins otherwise.
   let modelDetails: any = null
   let costEstimate: any = null
   let actionableNotes: string[] | null = null
+  let modelsTableRows: any[] = []
 
   if (recommendedModel) {
     try {
-      // Query the models table for enriched fields — is_routable + not deprecated
       const { data: modelRows } = await supabase
         .from('models')
         .select(`
@@ -568,71 +571,104 @@ export async function POST(request: NextRequest) {
         .eq('is_routable', true)
         .is('deprecated_at', null)
 
-      if (modelRows && modelRows.length > 0) {
-        // Apply constraint filters to the full candidate set
-        const constraintsForFilter = { data_residency, require_effort_level, exclude_workload_tags }
-        const filtered031 = filterByConstraints(modelRows, constraintsForFilter)
-
-        if (filtered031.length === 0 && (data_residency?.length || require_effort_level || exclude_workload_tags?.length)) {
-          // Constraints produced an empty set — return actionable empty response
-          return NextResponse.json({
-            approach: null,
-            recommended_skill: null,
-            recommended_model: null,
-            confidence: 0,
-            model_details: null,
-            cost_estimate: null,
-            actionable_notes: [
-              'No models match the provided constraints. Relax data_residency, require_effort_level, or exclude_workload_tags and try again.',
-            ],
-          })
-        }
-
-        // Find the enriched record matching our recommended model (by slug or display_name)
-        const enriched = filtered031.find((m: any) =>
-          m.display_name?.toLowerCase() === recommendedModel.display_name?.toLowerCase() ||
-          m.provider?.toLowerCase() === recommendedModel.provider?.toLowerCase()
-        ) || filtered031[0]
-
-        if (enriched) {
-          modelDetails = {
-            id: enriched.id,
-            provider: enriched.provider,
-            tier: enriched.tier,
-            context_window: enriched.context_window,
-            effort_levels: enriched.effort_levels,
-            data_residency: enriched.data_residency || 'global',
-            supports_task_budgets: enriched.supports_task_budgets,
-          }
-
-          // Tokenizer-aware cost estimate (only when token counts are provided)
-          if (estimated_input_tokens != null && estimated_output_tokens != null && enriched.input_price_per_m != null) {
-            costEstimate = estimateEffectiveCostUsd(enriched, estimated_input_tokens, estimated_output_tokens, { usOnly: us_only })
-          }
-
-          // Build actionable notes
-          const notes: string[] = []
-          const inflation = enriched.tokenizer_inflation_vs_baseline || 1.0
-          if (inflation > 1.0) {
-            const pct = ((inflation - 1) * 100).toFixed(0)
-            notes.push(`Tokenizer produces up to ${pct}% more tokens than baseline. Effective cost reflects this.`)
-          }
-          const taskKind = body.task?.kind
-          if (taskKind && enriched.best_for?.includes(taskKind)) {
-            notes.push(`Model is explicitly tuned for: ${taskKind}.`)
-          }
-          if (taskKind && enriched.avoid_for?.includes(taskKind)) {
-            notes.push(`Caution: model is marked avoid-for "${taskKind}". Consider a lighter model.`)
-          }
-          if (enriched.editorial_notes?.length) {
-            notes.push(...enriched.editorial_notes.slice(0, 2))
-          }
-          actionableNotes = notes.length > 0 ? notes : null
-        }
-      }
+      modelsTableRows = modelRows || []
     } catch {
-      // models table enrichment is optional — never block skill routing
+      // models table is optional — never blocks skill routing
     }
+  }
+
+  if (modelsTableRows.length > 0) {
+    const constraintsForFilter = { data_residency, require_effort_level, exclude_workload_tags }
+    const hasConstraints = !!(data_residency?.length || require_effort_level || exclude_workload_tags?.length)
+    const filtered = filterByConstraints(modelsTableRows, constraintsForFilter)
+
+    // Empty set with active constraints — return 200 with actionable guidance, not 4xx
+    if (filtered.length === 0 && hasConstraints) {
+      return NextResponse.json({
+        approach: null,
+        recommended_skill: null,
+        recommended_model: null,
+        confidence: 0,
+        model_details: null,
+        cost_estimate: null,
+        actionable_notes: [
+          'No models match the provided constraints. Relax data_residency, require_effort_level, or exclude_workload_tags and try again.',
+        ],
+      })
+    }
+
+    // ── Determine authoritative winner ──────────────────────────────────────
+    // Invariant: recommended_model.slug === model_details.id in every response
+    // where both are populated.
+    let authoritativeRow: any = null
+
+    if (require_effort_level) {
+      // Effort level pin: the filter result is authoritative — legacy tier classifier
+      // cannot know about effort_levels, so it will always pick the wrong model.
+      authoritativeRow = filtered[0] || null
+
+    } else if (data_residency?.length || exclude_workload_tags?.length) {
+      // Residency/workload constraints: check if the legacy winner satisfies them.
+      // Match by id === slug (models.id is the slug-like identifier).
+      const legacyRow = modelsTableRows.find((m: any) => m.id === recommendedModel?.slug)
+      if (legacyRow && filterByConstraints([legacyRow], constraintsForFilter).length > 0) {
+        // Legacy winner satisfies constraints — keep it
+        authoritativeRow = legacyRow
+      } else {
+        // Legacy winner violates constraints — override with filter winner
+        authoritativeRow = filtered[0] || null
+      }
+
+    } else {
+      // No constraints: look up legacy winner in models table by id === slug
+      // If not found, model_details stays null (slug not yet in seed data)
+      authoritativeRow = modelsTableRows.find((m: any) => m.id === recommendedModel?.slug) || null
+    }
+
+    if (authoritativeRow) {
+      // Override recommended_model when authoritative winner differs from legacy
+      if (recommendedModel && authoritativeRow.id !== recommendedModel.slug) {
+        recommendedModel = rebuildRecommendedModel(authoritativeRow, require_effort_level)
+      }
+
+      // model_details always describes the same model as recommended_model
+      modelDetails = {
+        id: authoritativeRow.id,
+        provider: authoritativeRow.provider,
+        tier: authoritativeRow.tier,
+        context_window: authoritativeRow.context_window,
+        effort_levels: authoritativeRow.effort_levels,
+        data_residency: authoritativeRow.data_residency || 'global',
+        supports_task_budgets: authoritativeRow.supports_task_budgets,
+      }
+
+      // Tokenizer-aware cost estimate (only when token counts provided)
+      if (estimated_input_tokens != null && estimated_output_tokens != null && authoritativeRow.input_price_per_m != null) {
+        costEstimate = estimateEffectiveCostUsd(authoritativeRow, estimated_input_tokens, estimated_output_tokens, { usOnly: us_only })
+      }
+
+      // Build actionable notes from the winning model row
+      const notes: string[] = []
+      const inflation = authoritativeRow.tokenizer_inflation_vs_baseline || 1.0
+      if (inflation > 1.0) {
+        const pct = ((inflation - 1) * 100).toFixed(0)
+        notes.push(`Tokenizer produces up to ${pct}% more tokens than baseline. Effective cost reflects this.`)
+      }
+      const taskKind = body.task?.kind
+      if (taskKind && authoritativeRow.best_for?.includes(taskKind)) {
+        notes.push(`Model is explicitly tuned for: ${taskKind}.`)
+      }
+      if (taskKind && authoritativeRow.avoid_for?.includes(taskKind)) {
+        notes.push(`Caution: model is marked avoid-for "${taskKind}". Consider a lighter model.`)
+      }
+      if (authoritativeRow.editorial_notes?.length) {
+        notes.push(...authoritativeRow.editorial_notes.slice(0, 2))
+      }
+      actionableNotes = notes.length > 0 ? notes : null
+    }
+    // authoritativeRow is null when legacy slug has no models-table row yet —
+    // model_details stays null, recommended_model stays as-is. Expected for slugs
+    // not yet in seed data; fix incrementally as models table is populated.
   }
 
   // Determine approach: multi-tool, single MCP server, or direct LLM?
@@ -897,6 +933,37 @@ function getNonMcpAlternative(workflowSlug: string): object | null {
     },
   }
   return alternatives[workflowSlug] || null
+}
+
+const TIER_DISPLAY_NAMES: Record<string, string> = {
+  cheap_chat: 'Cheap Chat',
+  cheap_structured: 'Cheap Structured',
+  fast_code: 'Fast Code',
+  creative_writing: 'Creative Writing',
+  reasoning_pro: 'Reasoning Pro',
+  tool_agent: 'Tool Agent',
+  best_available: 'Best Available',
+  flagship: 'Flagship',
+}
+
+/**
+ * Build the rich recommended_model shape from a models-table row.
+ * Used when the constraint filter winner overrides the legacy tier classifier.
+ */
+function rebuildRecommendedModel(row: any, effortLevel?: string): any {
+  return {
+    slug: row.id,
+    display_name: row.display_name,
+    provider: row.provider,
+    provider_model_id: `${row.provider}/${row.id}`,
+    input_cost_per_mtok: row.input_price_per_m,
+    output_cost_per_mtok: row.output_price_per_m,
+    tier: row.tier,
+    tier_description: TIER_DISPLAY_NAMES[row.tier] || row.tier,
+    reason: effortLevel
+      ? `Required effort level: ${effortLevel}`
+      : 'Matches constraints — best available for this task.',
+  }
 }
 
 function filterByConstraints(candidates: any[], constraints: {
