@@ -123,6 +123,16 @@ Requires: `NEXT_PUBLIC_SUPABASE_URL`, `NEXT_PUBLIC_SUPABASE_ANON_KEY`, `SUPABASE
 
 ---
 
+## How routing works
+
+ToolRoute classifies each task using an LLM classifier (Gemini Flash Lite,
+~$0.00001/call) with a keyword fallback. The resulting tier maps to a specific
+model via `src/lib/routing/tiers.ts`. Live pricing and capability data come
+from the `models` table. See [docs/architecture.md](./docs/architecture.md)
+for the full picture.
+
+---
+
 ## Stack
 
 Next.js 14 (App Router) · Supabase (Postgres) · Vercel
