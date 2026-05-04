@@ -430,14 +430,20 @@ export async function POST(request: NextRequest) {
 
   // If agent is registered, log the routing event for personalization
   let agentContext: any = null
+  let routingProfile: import('@/lib/routing/tiers').RoutingProfile = 'standard'
   if (agent_identity_id) {
     const { data: agent } = await supabase
       .from('agent_identities')
-      .select('agent_name, trust_tier')
+      .select('agent_name, trust_tier, routing_preferences')
       .eq('id', agent_identity_id)
       .single()
 
     if (agent) {
+      const { resolveProfileFromPreferences, DEFAULT_ROUTING_PREFERENCES } = await import('@/lib/routing/tiers')
+      routingProfile = resolveProfileFromPreferences(
+        agent.routing_preferences ?? DEFAULT_ROUTING_PREFERENCES
+      )
+
       agentContext = {
         agent_name: agent.agent_name,
         trust_tier: agent.trust_tier,
@@ -496,7 +502,7 @@ export async function POST(request: NextRequest) {
 
       // Resolve tier to model IDs in code — no model_aliases query
       const { resolveTierToModel } = await import('@/lib/routing/tiers')
-      const resolution = resolveTierToModel(tier as any)
+      const resolution = resolveTierToModel(tier as any, routingProfile)
       tierResolution = resolution
 
       // Fetch primary from models table; walk fallbacks if primary not found
@@ -712,6 +718,7 @@ export async function POST(request: NextRequest) {
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
       match_method: matchMethod,
+      routing_profile: routingProfile,
       ...(tierResolution ? {
         tier_fallback_chain: tierResolution.fallbacks,
         ...(tierResolution.required_effort_level ? { tier_required_effort_level: tierResolution.required_effort_level } : {}),
