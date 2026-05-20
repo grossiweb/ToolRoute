@@ -384,6 +384,15 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Self-healing: detect common typos in field names. The most frequent
+  // confusion is `quality_rating` (the legacy /api/report field name)
+  // vs `output_quality_rating` (this endpoint's actual field). Surface
+  // as a non-fatal hint; the report still records what was sent.
+  const apiHints: string[] = []
+  if ('quality_rating' in body && !('output_quality_rating' in body)) {
+    apiHints.push('`quality_rating` is the /api/report field name; on /api/report/model use `output_quality_rating`. Your rating was ignored. See https://toolroute.io/api-docs')
+  }
+
   // Build response
   const response: any = {
     recorded: true,
@@ -393,6 +402,7 @@ export async function POST(request: NextRequest) {
     proof_type: proofType,
     contribution_score: parseFloat(overallScore.toFixed(2)),
     accepted,
+    ...(apiHints.length > 0 ? { api_hints: apiHints } : {}),
     quality: {
       computed: parseFloat(computedQuality.toFixed(1)),
       verified: output_snippet && taskText ? 'pending_async' : null,

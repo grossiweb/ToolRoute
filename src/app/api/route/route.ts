@@ -754,6 +754,18 @@ export async function POST(request: NextRequest) {
       }
     : {}
 
+  // Self-healing: detect stale request fields from older API/SDK versions
+  // and surface as non-fatal hints. The request still runs normally — these
+  // are guidance for callers debugging shape mismatches.
+  const apiHints: string[] = []
+  if ('tool' in body) {
+    apiHints.push('`tool` is not a request field; the response field is `recommended_skill`. See https://toolroute.io/api-docs')
+  }
+  if ('priority' in body && !body.constraints?.priority) {
+    apiHints.push('`priority` belongs inside `constraints`. Use { constraints: { priority: "best_value" } }. See https://toolroute.io/api-docs')
+  }
+  const hintsField = apiHints.length > 0 ? { api_hints: apiHints } : {}
+
   return NextResponse.json({
     approach,
     ...(approach === 'multi_tool' ? {
@@ -841,6 +853,7 @@ export async function POST(request: NextRequest) {
     }),
     ...noticeFields,
     ...memoryFields,
+    ...hintsField,
   })
 }
 

@@ -245,6 +245,19 @@ export async function POST(request: NextRequest) {
     latency_ms: Date.now() - startMs,
   }).then(() => {})
 
+  // Self-healing: detect stale request fields from older API/SDK versions
+  // (SDK < 0.2.5 documented decision_id at the top level — agents that
+  // parsed the old types may pass it back in, or copy/paste the response
+  // shape into a request). Surface as non-fatal hints; the request still
+  // runs normally.
+  const apiHints: string[] = []
+  if ('recommended_model' in body) {
+    apiHints.push('`recommended_model` is a response field; remove it from the request body.')
+  }
+  if ('request_id' in body) {
+    apiHints.push('`request_id` was renamed. Read `routing_metadata.decision_id` from the response instead. See https://toolroute.io/api-docs')
+  }
+
   // 10. Build response
   const response: any = {
     recommended_model: `toolroute/${tier}`,
@@ -330,6 +343,8 @@ export async function POST(request: NextRequest) {
       endpoint: 'POST /api/route',
     },
   }
+
+  if (apiHints.length > 0) response.api_hints = apiHints
 
   // Active migration notices for this caller (never blocks the response).
   const notices = await getActiveNotices(supabase, agent_identity_id, '/api/route/model')

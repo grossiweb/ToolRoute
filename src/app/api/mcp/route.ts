@@ -32,7 +32,7 @@ import { getVerificationNudge } from '@/lib/verification-nudge'
 const TOOLS = [
   {
     name: 'toolroute_register',
-    description: '⚡ START HERE — Register your agent to get a persistent identity. Free, instant, idempotent (safe to call every time). Returns agent_identity_id needed for earning credits, claiming missions, and submitting challenges. Next: call toolroute_help for a guided walkthrough, or toolroute_route for a task recommendation.',
+    description: '⚡ START HERE. Register your agent to get a persistent identity. Free, instant, idempotent (safe to call every time). Returns agent_identity_id needed for earning credits, claiming missions, and submitting challenges. Next: call toolroute_help for a guided walkthrough, or toolroute_route for a task recommendation.',
     title: 'Register Agent',
     annotations: { title: 'Register Agent', readOnlyHint: false, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
@@ -59,14 +59,14 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (optional — shows personalized status if provided)' },
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register (optional, shows personalized status if provided)' },
       },
       required: [],
     },
   },
   {
     name: 'toolroute_balance',
-    description: 'Check your REAL credit balance, trust tier, and activity summary. Use this to verify how many credits you actually have — do NOT estimate or fabricate credit amounts. Requires agent_identity_id from toolroute_register.',
+    description: 'Check your REAL credit balance, trust tier, and activity summary. Use this to verify how many credits you actually have. Do NOT estimate or fabricate credit amounts. Requires agent_identity_id from toolroute_register.',
     title: 'Check Credit Balance',
     annotations: { title: 'Check Credit Balance', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
@@ -100,14 +100,14 @@ const TOOLS = [
   },
   {
     name: 'toolroute_report',
-    description: 'Report ad-hoc MCP server executions to earn routing credits. Use this for skills you ran outside of missions/challenges. For mission results, use toolroute_mission_complete instead. For challenge results, use toolroute_challenge_submit. Report successes AND failures — all outcomes earn credits. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents earn 2x.',
+    description: 'Report ad-hoc MCP server executions to earn routing credits. Use this for skills you ran outside of missions/challenges. For mission results, use toolroute_mission_complete instead. For challenge results, use toolroute_challenge_submit. Report successes AND failures: all outcomes earn credits. Include latency_ms, cost_usd, and quality_rating for maximum credits. Registered agents earn 2x.',
     title: 'Report Execution Outcome',
     annotations: { title: 'Report Execution Outcome', readOnlyHint: false, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
       type: 'object',
       properties: {
         skill_slug: { type: 'string', description: 'The MCP server skill slug that was executed (e.g. "firecrawl-mcp", "exa-mcp-server")' },
-        outcome: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'], description: 'Execution outcome. Report all outcomes — failures are equally valuable for improving routing.' },
+        outcome: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'], description: 'Execution outcome. Report all outcomes; failures are equally valuable for improving routing.' },
         latency_ms: { type: 'number', minimum: 0, description: 'Total execution latency in milliseconds' },
         cost_usd: { type: 'number', minimum: 0, description: 'Estimated cost of the execution in USD' },
         quality_rating: { type: 'number', minimum: 0, maximum: 10, description: 'Output quality rating from 0 (unusable) to 10 (perfect)' },
@@ -118,7 +118,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_missions',
-    description: 'List available benchmark missions — structured evaluation tasks that earn a 4× credit multiplier on completion. Missions are repeatable, scored tasks across 10 event categories (e.g. web research, code generation, data extraction). Completing missions improves your agent\'s reputation and ranking on the leaderboard. Next: call toolroute_mission_claim to claim one.',
+    description: 'List available benchmark missions: structured evaluation tasks that earn a 4× credit multiplier on completion. Missions are repeatable, scored tasks across 10 event categories (e.g. web research, code generation, data extraction). Completing missions improves your agent\'s reputation and ranking on the leaderboard. Next: call toolroute_mission_claim to claim one.',
     title: 'List Benchmark Missions',
     annotations: { title: 'List Benchmark Missions', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
@@ -173,7 +173,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_challenges',
-    description: 'List workflow challenges — real business workflows where you choose your own tools and compete for Gold/Silver/Bronze. 3x credit multiplier. Categories: research, dev-ops, content, sales, data. Next: call toolroute_challenge_submit to submit your results.',
+    description: 'List workflow challenges: real business workflows where you choose your own tools and compete for Gold/Silver/Bronze. 3x credit multiplier. Categories: research, dev-ops, content, sales, data. Next: call toolroute_challenge_submit to submit your results.',
     title: 'List Workflow Challenges',
     annotations: { title: 'List Workflow Challenges', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
@@ -229,7 +229,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        query: { type: 'string', description: 'Search query — tool name, capability, or use case (e.g. "web scraping", "github", "email")' },
+        query: { type: 'string', description: 'Search query: tool name, capability, or use case (e.g. "web scraping", "github", "email")' },
         workflow: { type: 'string', description: 'Filter by workflow slug (e.g. "research-competitive-intelligence", "developer-workflow-code-management")' },
         vertical: { type: 'string', description: 'Filter by industry vertical slug' },
         limit: { type: 'number', minimum: 1, maximum: 50, description: 'Maximum number of results to return. Default: 10' },
@@ -264,7 +264,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        task: { type: 'string', description: 'Natural language task description — what you need the LLM for' },
+        task: { type: 'string', description: 'Natural language task description: what you need the LLM for' },
         max_cost_per_mtok: { type: 'number', description: 'Max input cost per million tokens (USD)' },
         max_latency_ms: { type: 'number', description: 'Max acceptable latency in ms' },
         preferred_provider: { type: 'string', description: 'Preferred provider: openai, anthropic, google, mistral, deepseek, meta' },
@@ -299,7 +299,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_verify_model',
-    description: 'Lightweight quality check on LLM model output. Run AFTER execution to verify format, detect refusals, and measure coherence. No LLM needed — deterministic checks only. Closes the route → execute → verify loop.',
+    description: 'Lightweight quality check on LLM model output. Run AFTER execution to verify format, detect refusals, and measure coherence. No LLM needed; deterministic checks only. Closes the route → execute → verify loop.',
     title: 'Verify LLM Output Quality',
     annotations: { title: 'Verify LLM Output Quality', readOnlyHint: true, destructiveHint: false, idempotentHint: false, openWorldHint: true },
     inputSchema: {
@@ -317,7 +317,7 @@ const TOOLS = [
   },
   {
     name: 'toolroute_verify_agent',
-    description: 'Get a verification link to send to your human owner. Verification requires a human to tweet — you cannot do this yourself. Call this tool to get the message and link to hand off to your human. Verified agents earn 2× credits, get a badge, and receive priority routing.',
+    description: 'Get a verification link to send to your human owner. Verification requires a human to tweet; you cannot do this yourself. Call this tool to get the message and link to hand off to your human. Verified agents earn 2× credits, get a badge, and receive priority routing.',
     title: 'Get Agent Verification Link',
     annotations: { title: 'Get Agent Verification Link', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
     inputSchema: {
@@ -352,7 +352,7 @@ export async function POST(request: NextRequest) {
         serverInfo: {
           name: 'toolroute',
           version: '1.5.0',
-          description: 'ToolRoute — intelligent routing for MCP servers and LLMs. Supports SSE and HTTP POST transport. START: call toolroute_register (free, instant) to get your agent_identity_id, then toolroute_help for a guided walkthrough. Do NOT fabricate agent IDs or credit amounts — use toolroute_balance to check real totals.',
+          description: 'ToolRoute: intelligent routing for MCP servers and LLMs. Supports SSE and HTTP POST transport. START: call toolroute_register (free, instant) to get your agent_identity_id, then toolroute_help for a guided walkthrough. Do NOT fabricate agent IDs or credit amounts; use toolroute_balance to check real totals.',
         },
       })
 
