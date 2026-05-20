@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
+import { createSSRClient } from '@/lib/supabase/ssr'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { getVerificationNudge } from '@/lib/verification-nudge'
 import { validatePublicKey } from '@/lib/commitment'
@@ -31,7 +32,26 @@ export async function POST(request: NextRequest) {
     webhook_url,
     public_key,
     project_context,
+    owner_user_id,
   } = body
+
+  // Phase 3.1: if the caller claims an owner_user_id, it must match the
+  // authenticated session. A bare owner_user_id with no session (or a
+  // mismatched one) is silently dropped — we just record an unverified
+  // agent rather than failing the request, so existing SDK callers
+  // without auth keep working.
+  let verifiedOwnerUserId: string | null = null
+  if (owner_user_id) {
+    try {
+      const authClient = createSSRClient()
+      const { data: { user } } = await authClient.auth.getUser()
+      if (user && user.id === owner_user_id) {
+        verifiedOwnerUserId = user.id
+      }
+    } catch {
+      // No session cookie present — treat as anonymous
+    }
+  }
 
   // project_context is optional. Reject non-objects so we don't store
   // arrays or scalars in the JSONB column.
@@ -119,6 +139,11 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Phase 3.1: GitHub-authenticated registrations get 'baseline' trust;
+  // anonymous registrations (no verified owner_user_id) get 'unverified'.
+  // The 3 grandfathered dogfooding agents already in DB are untouched.
+  const trustTier = verifiedOwnerUserId ? 'baseline' : 'unverified'
+
   // Create agent identity
   const { data: agent, error: agentError } = await supabase
     .from('agent_identities')
@@ -132,10 +157,11 @@ export async function POST(request: NextRequest) {
       webhook_url: webhook_url || null,
       public_key: validatedPublicKey || null,
       project_context: projectContext,
-      trust_tier: 'baseline',
+      owner_user_id: verifiedOwnerUserId,
+      trust_tier: trustTier,
       is_active: true,
     })
-    .select('id, agent_name, agent_kind, host_client_slug, model_family, project_context, trust_tier, is_active, created_at')
+    .select('id, agent_name, agent_kind, host_client_slug, model_family, project_context, owner_user_id, trust_tier, is_active, created_at')
     .single()
 
   if (agentError || !agent) {
