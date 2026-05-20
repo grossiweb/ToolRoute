@@ -281,6 +281,171 @@ export interface PreflightResponse {
   version: string
 }
 
+// ── Typed responses for previously-untyped methods ──
+
+export interface BalanceResponse {
+  agent: { id: string; agent_name: string; trust_tier: string; contributor_id: string | null; created_at: string } | null
+  balance: { total_routing_credits: number; total_reputation_points: number }
+  contributions: Array<{ id: string; contribution_type: string; accepted: boolean; created_at: string }>
+  rewards: Array<{ id: string; routing_credits: number; reputation_points: number; reason: string; created_at: string }>
+  challengeSubmissions: Array<{
+    id: string
+    status: string
+    overall_score: number | null
+    tier: string | null
+    routing_credits_awarded: number | null
+    submitted_at: string
+    workflow_challenges: { title: string; slug: string; category: string } | null
+  }>
+}
+
+/** Free-form: the MCP help tool returns slightly different shapes for
+ *  registered vs unregistered callers. The fields below are always present;
+ *  the rest are forwarded as-is. */
+export interface HelpResponse {
+  your_status: {
+    registered: boolean
+    agent_name?: string
+    trust_tier?: string
+    total_routing_credits?: number
+    total_reputation_points?: number
+    [k: string]: unknown
+  }
+  terminology: string
+  quick_start: string
+  credits_value: string
+  tip: string
+  next_steps?: Record<string, unknown>
+  journey?: Record<string, unknown>
+  earning_paths?: Record<string, string>
+  [k: string]: unknown
+}
+
+export interface Mission {
+  id: string
+  title: string
+  description: string | null
+  task_prompt: string
+  task_fingerprint: string | null
+  reward_multiplier: number
+  max_claims: number
+  claimed_count: number
+  completed_count: number
+  status: string
+  expires_at: string | null
+  created_at: string
+  olympic_events: { slug: string; name: string; event_number: number } | null
+}
+
+export interface MissionsResponse {
+  missions: Mission[]
+  total: number
+}
+
+export type ClaimMissionResponse =
+  | { claim_id: string; mission_id: string; status: string; claimed_at: string; message?: string }
+  | { error: string; claim_id?: string; claim_status?: string }
+
+export type CompleteMissionResponse =
+  | {
+      status: 'completed'
+      claim_id: string
+      outcomes_recorded: number
+      rewards: {
+        routing_credits: number
+        reputation_points: number
+        economic_credits_usd: number
+        multipliers_applied: { base: number; mission: number; trust_tier: number }
+      }
+      message: string
+      tip?: string
+    }
+  | { error: string }
+
+export interface Challenge {
+  id: string
+  slug: string
+  title: string
+  description: string
+  objective: string | null
+  category: string
+  difficulty: string | null
+  expected_tools: number
+  expected_steps: number
+  cost_ceiling_usd: number | string
+  time_limit_minutes: number | null
+  reward_multiplier: number | string
+  max_submissions: number
+  submission_count: number
+  status: string
+  created_at: string
+}
+
+export interface ChallengesResponse {
+  challenges: Challenge[]
+  total: number
+}
+
+export type SubmitChallengeResponse =
+  | {
+      submission_id: string
+      challenge: string
+      tier: 'gold' | 'silver' | 'bronze' | null
+      rank: number
+      scores: { completeness: number; quality: number; efficiency: number; overall: number }
+      rewards: { routing_credits: number; reputation_points: number; multiplier_applied: string }
+      message: string
+      leaderboard?: string
+    }
+  | { error: string; submission_id?: string }
+
+export interface SkillSummary {
+  id: string
+  slug: string
+  canonical_name: string
+  short_description: string | null
+  vendor_type: string | null
+  status: string
+  skill_scores: {
+    overall_score: number | null
+    trust_score: number | null
+    reliability_score: number | null
+    output_score: number | null
+    cost_score: number | null
+  } | null
+  skill_metrics: {
+    github_stars: number | null
+    days_since_last_commit: number | null
+    estimated_visitors: number | null
+  } | null
+}
+
+export interface SearchResponse {
+  skills: SkillSummary[]
+  count: number | null
+  offset: number
+  limit: number
+}
+
+export interface SkillCompareEntry {
+  slug: string
+  canonical_name: string
+  skill_scores: {
+    overall_score: number | null
+    value_score: number | null
+    trust_score: number | null
+    reliability_score: number | null
+    output_score: number | null
+    efficiency_score: number | null
+    cost_score: number | null
+  } | null
+}
+
+export interface CompareResponse {
+  comparison: SkillCompareEntry[]
+  next_step?: string
+}
+
 export class ToolRoute {
   private baseUrl: string
   private timeoutMs: number
@@ -513,7 +678,7 @@ export class ToolRoute {
   /**
    * List available benchmark missions.
    */
-  async missions(eventSlug?: string): Promise<any> {
+  async missions(eventSlug?: string): Promise<MissionsResponse> {
     try {
       const params = eventSlug ? `?event=${eventSlug}` : ''
       const res = await this.fetch('GET', `/api/missions/available${params}`)
@@ -560,70 +725,100 @@ export class ToolRoute {
   }
 
   /** Check your real credit balance. */
-  async balance(agentIdentityId: string): Promise<any> {
+  async balance(agentIdentityId: string): Promise<BalanceResponse> {
+    const empty: BalanceResponse = {
+      agent: null,
+      balance: { total_routing_credits: 0, total_reputation_points: 0 },
+      contributions: [],
+      rewards: [],
+      challengeSubmissions: [],
+    }
     try {
       const res = await this.fetch('GET', `/api/agent-dashboard?agent_identity_id=${agentIdentityId}`)
-      if (!res.ok) return { total_routing_credits: 0, total_reputation_points: 0 }
+      if (!res.ok) return empty
       return await res.json()
-    } catch { return { total_routing_credits: 0, total_reputation_points: 0 } }
+    } catch { return empty }
   }
 
   /** Get guided walkthrough. */
-  async help(agentIdentityId?: string): Promise<any> {
+  async help(agentIdentityId?: string): Promise<HelpResponse> {
+    const empty: HelpResponse = {
+      your_status: { registered: false },
+      terminology: '',
+      quick_start: '',
+      credits_value: '',
+      tip: '',
+    }
     try {
       const body = agentIdentityId ? { agent_identity_id: agentIdentityId } : {}
       const res = await this.fetch('POST', '/api/mcp', {
         jsonrpc: '2.0', id: 1, method: 'tools/call',
         params: { name: 'toolroute_help', arguments: body },
       })
-      if (!res.ok) return {}
+      if (!res.ok) return empty
       const data = await res.json()
-      return JSON.parse(data?.result?.content?.[0]?.text || '{}')
-    } catch { return {} }
+      return JSON.parse(data?.result?.content?.[0]?.text || JSON.stringify(empty))
+    } catch { return empty }
   }
 
   /** Claim a benchmark mission. */
-  async claimMission(opts: { mission_id: string; agent_identity_id: string }): Promise<any> {
+  async claimMission(opts: { mission_id: string; agent_identity_id: string }): Promise<ClaimMissionResponse> {
     try {
       const res = await this.fetch('POST', '/api/missions/claim', opts)
-      if (!res.ok) return { error: 'Claim failed' }
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}))
+        return { error: detail?.error || 'Claim failed' }
+      }
       return await res.json()
     } catch { return { error: 'unreachable' } }
   }
 
   /** Submit mission results. */
-  async completeMission(opts: { claim_id: string; results: any[] }): Promise<any> {
+  async completeMission(opts: { claim_id: string; results: Array<Record<string, unknown>> }): Promise<CompleteMissionResponse> {
     try {
       const res = await this.fetch('POST', '/api/missions/complete', opts)
-      if (!res.ok) return { error: 'Completion failed' }
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}))
+        return { error: detail?.error || 'Completion failed' }
+      }
       return await res.json()
     } catch { return { error: 'unreachable' } }
   }
 
   /** List workflow challenges. */
-  async challenges(opts?: { category?: string; difficulty?: string }): Promise<any> {
+  async challenges(opts?: { category?: string; difficulty?: string }): Promise<ChallengesResponse> {
     try {
       const params = new URLSearchParams()
       if (opts?.category) params.set('category', opts.category)
       if (opts?.difficulty) params.set('difficulty', opts.difficulty)
       const qs = params.toString() ? `?${params.toString()}` : ''
       const res = await this.fetch('GET', `/api/challenges${qs}`)
-      if (!res.ok) return { challenges: [] }
+      if (!res.ok) return { challenges: [], total: 0 }
       return await res.json()
-    } catch { return { challenges: [] } }
+    } catch { return { challenges: [], total: 0 } }
   }
 
   /** Submit challenge results. */
-  async submitChallenge(opts: { challenge_slug: string; agent_identity_id: string; tools_used: any[]; steps_taken: number; [key: string]: any }): Promise<any> {
+  async submitChallenge(opts: {
+    challenge_slug: string
+    agent_identity_id: string
+    tools_used: Array<Record<string, unknown>>
+    steps_taken: number
+    [key: string]: unknown
+  }): Promise<SubmitChallengeResponse> {
     try {
       const res = await this.fetch('POST', '/api/challenges/submit', opts)
-      if (!res.ok) return { error: 'Submission failed' }
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}))
+        return { error: detail?.error || 'Submission failed', submission_id: detail?.submission_id }
+      }
       return await res.json()
     } catch { return { error: 'unreachable' } }
   }
 
   /** Search the MCP server catalog. */
-  async search(opts?: { query?: string; workflow?: string; vertical?: string; limit?: number }): Promise<any> {
+  async search(opts?: { query?: string; workflow?: string; vertical?: string; limit?: number }): Promise<SearchResponse> {
+    const empty: SearchResponse = { skills: [], count: 0, offset: 0, limit: 0 }
     try {
       const params = new URLSearchParams()
       if (opts?.query) params.set('q', opts.query)
@@ -632,22 +827,28 @@ export class ToolRoute {
       if (opts?.limit) params.set('limit', String(opts.limit))
       const qs = params.toString() ? `?${params.toString()}` : ''
       const res = await this.fetch('GET', `/api/skills${qs}`)
-      if (!res.ok) return []
+      if (!res.ok) return empty
       return await res.json()
-    } catch { return [] }
+    } catch { return empty }
   }
 
   /** Compare 2-4 skills side by side. */
-  async compare(skillSlugs: string[]): Promise<any> {
+  async compare(skillSlugs: string[]): Promise<CompareResponse> {
+    const empty: CompareResponse = { comparison: [] }
     try {
       const res = await this.fetch('POST', '/api/mcp', {
         jsonrpc: '2.0', id: 1, method: 'tools/call',
         params: { name: 'toolroute_compare', arguments: { skill_slugs: skillSlugs } },
       })
-      if (!res.ok) return []
+      if (!res.ok) return empty
       const data = await res.json()
-      return JSON.parse(data?.result?.content?.[0]?.text || '[]')
-    } catch { return [] }
+      const text = data?.result?.content?.[0]?.text
+      if (!text) return empty
+      const parsed = JSON.parse(text)
+      // Tool returns { comparison, next_step }; tolerate raw arrays too.
+      if (Array.isArray(parsed)) return { comparison: parsed }
+      return parsed
+    } catch { return empty }
   }
 
   /** Route to best model (convenience wrapper for model.route). */

@@ -25,3 +25,8 @@ sdk/.mcpregistry_*
 # Internal docs
 CLAUDE.md
 launch/
+
+# Vercel project linkage (contains org/project IDs, kept local)
+.vercel/project.json
+
+.vercel
