@@ -74,6 +74,24 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Validate available_providers if present
+  if ('available_providers' in preferences) {
+    if (!Array.isArray(preferences.available_providers)) {
+      return NextResponse.json(
+        { error: 'preferences.available_providers must be an array of provider strings (e.g. ["anthropic", "openai"]).' },
+        { status: 400 }
+      )
+    }
+    for (const p of preferences.available_providers) {
+      if (typeof p !== 'string' || p.length === 0) {
+        return NextResponse.json(
+          { error: `Invalid available_providers entry: ${JSON.stringify(p)}. Each entry must be a non-empty string.` },
+          { status: 400 }
+        )
+      }
+    }
+  }
+
   // Verify agent exists and load existing preferences
   const { data: agent, error: fetchErr } = await supabase
     .from('agent_identities')
@@ -104,6 +122,10 @@ export async function POST(request: NextRequest) {
       'regulated_industries' in preferences
         ? preferences.regulated_industries
         : existing.regulated_industries,
+    available_providers:
+      'available_providers' in preferences
+        ? preferences.available_providers
+        : (existing.available_providers ?? []),
   }
 
   const { data: updated, error: updateErr } = await supabase

@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } from '@/lib/scoring'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { getVerificationNudge } from '@/lib/verification-nudge'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/report — Self-documenting guide for telemetry reporting
 export async function GET() {
@@ -69,23 +70,30 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError(400, 'Invalid JSON', 'Request body must be valid JSON with Content-Type: application/json')
   }
 
   const { skill_slug, outcome, latency_ms, cost_usd, quality_rating, task_fingerprint, agent_identity_id } = body
 
   if (!skill_slug || !outcome) {
-    return NextResponse.json({
-      error: 'skill_slug and outcome are required',
-      usage: {
-        method: 'POST',
-        url: '/api/report',
-        required: { skill_slug: 'string', outcome: 'success | partial_success | failure | aborted' },
-        optional: { latency_ms: 'number', cost_usd: 'number', quality_rating: '0-10', agent_identity_id: 'UUID' },
-        example: { skill_slug: 'firecrawl-mcp', outcome: 'success', latency_ms: 1200 },
-      },
-      guide: 'GET /api/report for full documentation, GET /api/route for complete API guide',
-    }, { status: 400 })
+    // Help callers who tried to report a model execution to the wrong endpoint.
+    const looksLikeModelReport = !skill_slug && (body.model_slug || body.model_used || body.model)
+    if (looksLikeModelReport) {
+      return apiError(
+        400,
+        'skill_slug and outcome are required — but this looks like an LLM model report',
+        '/api/report is for MCP skill telemetry. For LLM model executions, use POST /api/report/model.',
+        'POST /api/report/model',
+        'GET /api/report/model for the model telemetry schema',
+      )
+    }
+    return apiError(
+      400,
+      'skill_slug and outcome are required',
+      'Minimal valid body: { "skill_slug": "firecrawl-mcp", "outcome": "success" }. Include latency_ms / cost_usd / quality_rating for more credits.',
+      undefined,
+      'GET /api/report for the full schema',
+    )
   }
 
   // Resolve skill_id from slug
@@ -96,11 +104,14 @@ export async function POST(request: NextRequest) {
     .maybeSingle()
 
   if (!skill) {
-    return NextResponse.json({
-      error: `Server "${skill_slug}" not found in catalog.`,
-      help: 'Use GET /api/skills to browse available servers, or call toolroute_search via MCP.',
-      accepted: false,
-    }, { status: 404 })
+    return apiError(
+      404,
+      `Server "${skill_slug}" not found in catalog.`,
+      'Use GET /api/skills to browse available servers, or call toolroute_search via MCP. Check spelling and the canonical slug format.',
+      undefined,
+      'GET /api/skills',
+      { accepted: false },
+    )
   }
 
   // Record in outcome_records (feeds score recalculation pipeline)

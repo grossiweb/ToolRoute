@@ -3,12 +3,13 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { getVerificationNudge } from '@/lib/verification-nudge'
 import { validatePublicKey } from '@/lib/commitment'
+import { apiError } from '@/lib/api-error'
 
 export async function POST(request: NextRequest) {
   const rlKey = getRateLimitKey(request)
   const rl = rateLimit('agents-register', rlKey, 30) // 30 registrations/hour per IP
   if (!rl.allowed) {
-    return NextResponse.json({ error: 'Rate limit exceeded. Max 30 registrations per hour.' }, { status: 429 })
+    return apiError(429, 'Rate limit exceeded. Max 30 registrations per hour.', 'Registration is idempotent — call once per agent, then cache agent_identity_id. If you legitimately need more, contact support.')
   }
 
   const supabase = createServerSupabaseClient()
@@ -17,7 +18,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError(400, 'Invalid JSON', 'Request body must be valid JSON with Content-Type: application/json')
   }
 
   const {
@@ -36,9 +37,12 @@ export async function POST(request: NextRequest) {
   if (public_key) {
     validatedPublicKey = validatePublicKey(public_key)
     if (!validatedPublicKey) {
-      return NextResponse.json(
-        { error: 'Invalid public_key. Must be a PEM-encoded Ed25519 public key.' },
-        { status: 400 }
+      return apiError(
+        400,
+        'Invalid public_key. Must be a PEM-encoded Ed25519 public key.',
+        'Generate with: openssl genpkey -algorithm ed25519 -out priv.pem && openssl pkey -in priv.pem -pubout',
+        undefined,
+        'See sdk/src/index.ts buildCommitment() for the signing flow.',
       )
     }
   }
@@ -211,7 +215,7 @@ export async function GET(request: NextRequest) {
   const { data: agents } = await query
 
   if (!agents || agents.length === 0) {
-    return NextResponse.json({ error: 'Agent not found' }, { status: 404 })
+    return apiError(404, 'Agent not found', 'No agent with that identifier. Register first with POST /api/agents/register and { agent_name }.')
   }
 
   // Get credit balance for each agent

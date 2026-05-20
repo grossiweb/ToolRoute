@@ -34,6 +34,7 @@ import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
 import { detectAntiGamingPatterns } from '@/lib/quality-verifier'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/contributions — Self-documenting guide for advanced telemetry
 export async function GET() {
@@ -180,31 +181,57 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError(400, 'Invalid JSON', 'Request body must be valid JSON with Content-Type: application/json')
   }
 
   const { agent_identity_id, contribution_type, payload, proof_type = 'self_reported' } = body
 
   if (!contribution_type || !payload) {
-    return NextResponse.json({ error: 'contribution_type and payload required' }, { status: 400 })
+    return apiError(
+      400,
+      'contribution_type and payload required',
+      'Wrap telemetry fields in a `payload` object: { agent_identity_id, contribution_type: "run_telemetry", payload: { skill_slug, outcome_status, ... } }',
+      undefined,
+      'GET /api/contributions for the full request schema',
+    )
   }
 
   const validTypes = ['run_telemetry', 'comparative_eval', 'fallback_chain', 'benchmark_package']
   if (!validTypes.includes(contribution_type)) {
-    return NextResponse.json({ error: `Invalid contribution_type. Must be one of: ${validTypes.join(', ')}` }, { status: 400 })
+    return apiError(
+      400,
+      `Invalid contribution_type. Must be one of: ${validTypes.join(', ')}`,
+      undefined,
+      undefined,
+      'GET /api/contributions for the full request schema',
+    )
   }
 
   // Type-specific validation
   const validation = validatePayload(payload, contribution_type)
   if (!validation.valid) {
-    return NextResponse.json({ error: validation.error }, { status: 400 })
+    // Detect the common "I'm reporting an LLM call" mistake and redirect.
+    const looksLikeModelReport =
+      contribution_type === 'run_telemetry' &&
+      !payload.skill_id && !payload.skill_slug &&
+      (payload.model_used || payload.model_slug || payload.model)
+    if (looksLikeModelReport) {
+      return apiError(
+        400,
+        validation.error || 'Invalid payload',
+        'This payload looks like LLM model telemetry, not MCP skill telemetry. /api/contributions only accepts skill executions (requires skill_id or skill_slug). For model executions, use POST /api/report/model.',
+        'POST /api/report/model',
+        'GET /api/report/model for the model telemetry schema',
+      )
+    }
+    return apiError(400, validation.error || 'Invalid payload')
   }
 
   const agentKey = agent_identity_id || request.headers.get('x-forwarded-for') || 'anonymous'
   if (!checkRateLimit(agentKey)) {
     return NextResponse.json(
-      { error: 'Rate limit exceeded. Max 100 contributions per hour.' },
-      { status: 429, headers: { 'Retry-After': '3600' } }
+      { error: 'Rate limit exceeded. Max 100 contributions per hour.', hint: 'Wait until the top of the next hour, or batch multiple events.' },
+      { status: 429, headers: { 'Retry-After': '3600' } },
     )
   }
 
@@ -253,7 +280,7 @@ export async function POST(request: NextRequest) {
     .single()
 
   if (!event) {
-    return NextResponse.json({ error: 'Failed to record contribution' }, { status: 500 })
+    return apiError(500, 'Failed to record contribution', 'Internal database error. Retry the request; if it persists, check /api/health and the Vercel logs.')
   }
 
   // Score the contribution

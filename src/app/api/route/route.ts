@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'
 import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -136,7 +137,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError(400, 'Invalid JSON', 'Request body must be valid JSON with Content-Type: application/json', undefined, 'GET /api/route for the full request schema')
   }
 
   const {

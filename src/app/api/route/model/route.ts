@@ -15,6 +15,7 @@ import {
 } from '@/lib/model-routing'
 import { detectCostAwareTier } from '@/lib/task-classifier'
 import { resolveTierToModel, type ClassifierTier } from '@/lib/routing/tiers'
+import { apiError } from '@/lib/api-error'
 
 // GET /api/route/model — Self-documenting guide
 export async function GET() {
@@ -88,7 +89,7 @@ export async function POST(request: NextRequest) {
   try {
     body = await request.json()
   } catch {
-    return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
+    return apiError(400, 'Invalid JSON', 'Request body must be valid JSON with Content-Type: application/json', undefined, 'GET /api/route/model for the full request schema')
   }
 
   const { task, constraints: rawConstraints, agent_identity_id } = body
@@ -169,8 +170,10 @@ export async function POST(request: NextRequest) {
       // tier-mapped models (they're all modern frontier models).
       supports_structured_output: true,
       supports_vision: m.supports_vision,
-      reasoning_strength: null,
-      code_strength: null,
+      // No reasoning/code strength columns in models table — use empty
+      // string (the interface declares these non-nullable).
+      reasoning_strength: '',
+      code_strength: '',
       deprecation_date: m.deprecated_at,
       avg_quality_rating: null,
       success_rate: null,

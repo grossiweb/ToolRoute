@@ -110,6 +110,23 @@ const BEST_AVAILABLE_KEYWORDS = [
 
 // ── Signal Detection ──
 
+/**
+ * Word-boundary keyword match. Returns true if ANY keyword in `keywords`
+ * appears in `lower` as a whole word (or as a multi-word phrase whose tokens
+ * are bounded). Used by code_present to avoid "class" matching
+ * "classification" and "import" matching "important".
+ */
+function matchesWordBoundary(lower: string, keywords: string[]): boolean {
+  for (const kw of keywords) {
+    // Escape regex special chars in the keyword
+    const escaped = kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')
+    // Word boundary on both sides; \b only matches between word and non-word
+    // characters so multi-word phrases like "bug fix" still anchor correctly.
+    if (new RegExp(`\\b${escaped}\\b`, 'i').test(lower)) return true
+  }
+  return false
+}
+
 export function detectTaskSignals(task: string): TaskSignals {
   if (!task) {
     return { tools_needed: false, structured_output_needed: false, code_present: false, complex_reasoning: false, creative_writing: false, signal_count: 0 }
@@ -119,7 +136,12 @@ export function detectTaskSignals(task: string): TaskSignals {
 
   const tools_needed = SIGNAL_KEYWORDS.tools_needed.some(kw => lower.includes(kw))
   const structured_output_needed = SIGNAL_KEYWORDS.structured_output_needed.some(kw => lower.includes(kw))
-  const code_present = SIGNAL_KEYWORDS.code_present.some(kw => lower.includes(kw))
+  // code_present uses word-boundary matching to prevent false positives:
+  //   - 'class' substring-matches "classification", "classify", "classroom"
+  //   - 'import' substring-matches "important", "importance"
+  // Without word boundaries, "binary classification" and "content moderation check"
+  // get incorrectly routed to fast_code instead of cheap_chat.
+  const code_present = matchesWordBoundary(lower, SIGNAL_KEYWORDS.code_present)
   const complex_reasoning = SIGNAL_KEYWORDS.complex_reasoning.some(kw => lower.includes(kw))
   const creative_writing = SIGNAL_KEYWORDS.creative_writing.some(kw => lower.includes(kw))
 

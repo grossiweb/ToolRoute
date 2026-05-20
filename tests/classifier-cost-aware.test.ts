@@ -6,6 +6,15 @@
 import { describe, it, expect, vi } from 'vitest'
 import { detectCostAwareTier } from '../src/lib/task-classifier'
 import { resolveTierToModel } from '../src/lib/routing/tiers'
+import { detectTaskSignals, resolveModelTier } from '../src/lib/model-routing'
+
+// End-to-end tier resolution: signal detection + cost-aware override.
+// Mirrors the order in /api/route/model: signals first, override last.
+function resolveTier(task: string): string {
+  const costAware = detectCostAwareTier(task)
+  if (costAware) return costAware
+  return resolveModelTier(detectTaskSignals(task), task)
+}
 
 // ── Mock Supabase server client BEFORE importing the route handler ──────────
 // The handler runs three real Supabase calls we need to satisfy:
@@ -147,10 +156,85 @@ describe('resolveTierToModel with preferred_provider="anthropic"', () => {
   })
 })
 
+// ── available_providers filter ──────────────────────────────────────────────
+describe('resolveTierToModel with available_providers filter', () => {
+  it('available_providers=["anthropic"] on cheap_structured walks chain to claude-haiku', () => {
+    // standard cheap_structured = { primary: gemini-2.5-flash, fallbacks: [claude-haiku-..., gpt-5-nano] }
+    // Filter to anthropic → claude-haiku becomes new primary
+    const r = resolveTierToModel('cheap_structured', 'standard', undefined, ['anthropic'])
+    expect(r.primary).toBe('claude-haiku-4-5-20251001')
+  })
+
+  it('available_providers=["google"] on cheap_chat keeps gemini primary', () => {
+    const r = resolveTierToModel('cheap_chat', 'standard', undefined, ['google'])
+    expect(r.primary).toBe('gemini-2.5-flash-lite')
+  })
+
+  it('available_providers=["anthropic"] on cheap_chat (no anthropic in chain) falls back to original', () => {
+    // standard cheap_chat chain has no anthropic models → returns original (gemini)
+    // Deliberate design: route to something rather than 404.
+    const r = resolveTierToModel('cheap_chat', 'standard', undefined, ['anthropic'])
+    expect(r.primary).toBe('gemini-2.5-flash-lite')
+  })
+
+  it('empty available_providers array = no filter applied', () => {
+    const r = resolveTierToModel('cheap_chat', 'standard', undefined, [])
+    expect(r.primary).toBe('gemini-2.5-flash-lite')
+  })
+
+  it('available_providers stacks with preferred_provider: explicit anthropic override wins', () => {
+    // preferred_provider=anthropic forces ANTHROPIC_ONLY_MAP; available_providers redundant
+    const r = resolveTierToModel('cheap_chat', 'standard', 'anthropic', ['anthropic'])
+    expect(r.primary).toBe('claude-haiku-4-5-20251001')
+  })
+
+  it('multi-provider whitelist works', () => {
+    // ['google', 'anthropic'] on cheap_structured — google is primary, both allowed → keep gemini
+    const r = resolveTierToModel('cheap_structured', 'standard', undefined, ['google', 'anthropic'])
+    expect(r.primary).toBe('gemini-2.5-flash')
+  })
+})
+
 // ── Integration test: handler with preferred_provider=anthropic ─────────────
 // Mocks Supabase (above) and calls the POST handler directly. Verifies the
 // constraint propagates end-to-end: input task → tier resolution → model
 // fetch → response. Asserts the returned model is Claude.
+
+// ── End-to-end tier resolution (signal + cost-aware override) ──────────────
+// Regression tests for the substring bug where "class" in code_present matched
+// "classification" via String.includes(), routing moderation tasks to fast_code.
+
+describe('resolveTier — moderation vs code disambiguation', () => {
+  it('"binary safe/unsafe classification" → cheap_chat', () => {
+    expect(resolveTier('binary safe/unsafe classification')).toBe('cheap_chat')
+  })
+
+  it('"content moderation check" → cheap_chat', () => {
+    expect(resolveTier('content moderation check')).toBe('cheap_chat')
+  })
+
+  it('"classify this code" → fast_code (still works)', () => {
+    expect(resolveTier('classify this code')).toBe('fast_code')
+  })
+
+  it('"binary search algorithm" → fast_code (still works)', () => {
+    expect(resolveTier('binary search algorithm')).toBe('fast_code')
+  })
+
+  it('"is this user comment appropriate" → cheap_chat (moderation)', () => {
+    expect(resolveTier('is this user comment appropriate for our forum')).toBe('cheap_chat')
+  })
+
+  it('"implement a Java class" → fast_code (code task still detected)', () => {
+    expect(resolveTier('implement a Java class for date parsing')).toBe('fast_code')
+  })
+
+  it('"important meeting recap" → cheap_chat (no longer false-positives on "import")', () => {
+    // Before the fix: 'import' substring matched 'important' → code_present true → fast_code
+    const tier = resolveTier('write a recap of the important meeting decisions')
+    expect(tier).not.toBe('fast_code')
+  })
+})
 
 describe('/api/route/model handler with preferred_provider=anthropic', () => {
   it('returns a claude- model for a cheap_chat task', async () => {
