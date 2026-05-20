@@ -30,7 +30,22 @@ export async function POST(request: NextRequest) {
     display_name,
     webhook_url,
     public_key,
+    project_context,
   } = body
+
+  // project_context is optional. Reject non-objects so we don't store
+  // arrays or scalars in the JSONB column.
+  let projectContext: Record<string, unknown> = {}
+  if (project_context !== undefined && project_context !== null) {
+    if (typeof project_context !== 'object' || Array.isArray(project_context)) {
+      return apiError(
+        400,
+        'project_context must be an object',
+        'Optional keys: framework, language, project_type, stack_tags (array). Any additional keys are accepted.',
+      )
+    }
+    projectContext = project_context as Record<string, unknown>
+  }
 
   // Validate public key if provided
   let validatedPublicKey: string | null = null
@@ -116,10 +131,11 @@ export async function POST(request: NextRequest) {
       environment_label: environment_label || null,
       webhook_url: webhook_url || null,
       public_key: validatedPublicKey || null,
+      project_context: projectContext,
       trust_tier: 'baseline',
       is_active: true,
     })
-    .select('id, agent_name, agent_kind, host_client_slug, model_family, trust_tier, is_active, created_at')
+    .select('id, agent_name, agent_kind, host_client_slug, model_family, project_context, trust_tier, is_active, created_at')
     .single()
 
   if (agentError || !agent) {
@@ -136,6 +152,7 @@ export async function POST(request: NextRequest) {
     agent_kind: agent.agent_kind,
     host_client_slug: agent.host_client_slug,
     model_family: agent.model_family,
+    project_context: agent.project_context,
     trust_tier: agent.trust_tier,
     is_active: agent.is_active,
     created_at: agent.created_at,
@@ -185,6 +202,7 @@ export async function GET(request: NextRequest) {
           model_family: '(optional) claude | gpt | gemini | llama',
           webhook_url: '(optional) URL to receive notifications (credits earned, verification approved, etc.)',
           public_key: '(optional) PEM-encoded Ed25519 public key — enables signed reports (proof_type: client_signed, anti-gaming bypassed)',
+          project_context: '(optional) Object describing the agent\'s project: { framework, language, project_type, stack_tags[] }. Used by the routing layer to cluster decisions by project type.',
         },
         returns: 'agent_identity_id — use in /api/route and /api/report',
       },

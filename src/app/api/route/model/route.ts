@@ -17,6 +17,8 @@ import { detectCostAwareTier } from '@/lib/task-classifier'
 import { resolveTierToModel, type ClassifierTier } from '@/lib/routing/tiers'
 import { apiError } from '@/lib/api-error'
 import { getActiveNotices } from '@/lib/notices'
+import { deriveTaskCluster } from '@/lib/task-cluster'
+import { getRoutingMemory } from '@/lib/routing-memory'
 
 // GET /api/route/model — Self-documenting guide
 export async function GET() {
@@ -110,6 +112,10 @@ export async function POST(request: NextRequest) {
   let tier = resolveModelTier(signals, task)
   const costAwareTier = detectCostAwareTier(task)
   if (costAwareTier) tier = costAwareTier as typeof tier
+
+  // Derived cluster key — used by routing-memory lookup below and stored
+  // on the decision row so future lookups have something to filter on.
+  const taskCluster = deriveTaskCluster(tier, signals as Record<string, boolean | number>)
 
   // 3. Build constraints
   const constraints: RoutingConstraints = {
@@ -228,6 +234,7 @@ export async function POST(request: NextRequest) {
     task_hash: taskHash,
     task_snippet: task.slice(0, 200),
     signals_json: signals,
+    task_cluster: taskCluster,
     resolved_tier: tier,
     recommended_model_id: primary.id,
     recommended_alias: `toolroute/${tier}`,
@@ -282,7 +289,8 @@ export async function POST(request: NextRequest) {
     },
   }
 
-  // Agent recognition
+  // Agent recognition + recursive intelligence loop. The memory lookup
+  // is hard-bounded to 200ms inside getRoutingMemory — it cannot block.
   if (agent_identity_id) {
     const { data: agent } = await supabase
       .from('agent_identities')
@@ -292,6 +300,17 @@ export async function POST(request: NextRequest) {
 
     if (agent) {
       response.agent = { agent_name: agent.agent_name, trust_tier: agent.trust_tier, recognized: true }
+    }
+
+    const memory = await getRoutingMemory(supabase, agent_identity_id, taskCluster)
+    if (memory && memory.success_rate >= 0.75) {
+      response.routing_memory = {
+        ...memory,
+        note: `Based on your past ${memory.sample_size} similar tasks`,
+      }
+      if (memory.historical_model === primary.id) {
+        response.confirmed_by_history = true
+      }
     }
   } else {
     response.register_hint = {

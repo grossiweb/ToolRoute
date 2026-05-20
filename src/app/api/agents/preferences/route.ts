@@ -30,7 +30,7 @@ export async function POST(request: NextRequest) {
     return NextResponse.json({ error: 'Invalid JSON' }, { status: 400 })
   }
 
-  const { agent_identity_id, preferences } = body
+  const { agent_identity_id, preferences, project_context } = body
 
   if (!agent_identity_id || typeof agent_identity_id !== 'string') {
     return NextResponse.json(
@@ -39,15 +39,32 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  if (!preferences || typeof preferences !== 'object' || Array.isArray(preferences)) {
+  // Either preferences or project_context (or both) must be provided.
+  const hasPrefs = preferences !== undefined && preferences !== null
+  const hasPC = project_context !== undefined && project_context !== null
+  if (!hasPrefs && !hasPC) {
     return NextResponse.json(
-      { error: 'preferences is required and must be an object.' },
+      { error: 'At least one of `preferences` or `project_context` is required.' },
+      { status: 400 }
+    )
+  }
+
+  if (hasPrefs && (typeof preferences !== 'object' || Array.isArray(preferences))) {
+    return NextResponse.json(
+      { error: 'preferences must be an object.' },
+      { status: 400 }
+    )
+  }
+
+  if (hasPC && (typeof project_context !== 'object' || Array.isArray(project_context))) {
+    return NextResponse.json(
+      { error: 'project_context must be an object.' },
       { status: 400 }
     )
   }
 
   // Validate allow_china if present
-  if ('allow_china' in preferences && typeof preferences.allow_china !== 'boolean') {
+  if (hasPrefs && 'allow_china' in preferences && typeof preferences.allow_china !== 'boolean') {
     return NextResponse.json(
       { error: 'preferences.allow_china must be a boolean.' },
       { status: 400 }
@@ -55,7 +72,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate regulated_industries if present
-  if ('regulated_industries' in preferences) {
+  if (hasPrefs && 'regulated_industries' in preferences) {
     if (!Array.isArray(preferences.regulated_industries)) {
       return NextResponse.json(
         { error: 'preferences.regulated_industries must be an array.' },
@@ -75,7 +92,7 @@ export async function POST(request: NextRequest) {
   }
 
   // Validate available_providers if present
-  if ('available_providers' in preferences) {
+  if (hasPrefs && 'available_providers' in preferences) {
     if (!Array.isArray(preferences.available_providers)) {
       return NextResponse.json(
         { error: 'preferences.available_providers must be an array of provider strings (e.g. ["anthropic", "openai"]).' },
@@ -92,10 +109,10 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Verify agent exists and load existing preferences
+  // Verify agent exists and load existing preferences + project_context
   const { data: agent, error: fetchErr } = await supabase
     .from('agent_identities')
-    .select('id, routing_preferences')
+    .select('id, routing_preferences, project_context')
     .eq('id', agent_identity_id)
     .maybeSingle()
 
@@ -112,27 +129,39 @@ export async function POST(request: NextRequest) {
     )
   }
 
-  // Replace per-field: present fields overwrite, absent fields keep existing.
-  // Empty array is a meaningful value (user wants no regulated industries).
-  const existing: RoutingPreferences = agent.routing_preferences ?? DEFAULT_ROUTING_PREFERENCES
-  const merged: RoutingPreferences = {
-    allow_china:
-      'allow_china' in preferences ? preferences.allow_china : existing.allow_china,
-    regulated_industries:
-      'regulated_industries' in preferences
-        ? preferences.regulated_industries
-        : existing.regulated_industries,
-    available_providers:
-      'available_providers' in preferences
-        ? preferences.available_providers
-        : (existing.available_providers ?? []),
+  // Build the update payload. Only include keys the caller actually sent.
+  const updatePayload: Record<string, unknown> = {}
+
+  if (hasPrefs) {
+    // Replace per-field: present fields overwrite, absent fields keep existing.
+    // Empty array is a meaningful value (user wants no regulated industries).
+    const existing: RoutingPreferences = agent.routing_preferences ?? DEFAULT_ROUTING_PREFERENCES
+    const merged: RoutingPreferences = {
+      allow_china:
+        'allow_china' in preferences ? preferences.allow_china : existing.allow_china,
+      regulated_industries:
+        'regulated_industries' in preferences
+          ? preferences.regulated_industries
+          : existing.regulated_industries,
+      available_providers:
+        'available_providers' in preferences
+          ? preferences.available_providers
+          : (existing.available_providers ?? []),
+    }
+    updatePayload.routing_preferences = merged
+  }
+
+  if (hasPC) {
+    // Shallow merge — provided keys overwrite, absent keys stay.
+    const existingPC = (agent.project_context ?? {}) as Record<string, unknown>
+    updatePayload.project_context = { ...existingPC, ...project_context }
   }
 
   const { data: updated, error: updateErr } = await supabase
     .from('agent_identities')
-    .update({ routing_preferences: merged })
+    .update(updatePayload)
     .eq('id', agent_identity_id)
-    .select('id, routing_preferences')
+    .select('id, routing_preferences, project_context')
     .single()
 
   if (updateErr || !updated) {
@@ -150,6 +179,7 @@ export async function POST(request: NextRequest) {
   return NextResponse.json({
     agent_identity_id: updated.id,
     preferences: updated.routing_preferences,
+    project_context: updated.project_context,
     resolved_profile: resolvedProfile,
   })
 }
