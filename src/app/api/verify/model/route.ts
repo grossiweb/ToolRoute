@@ -251,11 +251,12 @@ export async function POST(request: NextRequest) {
   // Fire-and-forget: log verification to model_outcome_records
   const supabase = createServerSupabaseClient()
 
-  // Look up model
+  // Look up model. models.id IS the canonical slug per Strategy D
+  // Phase 1; legacy model_registry retained for FK linkage only.
   supabase
-    .from('model_registry')
+    .from('models')
     .select('id')
-    .eq('slug', model_slug)
+    .eq('id', model_slug)
     .single()
     .then(({ data: model }) => {
       if (!model) return

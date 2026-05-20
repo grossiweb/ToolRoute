@@ -182,11 +182,14 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  // Resolve model_id from slug
+  // Resolve model_id from slug. The models table's `id` column IS the
+  // canonical slug (see Strategy D Phase 1) — no separate slug column.
+  // Legacy model_registry kept around for FK linkage only; see its
+  // table COMMENT for the deprecation note.
   const { data: model } = await supabase
-    .from('model_registry')
+    .from('models')
     .select('id')
-    .eq('slug', model_slug)
+    .eq('id', model_slug)
     .maybeSingle()
 
   if (!model) {

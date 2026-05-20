@@ -115,7 +115,7 @@ export async function POST(request: NextRequest) {
 
   // Derived cluster key — used by routing-memory lookup below and stored
   // on the decision row so future lookups have something to filter on.
-  const taskCluster = deriveTaskCluster(tier, signals as Record<string, boolean | number>)
+  const taskCluster = deriveTaskCluster(tier, signals)
 
   // 3. Build constraints
   const constraints: RoutingConstraints = {

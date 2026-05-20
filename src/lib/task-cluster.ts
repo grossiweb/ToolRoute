@@ -15,14 +15,18 @@
 // This is the join key for getRoutingMemory() — small cardinality keeps
 // the per-agent history dense enough to be useful.
 
+// Parameter is `object` rather than Record<string, ...> so closed-shape
+// signal types like TaskSignals (which has no index signature) can be
+// passed directly without a cast. Object.entries handles any object.
 export function deriveTaskCluster(
   tier: string,
-  signals: Record<string, boolean | number | undefined | null>,
+  signals: object,
 ): string {
-  const active = Object.entries(signals)
-    .filter(([, v]) => v === true)
-    .map(([k]) => k)
-    .sort()
+  const active: string[] = []
+  for (const [k, v] of Object.entries(signals)) {
+    if (v === true) active.push(k)
+  }
+  active.sort()
   if (active.length === 0) return tier
   return `${tier}:${active.slice(0, 2).join('+')}`
 }

@@ -712,7 +712,7 @@ export async function POST(request: NextRequest) {
   if (task) {
     const signals = detectTaskSignals(task)
     const tier = resolveModelTier(signals, task)
-    const taskClusterStr = deriveTaskCluster(tier, signals as Record<string, boolean | number>)
+    const taskClusterStr = deriveTaskCluster(tier, signals)
 
     const recSkillSlug =
       approach === 'multi_tool' ? (orchestration?.[0]?.recommended_skill ?? null) :
