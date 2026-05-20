@@ -4,6 +4,7 @@ import { semanticMatchWorkflow } from '@/lib/embeddings'
 import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
+import { getActiveNotices } from '@/lib/notices'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -688,6 +689,13 @@ export async function POST(request: NextRequest) {
     orchestration = buildOrchestrationChain(taskClassification.tool_categories, task || '')
   }
 
+  // Fetch any active migration notices for this caller. Never blocks the
+  // routing response — getActiveNotices() swallows all DB errors.
+  const notices = await getActiveNotices(supabase, agent_identity_id, '/api/route')
+  const noticeFields = notices.length > 0
+    ? { notices, ...(notices.length === 1 ? { migration_notice: notices[0] } : {}) }
+    : {}
+
   return NextResponse.json({
     approach,
     ...(approach === 'multi_tool' ? {
@@ -773,6 +781,7 @@ export async function POST(request: NextRequest) {
         then: 'Include the returned agent_identity_id in this request and in POST /api/report',
       },
     }),
+    ...noticeFields,
   })
 }
 

@@ -16,6 +16,7 @@ import {
 import { detectCostAwareTier } from '@/lib/task-classifier'
 import { resolveTierToModel, type ClassifierTier } from '@/lib/routing/tiers'
 import { apiError } from '@/lib/api-error'
+import { getActiveNotices } from '@/lib/notices'
 
 // GET /api/route/model — Self-documenting guide
 export async function GET() {
@@ -309,6 +310,15 @@ export async function POST(request: NextRequest) {
       message: 'Need an MCP server too? POST /api/route for tool recommendations.',
       endpoint: 'POST /api/route',
     },
+  }
+
+  // Active migration notices for this caller (never blocks the response).
+  const notices = await getActiveNotices(supabase, agent_identity_id, '/api/route/model')
+  if (notices.length > 0) {
+    response.notices = notices
+    if (notices.length === 1) {
+      response.migration_notice = notices[0]
+    }
   }
 
   return NextResponse.json(response)
