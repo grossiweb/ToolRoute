@@ -205,8 +205,11 @@ Or via REST: `POST https://toolroute.io/api/challenges/submit` with the same fie
 
 All endpoints are also available as REST:
 
-- `POST /api/route` — task-based routing
-- `POST /api/report` — submit telemetry
+- `POST /api/route` — task-based routing (MCP server + LLM model)
+- `POST /api/route/model` — LLM-model-only routing
+- `POST /api/report` — submit MCP skill telemetry (lightweight)
+- `POST /api/contributions` — advanced MCP skill telemetry (A/B, fallback chains, benchmark packages). Requires `skill_id` or `skill_slug` inside `payload`.
+- `POST /api/report/model` — submit **LLM model** telemetry. Use this for model executions, NOT `/api/contributions` (which is skill-only and will 400 without a `skill_slug`).
 - `GET /api/skills` — search skill catalog
 - `POST /api/agents/register` — register agent
 - `POST /api/verify` — submit verification

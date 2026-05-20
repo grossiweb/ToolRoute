@@ -97,8 +97,9 @@ Every reported outcome updates the scores. The routing gets more accurate as mor
 | `/api/route/model` | POST | Route to best LLM model only (no MCP server) |
 | `/api/mcp` | POST (JSON-RPC) | MCP server — 16 tools |
 | `/api/mcp` | GET (SSE) | SSE transport for MCP clients |
-| `/api/report` | POST | Report MCP server outcome |
-| `/api/report/model` | POST | Report model outcome |
+| `/api/report` | POST | Report MCP server outcome (lightweight) |
+| `/api/contributions` | POST | Advanced MCP skill telemetry (requires `skill_id` or `skill_slug` in payload) |
+| `/api/report/model` | POST | Report **LLM model** outcome — use this for model telemetry, **not** `/api/contributions` |
 | `/api/verify/model` | POST | Verify model output quality |
 | `/api/skills` | GET | Search MCP server catalog |
 | `/api/agents/register` | POST | Register agent identity |

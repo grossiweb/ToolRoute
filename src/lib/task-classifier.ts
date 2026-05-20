@@ -228,6 +228,79 @@ function keywordFallback(task: string): TaskClassification {
 }
 
 /**
+ * Cost-aware tier override.
+ *
+ * Some task patterns route to a cheaper tier regardless of what the LLM
+ * classifier returns. The LLM tends to over-classify high-volume templated
+ * content as 'creative_writing' or 'reasoning_pro', sending Sol Coloring-style
+ * pipelines (SEO snippets, moderation checks, synonym lists) to Opus at
+ * 100x the necessary cost.
+ *
+ * Returns a forced ClassifierTier when a pattern matches, null otherwise.
+ * Apply BEFORE classificationToModelTier in routing endpoints.
+ */
+const COST_AWARE_PATTERNS: Array<{ keywords: string[]; tier: ClassifierTier_Inline }> = [
+  {
+    // Templated SEO / content snippets
+    keywords: ['seo', 'meta description', 'meta title', 'fun facts', 'faqs for', 'coloring page'],
+    tier: 'cheap_structured',
+  },
+  {
+    // Binary classification / safety / moderation
+    keywords: [
+      'moderation',
+      'safe/unsafe',
+      'safe or unsafe',
+      'binary classification',
+      'binary classify',
+      'is this appropriate',
+      'is this safe',
+      'is safe',
+      'safe for kids',
+      'safe for children',
+      'appropriate for',
+      'inappropriate',
+      'classify if',
+      'classify as safe',
+      'classify as unsafe',
+    ],
+    tier: 'cheap_chat',
+  },
+  {
+    // Synonym lists / JSON arrays / short lists
+    keywords: ['synonyms', 'synonym list', 'search terms', 'json array of', 'short list of', 'short json'],
+    tier: 'cheap_structured',
+  },
+  {
+    // Bulk / high-volume / templated output
+    keywords: ['bulk', 'high volume', 'high-volume', 'templated', 'structured output at scale'],
+    tier: 'cheap_structured',
+  },
+]
+
+// Inline alias so this file doesn't import from routing/tiers.ts (which would
+// create a circular dep). Keep in sync with ClassifierTier there.
+type ClassifierTier_Inline =
+  | 'cheap_chat'
+  | 'cheap_structured'
+  | 'fast_code'
+  | 'creative_writing'
+  | 'reasoning_pro'
+  | 'tool_agent'
+  | 'best_available'
+
+export function detectCostAwareTier(task: string): ClassifierTier_Inline | null {
+  if (!task) return null
+  const lower = task.toLowerCase()
+  for (const { keywords, tier } of COST_AWARE_PATTERNS) {
+    for (const kw of keywords) {
+      if (lower.includes(kw)) return tier
+    }
+  }
+  return null
+}
+
+/**
  * Map task classification to model tier, respecting agent's routing priority.
  *
  * Priority modes:

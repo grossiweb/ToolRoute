@@ -11,20 +11,22 @@ type Decision = {
   time: string
 }
 
+// Illustrative sample data — NOT live production traffic. The header below is
+// labeled "sample feed" to make this clear to visitors.
 const INIT: Decision[] = [
   { task: 'scrape competitor pricing',   agent: 'agent_42f', win: 'firecrawl-mcp',  lose: 'jina-reader',  score: '94%', time: '2s ago' },
-  { task: 'parse CSV → structured JSON', agent: 'agent_7ba', win: 'haiku-3.5',      lose: 'gpt-4o-mini',  score: '97%', time: '5s ago' },
+  { task: 'parse CSV → structured JSON', agent: 'agent_7ba', win: 'claude-haiku-4-5', lose: 'gpt-5-nano', score: '97%', time: '5s ago' },
   { task: 'summarize GitHub diff',       agent: 'agent_1cc', win: 'github-mcp',     lose: 'file-read',    score: '88%', time: '11s ago' },
   { task: 'send Slack notification',     agent: 'agent_9e2', win: 'slack-mcp',      lose: 'zapier',       score: '99%', time: '18s ago' },
-  { task: 'web search: AI news today',   agent: 'agent_3d5', win: 'brave-search',   lose: 'bing-mcp',     score: '91%', time: '24s ago' },
+  { task: 'web search: AI news today',   agent: 'agent_3d5', win: 'exa-mcp-server', lose: 'brave-search', score: '91%', time: '24s ago' },
 ]
 
 const MORE: Decision[] = [
-  { task: 'extract table from PDF',      agent: 'agent_f11', win: 'pdf-reader-mcp', lose: 'gpt-vision',   score: '86%', time: '' },
-  { task: 'run SQL on warehouse',        agent: 'agent_0a8', win: 'postgres-mcp',   lose: 'direct api',   score: '93%', time: '' },
-  { task: 'translate email to French',   agent: 'agent_c55', win: 'haiku-3.5',      lose: 'deepl-mcp',    score: '96%', time: '' },
-  { task: 'lint TypeScript project',     agent: 'agent_88d', win: 'eslint-mcp',     lose: 'gpt-4o',       score: '89%', time: '' },
-  { task: 'get Notion page content',     agent: 'agent_2b7', win: 'notion-mcp',     lose: 'fetch-url',    score: '98%', time: '' },
+  { task: 'extract table from PDF',      agent: 'agent_f11', win: 'pdf-reader-mcp', lose: 'gpt-vision',          score: '86%', time: '' },
+  { task: 'run SQL on warehouse',        agent: 'agent_0a8', win: 'postgres-mcp',   lose: 'direct api',          score: '93%', time: '' },
+  { task: 'translate email to French',   agent: 'agent_c55', win: 'claude-haiku-4-5', lose: 'deepl-mcp',         score: '96%', time: '' },
+  { task: 'lint TypeScript project',     agent: 'agent_88d', win: 'eslint-mcp',     lose: 'claude-sonnet-4-6',   score: '89%', time: '' },
+  { task: 'get Notion page content',     agent: 'agent_2b7', win: 'notion-mcp',     lose: 'fetch-url',           score: '98%', time: '' },
 ]
 
 const TIMES = ['just now', '2s ago', '5s ago', '11s ago', '18s ago']
@@ -65,21 +67,19 @@ export function DecisionsFeed() {
       }}>
         <span style={{
           width: 6, height: 6, borderRadius: '50%',
-          background: 'var(--green)',
-          boxShadow: '0 0 6px var(--green)',
-          animation: 'pulse-dot 2s infinite',
+          background: 'var(--text-3)',
         }} />
         <span style={{
           fontFamily: 'var(--mono)', fontSize: 11,
           color: 'var(--text-2)', letterSpacing: 0.5, flex: 1,
-        }}>Recent decisions</span>
+        }}>Sample decisions</span>
         <span style={{
           fontFamily: 'var(--mono)', fontSize: 10,
-          color: 'var(--green)', textTransform: 'uppercase',
+          color: 'var(--text-3)', textTransform: 'uppercase',
           letterSpacing: 1,
-          background: 'var(--green-dim)',
+          background: 'var(--bg3)',
           padding: '2px 7px', borderRadius: 4,
-        }}>live</span>
+        }}>simulated</span>
       </div>
 
       {/* Rows */}

@@ -49,8 +49,38 @@ export interface RouteRequest {
 }
 
 export interface RouteResponse {
+  approach: 'direct_llm' | 'mcp_server' | 'multi_tool'
   recommended_skill: string | null
   recommended_skill_name?: string
+  recommended_model: {
+    slug: string
+    display_name: string
+    provider: string
+    provider_model_id: string
+    input_cost_per_mtok: number
+    output_cost_per_mtok: number
+    tier: string
+    tier_description?: string
+    reason?: string
+  } | null
+  model_details: {
+    id: string
+    provider: string
+    tier: string
+    context_window?: number
+    effort_levels?: string[]
+    data_residency?: string
+    supports_task_budgets?: boolean
+  } | null
+  cost_estimate: {
+    effective_input_tokens: number
+    effective_output_tokens: number
+    estimated_cost_usd: number
+    sticker_cost_usd: number
+    inflation_factor: number
+    us_only_premium: number
+  } | null
+  actionable_notes: string[] | null
   confidence: number
   reasoning: string
   alternatives: string[]
@@ -105,17 +135,45 @@ export interface ModelRouteRequest {
 }
 
 export interface ModelRouteResponse {
+  /** Tier alias e.g. "toolroute/fast_code". The concrete model lives in model_details.slug. */
   recommended_model: string
-  recommended_alias: string
-  provider: string
+  model_details: {
+    slug: string
+    display_name: string
+    provider: string
+    provider_model_id: string
+    input_cost_per_mtok: number
+    output_cost_per_mtok: number
+    context_window: number
+    supports_tool_calling: boolean
+    supports_structured_output: boolean
+    supports_vision: boolean
+  }
   tier: string
+  tier_description?: { name: string; description: string; use_case: string } | string
   confidence: number
+  signals: Record<string, boolean | number>
   reasoning: string
-  fallback_chain: string[]
-  escalation: { next_tier: string; alias: string } | null
-  cost_estimate: { input_per_mtok: number; output_per_mtok: number; estimated_task_cost: number }
-  routing_metadata: Record<string, any>
-  decision_id: string
+  estimated_cost: {
+    estimated_input_tokens: number
+    estimated_output_tokens: number
+    estimated_cost_usd: number
+  }
+  fallback_chain: Array<{ slug: string; provider: string; display_name: string }>
+  escalation: { next_tier: string; trigger: string; alias: string } | null
+  /** decision_id lives inside routing_metadata, NOT at the top level. */
+  routing_metadata: {
+    decision_id: string
+    routing_latency_ms?: number
+    candidates_evaluated?: number
+    candidates_after_filter?: number
+    constraints_applied?: string[]
+    outcome_data_available?: boolean
+    [k: string]: any
+  }
+  wanted_telemetry?: Record<string, any>
+  register_hint?: Record<string, any>
+  earn_more?: Record<string, any>
 }
 
 export interface ModelReportRequest {
@@ -335,24 +393,29 @@ export class ToolRoute {
      * fallback chain, escalation path, and cost estimate.
      */
     route: async (request: ModelRouteRequest): Promise<ModelRouteResponse> => {
+      const unreachableResponse = (error: 'unreachable' | 'timeout'): ModelRouteResponse => ({
+        recommended_model: '',
+        model_details: {
+          slug: '', display_name: '', provider: '', provider_model_id: '',
+          input_cost_per_mtok: 0, output_cost_per_mtok: 0,
+          context_window: 0,
+          supports_tool_calling: false, supports_structured_output: false, supports_vision: false,
+        },
+        tier: 'fast_code',
+        confidence: 0,
+        signals: {},
+        reasoning: 'ToolRoute unreachable — use your default model.',
+        estimated_cost: { estimated_input_tokens: 0, estimated_output_tokens: 0, estimated_cost_usd: 0 },
+        fallback_chain: [],
+        escalation: null,
+        routing_metadata: { decision_id: '', error },
+      })
       try {
         const res = await this.fetch('POST', '/api/route/model', request)
-        if (!res.ok) {
-          return {
-            recommended_model: '', recommended_alias: '', provider: '', tier: 'fast_code',
-            confidence: 0, reasoning: 'ToolRoute unreachable — use your default model.',
-            fallback_chain: [], escalation: null, cost_estimate: { input_per_mtok: 0, output_per_mtok: 0, estimated_task_cost: 0 },
-            routing_metadata: { error: 'unreachable' }, decision_id: '',
-          }
-        }
+        if (!res.ok) return unreachableResponse('unreachable')
         return await res.json()
       } catch {
-        return {
-          recommended_model: '', recommended_alias: '', provider: '', tier: 'fast_code',
-          confidence: 0, reasoning: 'ToolRoute unreachable — use your default model.',
-          fallback_chain: [], escalation: null, cost_estimate: { input_per_mtok: 0, output_per_mtok: 0, estimated_task_cost: 0 },
-          routing_metadata: { error: 'timeout' }, decision_id: '',
-        }
+        return unreachableResponse('timeout')
       }
     },
 
@@ -558,7 +621,12 @@ export class ToolRoute {
 
   private fallbackRouteResponse(request: RouteRequest): RouteResponse {
     return {
+      approach: 'direct_llm',
       recommended_skill: null,
+      recommended_model: null,
+      model_details: null,
+      cost_estimate: null,
+      actionable_notes: null,
       confidence: 0,
       reasoning: 'ToolRoute unreachable — proceed with your default tool.',
       alternatives: [],

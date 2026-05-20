@@ -136,6 +136,55 @@ export const DEFAULT_ROUTING_PREFERENCES: RoutingPreferences = {
   regulated_industries: [],
 }
 
+/**
+ * Anthropic-only tier map.
+ *
+ * Used when constraints.preferred_provider === 'anthropic' on POST /api/route.
+ * The standard TIER_MAP routes cheap_chat / cheap_structured to Gemini —
+ * customers on Anthropic-only API access (e.g. Sol Coloring) need an
+ * all-Claude routing table that still respects cost-vs-quality tradeoffs.
+ *
+ * Notably: creative_writing routes to Sonnet, NOT Opus. Cost matters at scale,
+ * and Sonnet 4.6 produces marketing-grade copy. Reserve Opus for reasoning_pro
+ * and best_available.
+ */
+export const ANTHROPIC_ONLY_MAP: Record<ClassifierTier, TierResolution> = {
+  cheap_chat: {
+    primary: 'claude-haiku-4-5-20251001',
+    fallbacks: ['claude-sonnet-4-6'],
+  },
+  cheap_structured: {
+    primary: 'claude-haiku-4-5-20251001',
+    fallbacks: ['claude-sonnet-4-6'],
+  },
+  fast_code: {
+    primary: 'claude-sonnet-4-6',
+    fallbacks: ['claude-haiku-4-5-20251001'],
+  },
+  creative_writing: {
+    // Intentionally NOT Opus — Sonnet handles persuasive content at 1/5 the cost.
+    primary: 'claude-sonnet-4-6',
+    fallbacks: ['claude-opus-4-6'],
+  },
+  reasoning_pro: {
+    primary: 'claude-opus-4-6',
+    fallbacks: ['claude-sonnet-4-6'],
+  },
+  tool_agent: {
+    primary: 'claude-sonnet-4-6',
+    fallbacks: ['claude-haiku-4-5-20251001'],
+  },
+  best_available: {
+    primary: 'claude-opus-4-7',
+    fallbacks: ['claude-opus-4-6'],
+    required_effort_level: 'xhigh',
+  },
+}
+
+const PROVIDER_OVERRIDE_MAPS: Record<string, Record<ClassifierTier, TierResolution>> = {
+  anthropic: ANTHROPIC_ONLY_MAP,
+}
+
 export function resolveProfileFromPreferences(prefs: RoutingPreferences): RoutingProfile {
   if (prefs.regulated_industries && prefs.regulated_industries.length > 0) {
     return 'regulated'
@@ -146,8 +195,20 @@ export function resolveProfileFromPreferences(prefs: RoutingPreferences): Routin
 
 export function resolveTierToModel(
   tier: ClassifierTier,
-  profile: RoutingProfile = 'standard'
+  profile: RoutingProfile = 'standard',
+  preferredProvider?: string,
 ): TierResolution {
+  // Provider constraint takes precedence over routing profile. Anthropic-only
+  // callers get a Claude-only resolution regardless of standard/unregulated/
+  // regulated profile preferences.
+  if (preferredProvider) {
+    const overrideMap = PROVIDER_OVERRIDE_MAPS[preferredProvider.toLowerCase()]
+    if (overrideMap) {
+      const overrideResolution = overrideMap[tier]
+      if (overrideResolution) return overrideResolution
+    }
+  }
+
   const profileMap = TIER_MAP[profile]
   if (!profileMap) {
     throw new Error(`Unknown routing profile: ${profile}`)

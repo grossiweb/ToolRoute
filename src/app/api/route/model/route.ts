@@ -13,6 +13,8 @@ import {
   type ModelCandidate,
   type RoutingConstraints,
 } from '@/lib/model-routing'
+import { detectCostAwareTier } from '@/lib/task-classifier'
+import { resolveTierToModel, type ClassifierTier } from '@/lib/routing/tiers'
 
 // GET /api/route/model — Self-documenting guide
 export async function GET() {
@@ -102,8 +104,10 @@ export async function POST(request: NextRequest) {
   // 1. Detect signals
   const signals = detectTaskSignals(task)
 
-  // 2. Resolve tier
-  const tier = resolveModelTier(signals, task)
+  // 2. Resolve tier (cost-aware override takes precedence)
+  let tier = resolveModelTier(signals, task)
+  const costAwareTier = detectCostAwareTier(task)
+  if (costAwareTier) tier = costAwareTier as typeof tier
 
   // 3. Build constraints
   const constraints: RoutingConstraints = {
@@ -114,61 +118,64 @@ export async function POST(request: NextRequest) {
     exclude_providers: rawConstraints?.exclude_providers,
   }
 
-  // 4. Fetch models for this tier
-  const { data: aliasRows, error: aliasError } = await supabase
-    .from('model_aliases')
-    .select(`
-      priority, is_fallback, alias_name,
-      model_registry (
-        id, slug, display_name, provider, provider_model_id,
-        supports_tool_calling, supports_structured_output, supports_vision,
-        context_window, max_output_tokens,
-        input_cost_per_mtok, output_cost_per_mtok,
-        avg_latency_ms, tokens_per_second,
-        reasoning_strength, code_strength,
-        deprecation_date, status
-      )
-    `)
-    .eq('tier', tier)
-    .eq('active', true)
-    .order('priority', { ascending: true })
+  // 4. Resolve tier → model IDs via in-code TIER_MAP (Strategy D Phase 1).
+  // preferred_provider routes to the Anthropic-only map when set.
+  const resolution = resolveTierToModel(
+    tier as ClassifierTier,
+    'standard',
+    constraints.preferred_provider,
+  )
+  const candidateIds = [resolution.primary, ...resolution.fallbacks]
 
-  if (aliasError || !aliasRows || aliasRows.length === 0) {
+  // Fetch those specific models from the catalog
+  const { data: modelRows, error: modelsError } = await supabase
+    .from('models')
+    .select('id, provider, display_name, tier, input_price_per_m, output_price_per_m, context_window, supports_tool_use, supports_vision, supports_reasoning, deprecated_at, is_routable')
+    .in('id', candidateIds)
+    .eq('is_routable', true)
+    .is('deprecated_at', null)
+
+  if (modelsError || !modelRows || modelRows.length === 0) {
     return NextResponse.json({
       error: 'No models available for the resolved tier',
       tier,
       signals,
-      hint: 'This tier may not have seed data yet. Run migration 023 in Supabase.',
+      resolved_ids: candidateIds,
+      hint: 'Resolved tier IDs are not present in the models catalog. Check src/lib/routing/tiers.ts against supabase/migrations/043_model_catalog.sql.',
     }, { status: 404 })
   }
 
-  // 5. Flatten into ModelCandidate[]
-  const candidates: ModelCandidate[] = aliasRows.map((a: any) => {
-    const m = Array.isArray(a.model_registry) ? a.model_registry[0] : a.model_registry
-    return {
+  // 5. Map to ModelCandidate, preserving the TIER_MAP order (primary first,
+  // then fallbacks). models.id is the canonical slug; provider_model_id is
+  // constructed as `${provider}/${id}` to match OpenRouter / SDK convention.
+  const rowsById = new Map(modelRows.map((m: any) => [m.id, m]))
+  const candidates: ModelCandidate[] = candidateIds
+    .map(id => rowsById.get(id))
+    .filter(Boolean)
+    .map((m: any, idx: number) => ({
       id: m.id,
-      slug: m.slug,
+      slug: m.id,
       display_name: m.display_name,
       provider: m.provider,
-      provider_model_id: m.provider_model_id,
-      priority: a.priority,
-      is_fallback: a.is_fallback,
-      input_cost_per_mtok: parseFloat(m.input_cost_per_mtok || '0'),
-      output_cost_per_mtok: parseFloat(m.output_cost_per_mtok || '0'),
-      avg_latency_ms: m.avg_latency_ms,
+      provider_model_id: `${m.provider}/${m.id}`,
+      priority: idx,
+      is_fallback: idx > 0,
+      input_cost_per_mtok: parseFloat(m.input_price_per_m || '0'),
+      output_cost_per_mtok: parseFloat(m.output_price_per_m || '0'),
+      avg_latency_ms: null,
       context_window: m.context_window,
-      supports_tool_calling: m.supports_tool_calling,
-      supports_structured_output: m.supports_structured_output,
+      supports_tool_calling: m.supports_tool_use,
+      // models table has no structured-output column; assume yes for all
+      // tier-mapped models (they're all modern frontier models).
+      supports_structured_output: true,
       supports_vision: m.supports_vision,
-      reasoning_strength: m.reasoning_strength,
-      code_strength: m.code_strength,
-      deprecation_date: m.deprecation_date,
-      // Outcome data will be populated below
+      reasoning_strength: null,
+      code_strength: null,
+      deprecation_date: m.deprecated_at,
       avg_quality_rating: null,
       success_rate: null,
       sample_size: null,
-    }
-  })
+    }))
 
   // 6. Fetch outcome stats per model (aggregate from model_outcome_records)
   const modelIds = candidates.map(c => c.id)

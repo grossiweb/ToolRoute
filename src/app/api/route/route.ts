@@ -155,6 +155,7 @@ export async function POST(request: NextRequest) {
     data_residency,
     require_effort_level,
     exclude_workload_tags,
+    preferred_provider,
   } = constraints
 
   const {
@@ -500,9 +501,18 @@ export async function POST(request: NextRequest) {
         tier = resolveModelTier(signals, task)
       }
 
-      // Resolve tier to model IDs in code — no model_aliases query
+      // Cost-aware override: certain task patterns (templated SEO, moderation,
+      // JSON synonym lists, high-volume bulk content) always route to a cheap
+      // tier regardless of what the LLM classifier returned. Prevents Opus
+      // bills for 100k-volume templated pipelines.
+      const { detectCostAwareTier } = await import('@/lib/task-classifier')
+      const costAwareTier = detectCostAwareTier(task)
+      if (costAwareTier) tier = costAwareTier
+
+      // Resolve tier to model IDs in code — no model_aliases query.
+      // preferred_provider constraint takes precedence over routing profile.
       const { resolveTierToModel } = await import('@/lib/routing/tiers')
-      const resolution = resolveTierToModel(tier as any, routingProfile)
+      const resolution = resolveTierToModel(tier as any, routingProfile, preferred_provider)
       tierResolution = resolution
 
       // Fetch primary from models table; walk fallbacks if primary not found

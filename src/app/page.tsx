@@ -185,9 +185,9 @@ export default function HomePage() {
                   marginBottom: 7, textTransform: 'uppercase', letterSpacing: 0.8,
                 }}>Task → Model</div>
                 {[
-                  { task: 'parse CSV', model: 'haiku-3.5' },
-                  { task: 'write unit tests', model: 'sonnet-3.7' },
-                  { task: 'architecture design', model: 'opus-4' },
+                  { task: 'parse CSV', model: 'claude-haiku-4-5' },
+                  { task: 'write unit tests', model: 'claude-sonnet-4-6' },
+                  { task: 'architecture design', model: 'claude-opus-4-6' },
                 ].map(r => (
                   <div key={r.task} style={{
                     display: 'flex', alignItems: 'center', gap: 8, padding: '7px 11px',
@@ -266,9 +266,9 @@ export default function HomePage() {
             {/* Fallback chain */}
             <div style={{ display: 'flex', flexDirection: 'column', gap: 0, marginTop: 18 }}>
               {[
-                { name: 'gpt-4o + firecrawl', status: 'timeout', dot: '#ef4444' },
-                { name: 'sonnet-3.5 + jina-reader', status: 'retrying…', dot: '#f59e0b' },
-                { name: 'haiku-3.5 + fetch', status: '94%', dot: '#10b981' },
+                { name: 'claude-opus-4-6 + firecrawl', status: 'timeout', dot: '#ef4444' },
+                { name: 'claude-sonnet-4-6 + jina-reader', status: 'retrying…', dot: '#f59e0b' },
+                { name: 'claude-haiku-4-5 + fetch', status: '94%', dot: '#10b981' },
               ].map((node, i) => (
                 <div key={node.name}>
                   <div style={{
@@ -473,7 +473,7 @@ export default function HomePage() {
 {`$ `}<span style={{ color: '#e5c07b' }}>toolroute route</span>{` `}<span style={{ color: 'var(--text-3)' }}>--task</span>{` `}<span style={{ color: 'var(--green)' }}>&quot;scrape product prices&quot;</span>{`
 
 `}<span style={{ color: 'var(--text-3)' }}># ToolRoute recommendation</span>{`
-`}<span style={{ color: 'var(--text-3)' }}>model:</span>{`      `}<span style={{ color: 'var(--green)' }}>claude-haiku-3.5</span>{`
+`}<span style={{ color: 'var(--text-3)' }}>model:</span>{`      `}<span style={{ color: 'var(--green)' }}>claude-haiku-4-5-20251001</span>{`
 `}<span style={{ color: 'var(--text-3)' }}>tool:</span>{`       `}<span style={{ color: 'var(--green)' }}>firecrawl-mcp</span>{`
 `}<span style={{ color: 'var(--text-3)' }}>tier:</span>{`       `}<span style={{ color: 'var(--green)' }}>2 / efficient</span>{`
 `}<span style={{ color: 'var(--text-3)' }}>cost_est:</span>{`   `}<span style={{ color: 'var(--green)' }}>$0.0008 / run</span>{`

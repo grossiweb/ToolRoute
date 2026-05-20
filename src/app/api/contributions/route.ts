@@ -1,3 +1,35 @@
+// ============================================================================
+// POST /api/contributions — MCP SKILL telemetry only.
+// ============================================================================
+//
+// This endpoint is for reporting MCP server (skill) executions. It does NOT
+// accept model telemetry.
+//
+// Required request shape (all contribution_type values):
+//   {
+//     "agent_identity_id": "uuid",       // optional, recommended for 2x credits
+//     "contribution_type": "run_telemetry" | "fallback_chain" |
+//                          "comparative_eval" | "benchmark_package",
+//     "payload": { ... }                 // shape varies by contribution_type
+//   }
+//
+// For contribution_type = "run_telemetry", the inner `payload` object MUST
+// contain either `skill_id` or `skill_slug` — those identify the MCP server
+// that was executed. Reports lacking both fail with HTTP 400:
+//     {"error":"run_telemetry requires skill_id or skill_slug"}
+//
+// ── Reporting LLM model usage? Use a different endpoint: ─────────────────────
+//   POST /api/report/model
+// ────────────────────────────────────────────────────────────────────────────
+//
+// Common mistake: sending `{ contribution_type: "run_telemetry", payload: {
+// model_used: "claude-...", outcome_status: "success" } }` here. That fails
+// because there is no skill_slug. Model telemetry belongs in /api/report/model
+// which writes to model_outcome_records (not outcome_records) and produces
+// model-specific routing learning. See GET /api/report/model for the full
+// schema of that endpoint.
+// ============================================================================
+
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS, TRUST_TIER_MODIFIERS } from '@/lib/scoring'
