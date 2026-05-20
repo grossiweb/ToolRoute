@@ -12,6 +12,10 @@ export async function GET(request: Request) {
 
   const supabase = createServerSupabaseClient()
 
+  // Phase 2 metrics: HEAD-count and aggregate-friendly queries below the
+  // main fetch block. ISO `now` is used for the active-notices filter.
+  const nowIso = new Date().toISOString()
+
   // Run all queries in parallel — capture errors too
   const [
     agentsResult,
@@ -29,8 +33,16 @@ export async function GET(request: Request) {
     challengesResult,
     challengeSubmissionsResult,
     contributingAgentsResult,
+    modelDecisionsCountResult,
+    skillDecisionsCountResult,
+    decisionPairsResult,
+    activeNoticesCountResult,
+    skillScoresResult,
   ] = await Promise.all([
-    supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at').eq('is_active', true),
+    // Agents query now includes project_context + routing_preferences so we
+    // can compute the Phase 2 adoption stats (project context, provider
+    // constraint) without an extra round trip.
+    supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, project_context, routing_preferences, created_at').eq('is_active', true),
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
     supabase.from('contribution_events').select('id, contributor_id, agent_identity_id, contribution_type, run_count, accepted, created_at').order('created_at', { ascending: false }).limit(500),
     supabase.from('reward_ledgers').select('id, contributor_id, agent_identity_id, routing_credits, reputation_points, economic_credits_usd, reason, created_at').order('created_at', { ascending: false }).limit(100),
@@ -48,6 +60,20 @@ export async function GET(request: Request) {
     // contributionsResult above limits to 500 for the recent-events list,
     // which would undercount distinct agents once we exceed that window.
     supabase.from('contribution_events').select('agent_identity_id').not('agent_identity_id', 'is', null),
+    // Recursive-loop metrics: HEAD counts where we just want a total, and a
+    // bounded (agent_identity_id, task_cluster) fetch we'll dedupe in JS
+    // for both memory_active_pairs and task_cluster_distribution.
+    supabase.from('model_routing_decisions').select('*', { count: 'exact', head: true }),
+    supabase.from('skill_routing_decisions').select('*', { count: 'exact', head: true }),
+    supabase.from('model_routing_decisions')
+      .select('agent_identity_id, task_cluster')
+      .not('agent_identity_id', 'is', null)
+      .not('task_cluster', 'is', null)
+      .range(0, 19999),
+    supabase.from('migration_notices').select('*', { count: 'exact', head: true })
+      .eq('is_active', true)
+      .or(`expires_at.is.null,expires_at.gt.${nowIso}`),
+    supabase.from('skill_scores').select('skill_id, score_version, updated_at').range(0, 999),
   ])
 
   // Collect any query errors for debugging
@@ -67,6 +93,11 @@ export async function GET(request: Request) {
   if (challengesResult.error) queryErrors.workflow_challenges = challengesResult.error.message
   if (challengeSubmissionsResult.error) queryErrors.challenge_submissions = challengeSubmissionsResult.error.message
   if (contributingAgentsResult.error) queryErrors.contributing_agents = contributingAgentsResult.error.message
+  if (modelDecisionsCountResult.error) queryErrors.model_decisions_count = modelDecisionsCountResult.error.message
+  if (skillDecisionsCountResult.error) queryErrors.skill_decisions_count = skillDecisionsCountResult.error.message
+  if (decisionPairsResult.error) queryErrors.decision_pairs = decisionPairsResult.error.message
+  if (activeNoticesCountResult.error) queryErrors.active_notices_count = activeNoticesCountResult.error.message
+  if (skillScoresResult.error) queryErrors.skill_scores = skillScoresResult.error.message
 
   const agents = agentsResult.data || []
   const outcomes = outcomeResult.data || []
@@ -99,6 +130,49 @@ export async function GET(request: Request) {
   const skillsWithOutcomeData = new Set(
     outcomes.map((o: any) => o.skill_id).filter(Boolean)
   ).size
+
+  // ── Recursive-loop metrics ────────────────────────────────────────────
+  const decisionPairs = decisionPairsResult.data || []
+  const skillScores = skillScoresResult.data || []
+
+  // Distinct (agent, cluster) combos. Capped at the 20k row fetch above —
+  // currently safe (12.5k rows total), revisit if model_routing_decisions
+  // exceeds 20k and exact accuracy matters more than one query.
+  const memoryActivePairs = new Set(
+    decisionPairs.map((r: any) => `${r.agent_identity_id}|${r.task_cluster}`)
+  ).size
+
+  // Top 8 task clusters by all-time count.
+  const clusterCounts: Record<string, number> = {}
+  for (const r of decisionPairs) {
+    if (r.task_cluster) clusterCounts[r.task_cluster] = (clusterCounts[r.task_cluster] || 0) + 1
+  }
+  const taskClusterDistribution = Object.entries(clusterCounts)
+    .sort(([, a], [, b]) => b - a)
+    .slice(0, 8)
+    .map(([cluster, count]) => ({ cluster, count }))
+
+  // Phase 2 adoption stats — computed from the agents array (which now
+  // includes project_context + routing_preferences).
+  const agentsWithProjectContext = agents.filter((a: any) => {
+    const pc = a.project_context
+    return pc && typeof pc === 'object' && !Array.isArray(pc) && Object.keys(pc).length > 0
+  }).length
+  const agentsWithProviderConstraint = agents.filter((a: any) => {
+    const providers = a.routing_preferences?.available_providers
+    return Array.isArray(providers) && providers.length > 0
+  }).length
+
+  // Score version distribution + last recalc timestamp.
+  const scoreVersionCounts: Record<string, number> = {}
+  let lastScoreRecalcAt: string | null = null
+  for (const s of skillScores) {
+    const v = s.score_version || 'unknown'
+    scoreVersionCounts[v] = (scoreVersionCounts[v] || 0) + 1
+    if (s.updated_at && (!lastScoreRecalcAt || s.updated_at > lastScoreRecalcAt)) {
+      lastScoreRecalcAt = s.updated_at
+    }
+  }
 
   // Compute summaries
   const totalCredits = rewards.reduce((sum: number, r: any) => sum + (r.routing_credits || 0), 0)
@@ -179,8 +253,19 @@ export async function GET(request: Request) {
       avg_quality_rating: avgQualityRating,
       verified_agents: verifiedAgents,
       human_verified_agents: humanVerifiedAgents,
+      agents_with_project_context: agentsWithProjectContext,
+      agents_with_provider_constraint: agentsWithProviderConstraint,
       trust_tier_breakdown: trustTierBreakdown,
       top_skills: topSkills,
+    },
+    recursive_loop: {
+      model_routing_decisions_total: modelDecisionsCountResult.count ?? 0,
+      skill_routing_decisions_total: skillDecisionsCountResult.count ?? 0,
+      memory_active_pairs: memoryActivePairs,
+      active_migration_notices: activeNoticesCountResult.count ?? 0,
+      task_cluster_distribution: taskClusterDistribution,
+      score_version_distribution: scoreVersionCounts,
+      last_score_recalc_at: lastScoreRecalcAt,
     },
     summary: {
       registered_agents: agents.length,

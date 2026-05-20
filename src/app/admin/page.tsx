@@ -137,6 +137,8 @@ export default function AdminPage() {
           <HealthCard label="Acceptance Rate" value={g.acceptance_rate_pct ?? 0} unit="%" color={healthColor(g.acceptance_rate_pct ?? 0, 70, 50)} />
           <HealthCard label="Avg Quality" value={g.avg_quality_rating ?? '—'} unit={g.avg_quality_rating ? '/10' : ''} color={healthColor(g.avg_quality_rating ?? 0, 7, 5)} />
           <HealthCard label="Verified Agents" value={g.verified_agents ?? 0} unit="" color="var(--blue)" />
+          <HealthCard label="Project Context" value={g.agents_with_project_context ?? 0} unit="" color="var(--blue)" note="Phase 2 adoption" />
+          <HealthCard label="Provider Constraint" value={g.agents_with_provider_constraint ?? 0} unit="" color="var(--blue)" note="Phase 2 adoption" />
         </div>
       </div>
 
@@ -180,6 +182,38 @@ export default function AdminPage() {
         <StatCard label="Challenges" value={s.workflow_challenges} />
         <StatCard label="Challenge Subs" value={s.challenge_submissions} />
       </div>
+
+      {/* Recursive Loop Health — Phase 1+2 routing memory metrics */}
+      {stats?.recursive_loop && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+            Recursive Loop Health
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 16 }}>
+            <StatCard label="Model Routing Decisions" value={stats.recursive_loop.model_routing_decisions_total} />
+            <StatCard label="Skill Routing Decisions" value={stats.recursive_loop.skill_routing_decisions_total} />
+            <StatCard label="Memory-Active Pairs" value={stats.recursive_loop.memory_active_pairs} />
+            <StatCard label="Active Notices" value={stats.recursive_loop.active_migration_notices} />
+          </div>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <Section title="Task Cluster Distribution">
+              <Table
+                headers={['Cluster', 'Count']}
+                rows={(stats.recursive_loop.task_cluster_distribution || []).map((c: any) => [c.cluster, c.count])}
+              />
+            </Section>
+            <Section title="Score Version Distribution">
+              <Table
+                headers={['Version', 'Skills']}
+                rows={Object.entries(stats.recursive_loop.score_version_distribution || {}).sort(([,a],[,b]) => (b as number) - (a as number)).map(([v, n]: any) => [v, n])}
+              />
+              <p style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)', marginTop: 8 }}>
+                Last recalc: {stats.recursive_loop.last_score_recalc_at ? new Date(stats.recursive_loop.last_score_recalc_at).toLocaleString() : '—'}
+              </p>
+            </Section>
+          </div>
+        </div>
+      )}
 
       {/* Two Column Layout */}
       <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 20 }}>
