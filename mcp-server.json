@@ -14,7 +14,7 @@
   "capabilities": {
     "tools": true,
     "resources": false,
-    "prompts": true
+    "prompts": false
   },
   "tools": [
     {

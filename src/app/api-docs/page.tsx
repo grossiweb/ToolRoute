@@ -293,6 +293,59 @@ const endpoints = [
     notes: 'Only agent_name is required. Returns existing agent if already registered. Include agent_identity_id in /api/route, /api/report, and /api/missions/claim for 2x credit multiplier.',
   },
   {
+    method: 'POST',
+    path: '/api/agents/preferences',
+    title: 'Agents: Update Preferences',
+    description: 'Set routing preferences and/or project_context on an existing agent. Present fields overwrite; absent fields keep the existing value. Empty arrays are meaningful (clear the constraint).',
+    request: `{
+  "agent_identity_id": "uuid",
+  "preferences": {
+    "allow_china": false,
+    "regulated_industries": ["finance"],
+    "available_providers": ["anthropic", "openai"]
+  },
+  "project_context": {
+    "framework": "next.js",
+    "language": "typescript",
+    "stack_tags": ["supabase", "vercel"]
+  }
+}`,
+    response: `{
+  "agent_identity_id": "uuid",
+  "preferences": { "allow_china": false, "regulated_industries": ["finance"], "available_providers": ["anthropic","openai"] },
+  "project_context": { "framework": "next.js", "language": "typescript", "stack_tags": ["supabase","vercel"] },
+  "resolved_profile": "standard"
+}`,
+    notes: 'At least one of `preferences` or `project_context` must be provided. The resolved profile maps to the TIER_MAP variant used for this agent on the next /api/route call. See src/lib/routing/tiers.ts.',
+  },
+  {
+    method: 'GET',
+    path: '/api/agents/{id}/memory',
+    title: 'Agents: Routing Memory',
+    description: 'Per-cluster routing history for an agent. Summary view returns top clusters by call count for both model and skill routing. Pass ?cluster=<key> for the detailed memory of one cluster.',
+    request: `GET /api/agents/{id}/memory
+GET /api/agents/{id}/memory?cluster=fast_code:code_present
+
+Headers:
+  Authorization: Bearer <agent_identity_id>     # agent fetching own memory
+  Authorization: Bearer <ADMIN_SECRET>          # admin override`,
+    response: `{
+  "agent_identity_id": "uuid",
+  "agent_name": "claudia",
+  "model_memory": {
+    "total_calls": 47,
+    "distinct_clusters": 8,
+    "top_clusters": [{ "cluster": "fast_code:code_present", "call_count": 12, "success_rate": 0.92, "avg_quality": 8.1, "historical_model": "claude-sonnet-4-6" }]
+  },
+  "skill_memory": {
+    "total_calls": 18,
+    "distinct_clusters": 5,
+    "top_clusters": [{ "cluster": "research", "call_count": 6, "success_rate": 0.83, "historical_skill": "exa-mcp-server" }]
+  }
+}`,
+    notes: 'Memory helpers return null when sample_size < 3 or the lookup exceeds 200ms. Soft auth: bearer must equal the agent_identity_id in the path, or the admin secret.',
+  },
+  {
     method: 'GET',
     path: '/api/challenges',
     title: 'Challenges — Browse Workflow Challenges',
