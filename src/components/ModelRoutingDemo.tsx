@@ -1,6 +1,54 @@
 'use client'
 
-import { useState, useEffect, useRef } from 'react'
+/**
+ * ModelRoutingDemo — homepage routing demo.
+ *
+ * The default task ('write a python function to parse CSV') renders a
+ * cached response (STATIC_DEFAULT_RESULT below) synchronously on mount.
+ * No API call, no loading state. Custom tasks (anything not equal to
+ * DEFAULT_TASK) fire the real POST /api/route/model.
+ *
+ * Why: the auto-fire on every page load was producing ~18k POST /api/route/model
+ * calls per day in Vercel logs — almost all from bots/crawlers visiting the
+ * homepage with no user interaction.
+ *
+ * STATIC_DEFAULT_RESULT was captured from a live POST /api/route/model on
+ * 2026-05-20 with task='write a python function to parse CSV'. If the API
+ * response shape changes (new top-level field, renamed key, removed value),
+ * update STATIC_DEFAULT_RESULT below AND this comment block on the same day.
+ *
+ * Expected top-level fields in /api/route/model response:
+ *   recommended_model      string        e.g. 'toolroute/fast_code'
+ *   model_details          object        slug, display_name, provider,
+ *                                        provider_model_id, input_cost_per_mtok,
+ *                                        output_cost_per_mtok, context_window,
+ *                                        supports_tool_calling,
+ *                                        supports_structured_output,
+ *                                        supports_vision
+ *   tier                   string
+ *   tier_description       object        name, description, use_case
+ *   confidence             number        0–1
+ *   signals                object        tools_needed, structured_output_needed,
+ *                                        code_present, complex_reasoning,
+ *                                        creative_writing, signal_count
+ *   estimated_cost         object        estimated_input_tokens,
+ *                                        estimated_output_tokens,
+ *                                        estimated_cost_usd
+ *   fallback_chain         array<object> slug, provider, display_name
+ *   escalation             object|null   next_tier, trigger, alias
+ *   reasoning              string
+ *   routing_metadata       object        decision_id, routing_latency_ms,
+ *                                        candidates_evaluated,
+ *                                        candidates_after_filter,
+ *                                        constraints_applied,
+ *                                        outcome_data_available
+ *   wanted_telemetry       object        report_endpoint, decision_id,
+ *                                        reward_multiplier, fields, one_liner
+ *   register_hint          object        message, action, body
+ *   earn_more              object        challenges, mcp_routing
+ */
+
+import { useState } from 'react'
 
 const EXAMPLE_TASKS = [
   'write a python function to parse CSV',
@@ -13,21 +61,118 @@ const EXAMPLE_TASKS = [
 
 const DEFAULT_TASK = 'write a python function to parse CSV'
 
+// Captured from live POST /api/route/model on 2026-05-20 — see comment block above.
+const STATIC_DEFAULT_RESULT = {
+  recommended_model: 'toolroute/fast_code',
+  model_details: {
+    slug: 'deepseek-v3',
+    display_name: 'DeepSeek V3',
+    provider: 'deepseek',
+    provider_model_id: 'deepseek-chat',
+    input_cost_per_mtok: 0.14,
+    output_cost_per_mtok: 0.28,
+    context_window: 128000,
+    supports_tool_calling: true,
+    supports_structured_output: true,
+    supports_vision: false,
+  },
+  tier: 'fast_code',
+  tier_description: {
+    name: 'Fast Code',
+    description: 'High-quality code generation and editing models',
+    use_case: 'Write functions, refactor code, fix bugs, generate tests, code review',
+  },
+  confidence: 0.8,
+  signals: {
+    tools_needed: false,
+    structured_output_needed: true,
+    code_present: true,
+    complex_reasoning: false,
+    creative_writing: false,
+    signal_count: 2,
+  },
+  estimated_cost: {
+    estimated_input_tokens: 500,
+    estimated_output_tokens: 800,
+    estimated_cost_usd: 0.000294,
+  },
+  fallback_chain: [
+    { slug: 'gpt-4o', provider: 'openai', display_name: 'GPT-4o' },
+    { slug: 'claude-sonnet-4-6', provider: 'anthropic', display_name: 'Claude Sonnet 4.6' },
+  ],
+  escalation: {
+    next_tier: 'reasoning_pro',
+    trigger: 'If complex logic or multi-step planning needed',
+    alias: 'toolroute/reasoning_pro',
+  },
+  reasoning:
+    'Detected signals: structured output, code generation. Routed to fast_code. DeepSeek V3 (deepseek) selected as primary from 5 candidates. Input cost: $0.14/Mtok.',
+  routing_metadata: {
+    decision_id: '4979461c-db19-4e94-8757-0dd4064b4938',
+    routing_latency_ms: 56,
+    candidates_evaluated: 5,
+    candidates_after_filter: 5,
+    constraints_applied: [] as string[],
+    outcome_data_available: false,
+  },
+  wanted_telemetry: {
+    report_endpoint: '/api/report/model',
+    decision_id: '4979461c-db19-4e94-8757-0dd4064b4938',
+    reward_multiplier: 1.5,
+    fields: [
+      'latency_ms',
+      'input_tokens',
+      'output_tokens',
+      'estimated_cost_usd',
+      'output_quality_rating',
+      'outcome_status',
+    ],
+    one_liner:
+      'Report how this model performed → earn routing credits → improve routing for all agents',
+  },
+  register_hint: {
+    message: 'Register your agent for 2x credit bonuses on model telemetry reports.',
+    action: 'POST /api/agents/register',
+    body: { agent_name: 'your-agent-name' },
+  },
+  earn_more: {
+    challenges: {
+      message:
+        'Workflow Challenges pay 3x credits — pick a business task, choose your own model + tools, compete for Gold.',
+      endpoint: 'GET /api/challenges',
+    },
+    mcp_routing: {
+      message: 'Need an MCP server too? POST /api/route for tool recommendations.',
+      endpoint: 'POST /api/route',
+    },
+  },
+} as const
+
 // GPT-4o baseline costs for savings calculation
 const GPT4O_INPUT_COST = 2.5 // per MTok
 const GPT4O_OUTPUT_COST = 10.0 // per MTok
 
 export function ModelRoutingDemo() {
   const [task, setTask] = useState(DEFAULT_TASK)
-  const [result, setResult] = useState<any>(null)
+  // Initialized with the cached default response so the result is visible
+  // immediately on mount — no spinner, no API call for the default task.
+  const [result, setResult] = useState<any>(STATIC_DEFAULT_RESULT)
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [resultCopied, setResultCopied] = useState(false)
-  const autoFired = useRef(false)
 
   async function handleRoute(taskOverride?: string) {
     const t = taskOverride || task
     if (!t.trim()) return
+
+    // Default task: serve the cached response without hitting the API.
+    // Live calls only fire when the user submits a custom task.
+    if (t === DEFAULT_TASK) {
+      setError('')
+      setResult(STATIC_DEFAULT_RESULT)
+      return
+    }
+
     setLoading(true)
     setError('')
     setResult(null)
@@ -79,14 +224,6 @@ ${result.reasoning || ''}`
     setResultCopied(true)
     setTimeout(() => setResultCopied(false), 2000)
   }
-
-  // Auto-fire on first render with default task
-  useEffect(() => {
-    if (!autoFired.current) {
-      autoFired.current = true
-      handleRoute(DEFAULT_TASK)
-    }
-  }, []) // eslint-disable-line react-hooks/exhaustive-deps
 
   const savings = result ? calcSavings() : null
 
