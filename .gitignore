@@ -15,6 +15,7 @@ hook/dist/
 .claude/
 .cursor/
 .vscode/
+.mcp.json
 
 # SDK tooling binaries
 sdk/mcp-publisher.exe
