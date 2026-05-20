@@ -28,6 +28,7 @@ export async function GET() {
       output_quality_rating: 'Agent-asserted quality 0-10 (lowest trust weight — prefer output_snippet)',
       output_snippet: 'First 500 chars of model output — enables LLM quality verification (highest trust)',
       task: 'The task/prompt you sent to the model — used by LLM evaluator alongside output_snippet',
+      task_description: 'Synonym for `task` — accepted interchangeably',
       retry_count: 'How many retries were needed before success (0 = clean run)',
       structured_output_valid: 'Did the model produce valid structured output? (boolean)',
       tool_calls_succeeded: 'Did tool calls succeed? (boolean)',
@@ -35,6 +36,8 @@ export async function GET() {
       fallback_used: 'Did you fall back to a different model? (boolean)',
       fallback_model_slug: 'Which model did you fall back to?',
       agent_identity_id: 'Your agent UUID for credit tracking',
+      human_correction_required: 'Did a human need to correct the output? (boolean) — fully automated pipelines should pass false',
+      human_correction_minutes: 'Minutes of human correction effort (int)',
     },
     quality_verification: {
       note: 'Quality is verified independently — self-reported ratings have 50% weight vs 100% for LLM-verified',
@@ -112,6 +115,7 @@ export async function POST(request: NextRequest) {
     output_quality_rating,
     output_snippet,
     task,
+    task_description,
     retry_count,
     structured_output_valid,
     tool_calls_succeeded,
@@ -119,11 +123,15 @@ export async function POST(request: NextRequest) {
     fallback_used,
     fallback_model_slug,
     agent_identity_id,
+    human_correction_required,
+    human_correction_minutes,
     // Cryptographic commitment fields (Option B)
     commitment_hash,
     report_signature,
     report_timestamp,
   } = body
+
+  const taskText = task ?? task_description ?? null
 
   // ── Signature verification ──────────────────────────────────────────────────
   let proofType: 'client_signed' | 'self_reported' = 'self_reported'
@@ -225,7 +233,7 @@ export async function POST(request: NextRequest) {
       estimated_cost_usd: estimated_cost_usd ?? null,
       output_quality_rating: output_quality_rating ?? null,
       output_snippet: output_snippet ? String(output_snippet).slice(0, 500) : null,
-      task_context: task ? String(task).slice(0, 300) : null,
+      task_context: taskText ? String(taskText).slice(0, 300) : null,
       computed_quality: parseFloat(computedQuality.toFixed(2)),
       retry_count: retry_count ?? 0,
       structured_output_valid: structured_output_valid ?? null,
@@ -234,6 +242,8 @@ export async function POST(request: NextRequest) {
       fallback_used: fallback_used ?? false,
       fallback_model_slug: fallback_model_slug ?? null,
       agent_identity_id: agent_identity_id ?? null,
+      human_correction_required: human_correction_required ?? null,
+      human_correction_minutes: human_correction_minutes ?? null,
       proof_type: proofType,
       commitment_hash: commitment_hash ?? null,
       report_signature: report_signature ?? null,
@@ -262,7 +272,7 @@ export async function POST(request: NextRequest) {
   if (structured_output_valid != null) fieldCount++
   if (tool_calls_succeeded != null) fieldCount++
   if (output_snippet != null) fieldCount += 2  // snippet = +2 (enables LLM verification)
-  if (task != null) fieldCount++
+  if (taskText != null) fieldCount++
 
   const validity = Math.min(0.3 + fieldCount * 0.08, 1.0)
   const usefulness = Math.min(0.4 + fieldCount * 0.07, 0.9)
@@ -314,8 +324,8 @@ export async function POST(request: NextRequest) {
   const reputation = Math.round(credits * 0.5)
 
   // Schedule async LLM quality verification if snippet + task provided
-  if (accepted && output_snippet && task) {
-    scheduleVerifiedQualityUpdate(supabase, outcome.id, 'model_outcome_records', task, output_snippet)
+  if (accepted && output_snippet && taskText) {
+    scheduleVerifiedQualityUpdate(supabase, outcome.id, 'model_outcome_records', taskText, output_snippet)
   }
 
   // Issue rewards — requires contributor_id (NOT NULL in reward_ledgers)
@@ -385,8 +395,8 @@ export async function POST(request: NextRequest) {
     accepted,
     quality: {
       computed: parseFloat(computedQuality.toFixed(1)),
-      verified: output_snippet && task ? 'pending_async' : null,
-      note: output_snippet && task
+      verified: output_snippet && taskText ? 'pending_async' : null,
+      note: output_snippet && taskText
         ? 'LLM verification queued — verified_quality will update within seconds.'
         : 'Add output_snippet + task for independent LLM quality verification (+credits)',
     },
