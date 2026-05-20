@@ -3,51 +3,54 @@
 import { useState, useEffect } from 'react'
 
 type Decision = {
-  task: string
-  agent: string
-  win: string
-  lose: string
-  score: string
-  time: string
+  id: string
+  agent_name: string | null
+  task_snippet: string | null
+  resolved_tier: string | null
+  task_cluster: string | null
+  created_at: string
 }
 
-// Illustrative sample data — NOT live production traffic. The header below is
-// labeled "sample feed" to make this clear to visitors.
-const INIT: Decision[] = [
-  { task: 'scrape competitor pricing',   agent: 'agent_42f', win: 'firecrawl-mcp',  lose: 'jina-reader',  score: '94%', time: '2s ago' },
-  { task: 'parse CSV → structured JSON', agent: 'agent_7ba', win: 'claude-haiku-4-5', lose: 'gpt-5-nano', score: '97%', time: '5s ago' },
-  { task: 'summarize GitHub diff',       agent: 'agent_1cc', win: 'github-mcp',     lose: 'file-read',    score: '88%', time: '11s ago' },
-  { task: 'send Slack notification',     agent: 'agent_9e2', win: 'slack-mcp',      lose: 'zapier',       score: '99%', time: '18s ago' },
-  { task: 'web search: AI news today',   agent: 'agent_3d5', win: 'exa-mcp-server', lose: 'brave-search', score: '91%', time: '24s ago' },
-]
-
-const MORE: Decision[] = [
-  { task: 'extract table from PDF',      agent: 'agent_f11', win: 'pdf-reader-mcp', lose: 'gpt-vision',          score: '86%', time: '' },
-  { task: 'run SQL on warehouse',        agent: 'agent_0a8', win: 'postgres-mcp',   lose: 'direct api',          score: '93%', time: '' },
-  { task: 'translate email to French',   agent: 'agent_c55', win: 'claude-haiku-4-5', lose: 'deepl-mcp',         score: '96%', time: '' },
-  { task: 'lint TypeScript project',     agent: 'agent_88d', win: 'eslint-mcp',     lose: 'claude-sonnet-4-6',   score: '89%', time: '' },
-  { task: 'get Notion page content',     agent: 'agent_2b7', win: 'notion-mcp',     lose: 'fetch-url',           score: '98%', time: '' },
-]
-
-const TIMES = ['just now', '2s ago', '5s ago', '11s ago', '18s ago']
+function relativeTime(iso: string): string {
+  const diffMs = Date.now() - new Date(iso).getTime()
+  const s = Math.max(1, Math.floor(diffMs / 1000))
+  if (s < 60) return `${s}s ago`
+  const m = Math.floor(s / 60)
+  if (m < 60) return `${m}m ago`
+  const h = Math.floor(m / 60)
+  if (h < 24) return `${h}h ago`
+  const d = Math.floor(h / 24)
+  return `${d}d ago`
+}
 
 export function DecisionsFeed() {
-  const [rows, setRows] = useState<Decision[]>(INIT)
-  const [idx, setIdx] = useState(0)
+  const [rows, setRows] = useState<Decision[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
-    const interval = setInterval(() => {
-      setIdx(prev => {
-        const next = prev + 1
-        const newRow = { ...MORE[next % MORE.length], time: 'just now' }
-        setRows(cur => {
-          const updated = [newRow, ...cur.slice(0, 4)]
-          return updated.map((r, i) => ({ ...r, time: TIMES[i] || r.time }))
-        })
-        return next
-      })
-    }, 3800)
-    return () => clearInterval(interval)
+    let cancelled = false
+    async function load() {
+      try {
+        const res = await fetch('/api/recent-decisions', { cache: 'no-store' })
+        if (!res.ok) throw new Error(`HTTP ${res.status}`)
+        const json = await res.json()
+        if (!cancelled) {
+          setRows((json.decisions || []).slice(0, 5))
+          setError(null)
+        }
+      } catch (e: any) {
+        if (!cancelled) setError(e.message || 'fetch failed')
+      } finally {
+        if (!cancelled) setLoading(false)
+      }
+    }
+    load()
+    const interval = setInterval(load, 30000)
+    return () => {
+      cancelled = true
+      clearInterval(interval)
+    }
   }, [])
 
   return (
@@ -66,42 +69,54 @@ export function DecisionsFeed() {
         background: 'var(--bg3)',
       }}>
         <span style={{
-          width: 6, height: 6, borderRadius: '50%',
-          background: 'var(--text-3)',
-        }} />
-        <span style={{
           fontFamily: 'var(--mono)', fontSize: 11,
           color: 'var(--text-2)', letterSpacing: 0.5, flex: 1,
-        }}>Sample decisions</span>
+        }}>Recent routing decisions</span>
         <span style={{
           fontFamily: 'var(--mono)', fontSize: 10,
           color: 'var(--text-3)', textTransform: 'uppercase',
           letterSpacing: 1,
           background: 'var(--bg3)',
           padding: '2px 7px', borderRadius: 4,
-        }}>simulated</span>
+        }}>Recent</span>
       </div>
 
       {/* Rows */}
-      {rows.map((d, i) => (
-        <div key={`${d.task}-${i}`} style={{
-          display: 'flex', alignItems: 'center', gap: 8,
-          padding: '8px 15px',
-          borderBottom: i < rows.length - 1 ? '1px solid var(--border)' : 'none',
+      {loading && rows.length === 0 && (
+        <div style={{
+          padding: '14px 15px',
           fontFamily: 'var(--mono)', fontSize: 11,
-          animation: i === 0 ? 'fadeSlideIn .3s ease' : undefined,
-          transition: 'background .15s',
-        }}>
-          <span style={{ flex: 1, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{d.task}</span>
-          <span style={{ color: 'var(--text-3)', fontSize: 10, minWidth: 58 }}>{d.agent}</span>
-          <span style={{ color: 'var(--border-bright)' }}>picked</span>
-          <span style={{ color: 'var(--amber)', fontWeight: 500 }}>{d.win}</span>
-          <span style={{ color: 'var(--border-bright)' }}>over</span>
-          <span style={{ color: 'var(--text-3)', textDecoration: 'line-through' }}>{d.lose}</span>
-          <span style={{ color: 'var(--green)', fontSize: 10, minWidth: 34, textAlign: 'right' }}>{d.score}</span>
-          <span style={{ color: 'var(--text-3)', fontSize: 10, minWidth: 40, textAlign: 'right' }}>{d.time}</span>
-        </div>
-      ))}
+          color: 'var(--text-3)',
+        }}>Loading…</div>
+      )}
+      {error && rows.length === 0 && (
+        <div style={{
+          padding: '14px 15px',
+          fontFamily: 'var(--mono)', fontSize: 11,
+          color: 'var(--text-3)',
+        }}>No recent decisions available.</div>
+      )}
+      {rows.map((d, i) => {
+        const task = d.task_snippet || d.task_cluster || '(no task)'
+        const agent = d.agent_name || 'anon'
+        const tier = d.resolved_tier || d.task_cluster || '—'
+        return (
+          <div key={d.id} style={{
+            display: 'flex', alignItems: 'center', gap: 8,
+            padding: '8px 15px',
+            borderBottom: i < rows.length - 1 ? '1px solid var(--border)' : 'none',
+            fontFamily: 'var(--mono)', fontSize: 11,
+            animation: i === 0 ? 'fadeSlideIn .3s ease' : undefined,
+            transition: 'background .15s',
+          }}>
+            <span style={{ flex: 1, color: 'var(--text-2)', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{task}</span>
+            <span style={{ color: 'var(--text-3)', fontSize: 10, minWidth: 58, overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }}>{agent}</span>
+            <span style={{ color: 'var(--border-bright)' }}>→</span>
+            <span style={{ color: 'var(--amber)', fontWeight: 500 }}>{tier}</span>
+            <span style={{ color: 'var(--text-3)', fontSize: 10, minWidth: 50, textAlign: 'right' }}>{relativeTime(d.created_at)}</span>
+          </div>
+        )
+      })}
     </div>
   )
 }

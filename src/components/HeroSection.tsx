@@ -169,7 +169,7 @@ export function HeroSection() {
         fontSize: 18, color: 'var(--text-2)', maxWidth: 560,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server{' '}<MCPTooltip />{' '}for each task: Claude Opus 4.7 quality at a fraction of the cost across 132 real benchmark runs.
+        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server{' '}<MCPTooltip />{' '}for each task — routing decisions backed by 132+ real benchmark executions.
       </p>
 
       {/* CTA buttons */}

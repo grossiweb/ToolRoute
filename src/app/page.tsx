@@ -2,6 +2,7 @@ import { HeroSection } from '@/components/HeroSection'
 import { ConnectBlock } from '@/components/ConnectBlock'
 import { DecisionsFeed } from '@/components/DecisionsFeed'
 import { LiveTryIt } from '@/components/LiveTryIt'
+import { HomeStats } from '@/components/HomeStats'
 import { Suspense } from 'react'
 
 export const revalidate = 60
@@ -12,37 +13,9 @@ export default function HomePage() {
       {/* Hero — full viewport */}
       <HeroSection />
 
-      {/* Stats bar */}
+      {/* Stats bar — live data from /api/stats/public */}
       <div className="home-section" style={{ padding: '0 40px', maxWidth: 1240, margin: '0 auto' }}>
-        <div className="stats-bar" style={{
-          border: '1px solid var(--border)', borderRadius: 'var(--radius-lg)',
-          background: 'var(--bg2)', display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', overflow: 'hidden',
-        }}>
-          {[
-            { num: '0', label: 'Losses vs GPT-4o' },
-            { num: '10-40x', label: 'Cost savings' },
-            { num: '132', label: 'Benchmark runs' },
-            { num: '100%', label: 'Free to use' },
-          ].map((s, i) => (
-            <div key={i} style={{
-              padding: '28px 32px',
-              borderRight: i < 3 ? '1px solid var(--border)' : 'none',
-            }}>
-              <div style={{
-                fontFamily: 'var(--serif)', fontSize: 44, lineHeight: 1,
-                color: 'var(--text)', marginBottom: 4, fontStyle: 'italic',
-              }}>
-                {s.num}
-              </div>
-              <div style={{
-                fontFamily: 'var(--mono)', fontSize: 11,
-                color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 0.8,
-              }}>
-                {s.label}
-              </div>
-            </div>
-          ))}
-        </div>
+        <HomeStats />
       </div>
 
       {/* Try It + Code section */}

@@ -6,12 +6,12 @@ import { NavBar } from '@/components/NavBar'
 import { ThemeScript } from '@/components/ThemeScript'
 
 export const metadata: Metadata = {
-  title: 'ToolRoute — AI Model Routing Platform | Claude Opus 4.7 Quality at a Fraction of the Cost',
-  description: 'ToolRoute is an AI model routing platform for agent developers. Automatically select the optimal model and MCP server for each task. Claude Opus 4.7 quality at a fraction of the cost, proven across 132 real benchmark runs.',
+  title: 'ToolRoute — AI Model Routing Platform | The Right Model for Every Task',
+  description: 'ToolRoute is an AI model routing platform for agent developers. The right model for every task, at the right cost — routing decisions backed by real execution data.',
   metadataBase: new URL('https://toolroute.io'),
   openGraph: {
-    title: 'ToolRoute — AI Model Routing Platform | Claude Opus 4.7 Quality at a Fraction of the Cost',
-    description: 'ToolRoute is an AI model routing platform for agent developers. Automatically select the optimal model and MCP server for each task. Claude Opus 4.7 quality at a fraction of the cost.',
+    title: 'ToolRoute — AI Model Routing Platform | The Right Model for Every Task',
+    description: 'The right model for every task, at the right cost — routing decisions backed by real execution data.',
     url: 'https://toolroute.io',
     siteName: 'ToolRoute',
     type: 'website',
@@ -19,8 +19,8 @@ export const metadata: Metadata = {
   },
   twitter: {
     card: 'summary_large_image',
-    title: 'ToolRoute — AI Model Routing Platform | Claude Opus 4.7 Quality at a Fraction of the Cost',
-    description: 'ToolRoute is an AI model routing platform for agent developers. Automatically select the optimal model and MCP server for each task. Claude Opus 4.7 quality at a fraction of the cost.',
+    title: 'ToolRoute — AI Model Routing Platform | The Right Model for Every Task',
+    description: 'The right model for every task, at the right cost — routing decisions backed by real execution data.',
     images: ['/api/og?title=ToolRoute&type=server'],
   },
 }
