@@ -2,14 +2,13 @@
 
 import { useState } from 'react'
 
-type Tab = 'claude-code' | 'claude-desktop' | 'cursor' | 'openrouter' | 'python' | 'litellm' | 'curl'
+type Tab = 'claude-code' | 'claude-desktop' | 'cursor' | 'openrouter' | 'litellm' | 'curl'
 
 const LABELS: Record<Tab, string> = {
   'claude-code': 'Claude Code',
   'claude-desktop': 'SSE / JSON',
   cursor: 'Cursor',
   openrouter: 'OpenRouter',
-  python: 'Python',
   litellm: 'LiteLLM',
   curl: 'cURL',
 }
@@ -63,17 +62,17 @@ const openrouter = new OpenAI({
 
 // 1. Ask ToolRoute which model + tool to use
 const rec = await tr.route({ task: "parse CSV" })
-// → { model: "haiku-3.5", tool: "csv-parser-mcp", cost: "$0.001", confidence: 0.94 }
+// → { recommended_skill: "csv-parser-mcp",
+//     recommended_model: { slug: "claude-haiku-4-5-20251001",
+//                          provider: "anthropic",
+//                          provider_model_id: "anthropic/claude-haiku-4-5-20251001",
+//                          tier: "cheap_chat", ... },
+//     confidence: 0.94, ... }
 
 // 2. Call via OpenRouter with the recommendation
 const res = await openrouter.chat.completions.create({
-  model: rec.model_details.provider_model_id
+  model: rec.recommended_model.provider_model_id
 })`,
-    python: `from toolroute import ToolRoute
-
-tr = ToolRoute()
-model = tr.model.route(task="parse CSV file")
-tool = tr.route(task="web scraping")`,
     litellm: `# Use ToolRoute to pick the model, LiteLLM to call it
 import litellm
 import requests
@@ -152,21 +151,12 @@ response = litellm.completion(
         {'\n'}
         <span style={cc}>{'// 1. Ask ToolRoute which model + tool to use'}</span>{'\n'}
         <span style={ck}>const</span>{' rec = '}<span style={ck}>await</span>{' tr.route({ task: '}<span style={cs}>&quot;parse CSV&quot;</span>{' })\n'}
-        <span style={cc}>{'// → '}<span style={co}>{'{ model: "haiku-3.5", tool: "csv-parser-mcp", cost: "$0.001", confidence: 0.94 }'}</span></span>{'\n'}
+        <span style={cc}>{'// → '}<span style={co}>{'{ recommended_skill: "csv-parser-mcp", recommended_model: { slug: "claude-haiku-4-5-20251001", ... }, confidence: 0.94 }'}</span></span>{'\n'}
         {'\n'}
         <span style={cc}>{'// 2. Call via OpenRouter with the recommendation'}</span>{'\n'}
         <span style={ck}>const</span>{' res = '}<span style={ck}>await</span>{' openrouter.chat.completions.create({\n'}
-        {'  model: rec.'}<span style={cp}>model_details</span>{'.'}<span style={cp}>provider_model_id</span>{'\n'}
+        {'  model: rec.'}<span style={cp}>recommended_model</span>{'.'}<span style={cp}>provider_model_id</span>{'\n'}
         {'})'}
-      </>
-    ),
-    python: (
-      <>
-        <span style={ck}>from</span>{' toolroute '}<span style={ck}>import</span>{' ToolRoute\n'}
-        {'\n'}
-        {'tr = ToolRoute()\n'}
-        {'model = tr.model.route(task='}<span style={cs}>&quot;parse CSV file&quot;</span>{')\n'}
-        {'tool = tr.route(task='}<span style={cs}>&quot;web scraping&quot;</span>{')'}
       </>
     ),
     litellm: (
@@ -195,7 +185,7 @@ response = litellm.completion(
     ),
   }
 
-  const TAB_ORDER: Tab[] = ['openrouter', 'claude-code', 'claude-desktop', 'cursor', 'python', 'litellm', 'curl']
+  const TAB_ORDER: Tab[] = ['openrouter', 'claude-code', 'claude-desktop', 'cursor', 'litellm', 'curl']
 
   return (
     <div style={{

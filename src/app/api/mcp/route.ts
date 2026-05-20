@@ -283,7 +283,7 @@ const TOOLS = [
       type: 'object',
       properties: {
         decision_id: { type: 'string', description: 'The decision_id from toolroute_model_route response (earns 1.5x bonus)' },
-        model_slug: { type: 'string', description: 'The model slug (e.g. "gpt-4o-mini", "claude-3-5-sonnet")' },
+        model_slug: { type: 'string', description: 'The model slug (e.g. "claude-haiku-4-5-20251001", "claude-sonnet-4-6")' },
         outcome_status: { type: 'string', enum: ['success', 'partial_success', 'failure', 'aborted'] },
         latency_ms: { type: 'number', minimum: 0, description: 'Total LLM call latency in milliseconds' },
         input_tokens: { type: 'number', minimum: 0, description: 'Input tokens consumed' },
@@ -305,7 +305,7 @@ const TOOLS = [
     inputSchema: {
       type: 'object',
       properties: {
-        model_slug: { type: 'string', description: 'The model slug (e.g. "gpt-4o", "claude-3-5-sonnet")' },
+        model_slug: { type: 'string', description: 'The model slug (e.g. "claude-sonnet-4-6", "claude-opus-4-7")' },
         task: { type: 'string', description: 'The original task description you sent to the model' },
         output_snippet: { type: 'string', description: 'First 500 chars of the model output' },
         decision_id: { type: 'string', description: 'The decision_id from toolroute_model_route (links verification to decision)' },

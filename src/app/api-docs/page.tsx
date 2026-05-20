@@ -393,7 +393,7 @@ const endpoints = [
     description: 'Report LLM model execution outcomes. Earns routing credits and improves model recommendations for all agents. Report ANY model execution — even without using /api/route/model first.',
     request: `{
   "decision_id": "uuid (from /api/route/model)",
-  "model_slug": "claude-3-5-sonnet",
+  "model_slug": "claude-sonnet-4-6",
   "outcome_status": "success",
   "latency_ms": 1200,
   "input_tokens": 3400,
@@ -498,7 +498,7 @@ const model = await tr.routeModel({
 // Call the LLM yourself, then report
 await tr.reportModel({
   decision_id: model.routing_metadata.decision_id,
-  model_slug: 'claude-3-5-sonnet',
+  model_slug: 'claude-sonnet-4-6',
   outcome_status: 'success',
   latency_ms: 1200
 })`

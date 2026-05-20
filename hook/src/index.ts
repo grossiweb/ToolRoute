@@ -141,7 +141,10 @@ export function createHook(config: HookConfig = {}): ToolRouteHook {
         skill: data.recommended_skill,
         skillName: data.recommended_skill_name || null,
         confidence: data.confidence || 0,
-        model: data.recommended_model?.alias || data.recommended_model?.recommended_alias || null,
+        // /api/route returns recommended_model as an object with .slug (the
+        // canonical model identifier). There is no .alias or .recommended_alias
+        // field — those were the bug; users got model: null every time.
+        model: data.recommended_model?.slug || null,
         modelProvider: data.recommended_model?.provider_model_id || null,
         fallback: data.fallback || null,
         alternatives: data.alternatives || [],
@@ -195,33 +198,31 @@ export function createHook(config: HookConfig = {}): ToolRouteHook {
       // Route
       const routing = await routeTask(task)
 
-      // Execute
-      let data: T
+      // Execute — capture the result or the thrown error without using a
+      // finally block. (Earlier versions reported inside finally AND again
+      // after the try, double-firing POST /api/contributions for every task.)
+      let data: T | undefined
       let outcome: 'success' | 'failure' = 'success'
+      let thrown: unknown = null
       try {
         data = await fn(routing)
       } catch (err) {
         outcome = 'failure'
-        throw err
-      } finally {
-        const executionMs = Date.now() - start
-
-        // Report (fire-and-forget)
-        let reported = false
-        let creditsEarned = 0
-        if (routing.skill) {
-          reported = await reportOutcome(routing.skill, outcome, executionMs)
-          if (reported) creditsEarned = outcome === 'success' ? 5 : 2
-        }
+        thrown = err
       }
 
       const executionMs = Date.now() - start
+
+      // Single fire-and-forget report — runs on both success and failure paths.
       let reported = false
       let creditsEarned = 0
       if (routing.skill) {
         reported = await reportOutcome(routing.skill, outcome, executionMs)
         if (reported) creditsEarned = outcome === 'success' ? 5 : 2
       }
+
+      // Re-throw after reporting so the caller sees the original error.
+      if (thrown !== null) throw thrown
 
       return { data: data!, routing, executionMs, reported, creditsEarned }
     },

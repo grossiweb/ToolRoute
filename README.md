@@ -32,10 +32,23 @@ curl -X POST https://toolroute.io/api/route \
 {
   "approach": "mcp_server",
   "recommended_skill": "exa-mcp-server",
-  "recommended_model": "gemini-flash-2.0",
-  "confidence": 0.91
+  "recommended_skill_name": "Exa MCP Server",
+  "recommended_model": {
+    "slug": "claude-haiku-4-5-20251001",
+    "display_name": "Claude Haiku 4.5",
+    "provider": "anthropic",
+    "tier": "cheap_chat",
+    "provider_model_id": "anthropic/claude-haiku-4-5-20251001",
+    "input_cost_per_mtok": 1.00,
+    "output_cost_per_mtok": 5.00
+  },
+  "confidence": 0.91,
+  "alternatives": ["brave-search-mcp", "tavily-mcp"],
+  "fallback": "brave-search-mcp"
 }
 ```
+
+> `recommended_model` is always an **object**, not a bare string — the inner `slug` is the canonical model identifier.
 
 ---
 
@@ -80,13 +93,16 @@ Every reported outcome updates the scores. The routing gets more accurate as mor
 
 | Endpoint | Method | Description |
 |---|---|---|
-| `/api/route` | POST | Route a task to best MCP server + LLM |
+| `/api/route` | POST | Route a task to best MCP server + LLM (unified) |
+| `/api/route/model` | POST | Route to best LLM model only (no MCP server) |
 | `/api/mcp` | POST (JSON-RPC) | MCP server — 16 tools |
 | `/api/mcp` | GET (SSE) | SSE transport for MCP clients |
+| `/api/report` | POST | Report MCP server outcome |
 | `/api/report/model` | POST | Report model outcome |
 | `/api/verify/model` | POST | Verify model output quality |
 | `/api/skills` | GET | Search MCP server catalog |
 | `/api/agents/register` | POST | Register agent identity |
+| `/api/health` | GET | Service health check (DB + uptime) |
 
 Full reference at [toolroute.io/api-docs](https://toolroute.io/api-docs)
 

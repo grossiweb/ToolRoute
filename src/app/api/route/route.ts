@@ -82,7 +82,7 @@ export async function GET() {
       'POST /api/report': 'Report ANY skill execution — earns credits (GET for full docs)',
       'GET /api/report': 'Documentation for reporting — what to report, examples, credit rewards',
       'POST /api/contributions': 'Advanced telemetry — A/B tests, fallback chains, benchmark packages',
-      'POST /api/mcp': 'JSON-RPC MCP endpoint (8 tools)',
+      'POST /api/mcp': 'JSON-RPC MCP endpoint (16 tools)',
       'GET /api/skills': 'Search the MCP server catalog',
       'GET /api/missions/available': 'List available benchmark missions (10 events)',
       'POST /api/missions/claim': 'Claim a benchmark mission',
@@ -102,7 +102,7 @@ export async function GET() {
       description: 'ToolRoute is itself an MCP server. Add it to your config for tool-assisted routing.',
       cursor: { url: 'https://toolroute.io/api/mcp', transport: 'http' },
       claude_desktop: { command: 'npx', args: ['-y', '@toolroute/sdk', '--mcp'] },
-      tools: ['toolroute_route', 'toolroute_search', 'toolroute_compare', 'toolroute_missions', 'toolroute_report', 'toolroute_register', 'toolroute_challenges', 'toolroute_challenge_submit'],
+      tools: ['toolroute_register', 'toolroute_help', 'toolroute_balance', 'toolroute_route', 'toolroute_report', 'toolroute_missions', 'toolroute_mission_claim', 'toolroute_mission_complete', 'toolroute_challenges', 'toolroute_challenge_submit', 'toolroute_search', 'toolroute_compare', 'toolroute_model_route', 'toolroute_model_report', 'toolroute_verify_model', 'toolroute_verify_agent'],
     },
     scoring: {
       formula: 'Value Score = 0.35×Output + 0.25×Reliability + 0.15×Efficiency + 0.15×Cost + 0.10×Trust',

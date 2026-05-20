@@ -1,6 +1,6 @@
 {
   "name": "@toolroute/hook",
-  "version": "1.0.1",
+  "version": "1.0.2",
   "description": "Auto-route every agent task through ToolRoute. Install once, every task gets the best tool and model recommendation.",
   "main": "dist/index.js",
   "module": "dist/index.mjs",
@@ -35,7 +35,7 @@
   "homepage": "https://toolroute.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/grossiweb/ToolRoute",
+    "url": "git+https://github.com/grossiweb/ToolRoute.git",
     "directory": "hook"
   },
   "dependencies": {
