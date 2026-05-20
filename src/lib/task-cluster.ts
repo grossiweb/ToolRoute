@@ -8,7 +8,9 @@
 //
 // Active signals are taken in alphabetical order and capped at 2 so the
 // label stays bounded and is deterministic regardless of how the signals
-// object was constructed. Active = boolean true OR positive number.
+// object was constructed. Only boolean-true values count as signals —
+// numeric fields like signal_count on the TaskSignals payload are
+// metadata and would otherwise leak into the cluster string.
 //
 // This is the join key for getRoutingMemory() — small cardinality keeps
 // the per-agent history dense enough to be useful.
@@ -18,7 +20,7 @@ export function deriveTaskCluster(
   signals: Record<string, boolean | number | undefined | null>,
 ): string {
   const active = Object.entries(signals)
-    .filter(([, v]) => v === true || (typeof v === 'number' && v > 0))
+    .filter(([, v]) => v === true)
     .map(([k]) => k)
     .sort()
   if (active.length === 0) return tier
