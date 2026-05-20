@@ -1,3 +1,6 @@
+// STATUS: active. REST alternative to the MCP toolroute_verify_agent tool —
+// callers that don't use the MCP transport hit this endpoint to start the
+// human-tweet verification flow. Used by /verify page and external scripts.
 import { NextRequest, NextResponse } from 'next/server'
 import { createClient } from '@supabase/supabase-js'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'

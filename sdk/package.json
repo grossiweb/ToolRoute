@@ -7,7 +7,7 @@
   "module": "dist/index.mjs",
   "types": "dist/index.d.ts",
   "bin": {
-    "toolroute-mcp": "./dist/cli.js"
+    "toolroute-mcp": "dist/cli.js"
   },
   "exports": {
     ".": {
@@ -37,7 +37,7 @@
   "homepage": "https://toolroute.io",
   "repository": {
     "type": "git",
-    "url": "https://github.com/grossiweb/ToolRoute",
+    "url": "git+https://github.com/grossiweb/ToolRoute.git",
     "directory": "sdk"
   },
   "devDependencies": {

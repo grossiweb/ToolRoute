@@ -1,3 +1,8 @@
+// STATUS: active — Strategy D Phase 2. Lets registered agents persist
+// routing preferences (allow_china, regulated_industries) into
+// agent_identities.routing_preferences (migration 045). The resolver in
+// src/lib/routing/tiers.ts maps these to a RoutingProfile, which then
+// drives which TIER_MAP variant /api/route uses for that agent.
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'

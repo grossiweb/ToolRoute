@@ -1,3 +1,8 @@
+// STATUS: legacy alias. GET-based, lighter version of /api/route. Does
+// keyword-only workflow matching (no LLM classifier), returns top N skills,
+// no model recommendation, no constraints. Kept for backward compatibility
+// with early integrations. New callers should use POST /api/route which
+// returns recommended_skill + recommended_model + cost_estimate.
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'

@@ -1,3 +1,7 @@
+// STATUS: active. Public aggregate metrics — total agents, 7d new agents,
+// outcome counts, contributions, total credits, trust-tier distribution. No
+// auth required, no PII exposed. Consumed by external uptime monitors and
+// the scheduled growth agents that post platform stats to MoltBook/Twitter.
 import { NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
 

@@ -103,7 +103,9 @@ Every reported outcome updates the scores. The routing gets more accurate as mor
 | `/api/verify/model` | POST | Verify model output quality |
 | `/api/skills` | GET | Search MCP server catalog |
 | `/api/agents/register` | POST | Register agent identity |
+| `/api/agents/preferences` | POST | Set routing preferences (Strategy D Phase 2 — `allow_china`, `regulated_industries`) |
 | `/api/health` | GET | Service health check (DB + uptime) |
+| `/api/metrics` | GET | Public aggregate platform metrics (no auth) |
 
 Full reference at [toolroute.io/api-docs](https://toolroute.io/api-docs)
 

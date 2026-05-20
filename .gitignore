@@ -8,6 +8,8 @@ node_modules
 # Build artifacts
 *.tsbuildinfo
 next-env.d.ts
+sdk/dist/
+hook/dist/
 
 # IDE and AI tooling
 .claude/
