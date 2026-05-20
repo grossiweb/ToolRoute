@@ -28,6 +28,7 @@ export async function GET(request: Request) {
     modelOutcomesResult,
     challengesResult,
     challengeSubmissionsResult,
+    contributingAgentsResult,
   ] = await Promise.all([
     supabase.from('agent_identities').select('id, agent_name, agent_kind, trust_tier, is_active, created_at').eq('is_active', true),
     supabase.from('outcome_records').select('id, skill_id, outcome_status, latency_ms, estimated_cost_usd, output_quality_rating, created_at'),
@@ -43,6 +44,10 @@ export async function GET(request: Request) {
     supabase.from('model_outcome_records').select('id, model_id, agent_identity_id, outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, created_at').order('created_at', { ascending: false }).limit(20),
     supabase.from('workflow_challenges').select('id, title, slug, category, submission_count, status'),
     supabase.from('challenge_submissions').select('id, challenge_id, agent_identity_id, tier, overall_score, scored_at, agent_identities(agent_name), workflow_challenges(title, slug)').order('scored_at', { ascending: false }).limit(20),
+    // Dedicated unbounded query for distinct contributing-agent count. The
+    // contributionsResult above limits to 500 for the recent-events list,
+    // which would undercount distinct agents once we exceed that window.
+    supabase.from('contribution_events').select('agent_identity_id').not('agent_identity_id', 'is', null),
   ])
 
   // Collect any query errors for debugging
@@ -61,6 +66,7 @@ export async function GET(request: Request) {
   if (modelOutcomesResult.error) queryErrors.model_outcome_records = modelOutcomesResult.error.message
   if (challengesResult.error) queryErrors.workflow_challenges = challengesResult.error.message
   if (challengeSubmissionsResult.error) queryErrors.challenge_submissions = challengeSubmissionsResult.error.message
+  if (contributingAgentsResult.error) queryErrors.contributing_agents = contributingAgentsResult.error.message
 
   const agents = agentsResult.data || []
   const outcomes = outcomeResult.data || []
@@ -76,6 +82,23 @@ export async function GET(request: Request) {
   const modelOutcomes = modelOutcomesResult.data || []
   const challenges = challengesResult.data || []
   const challengeSubmissions = challengeSubmissionsResult.data || []
+  const contributingAgentsRaw = contributingAgentsResult.data || []
+
+  // Contributing agents = distinct agent_identity_ids in contribution_events
+  // restricted to currently-active agents. Bounded above by registered_agents
+  // by construction.
+  const activeAgentIds = new Set(agents.map((a: any) => a.id))
+  const contributingAgents = new Set(
+    contributingAgentsRaw
+      .map((r: any) => r.agent_identity_id)
+      .filter((id: string) => id && activeAgentIds.has(id))
+  ).size
+
+  // Skills with outcome data = distinct skill_ids appearing in outcome_records.
+  // Reuses the already-loaded outcomes array — no extra query.
+  const skillsWithOutcomeData = new Set(
+    outcomes.map((o: any) => o.skill_id).filter(Boolean)
+  ).size
 
   // Compute summaries
   const totalCredits = rewards.reduce((sum: number, r: any) => sum + (r.routing_credits || 0), 0)
@@ -161,7 +184,8 @@ export async function GET(request: Request) {
     },
     summary: {
       registered_agents: agents.length,
-      total_contributors: contributors.length,
+      contributing_agents: contributingAgents,
+      total_contributor_entities: contributors.length,
       total_outcome_records: outcomes.length,
       total_contributions: contributions.length,
       total_reward_entries: rewards.length,
@@ -169,7 +193,8 @@ export async function GET(request: Request) {
       total_reputation_points_issued: totalReputation,
       total_mission_claims: missionClaims.length,
       total_agent_runs: agentRuns.length,
-      active_skills_in_catalog: skills.length,
+      total_skills_in_catalog: skills.length,
+      skills_with_outcome_data: skillsWithOutcomeData,
       model_routing_decisions: modelDecisions.length,
       model_outcome_reports: modelOutcomes.length,
       workflow_challenges: challenges.length,

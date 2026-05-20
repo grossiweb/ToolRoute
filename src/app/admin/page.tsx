@@ -166,14 +166,15 @@ export default function AdminPage() {
       </div>
       <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(160px, 1fr))', gap: 12, marginBottom: 32 }}>
         <StatCard label="Registered Agents" value={s.registered_agents} />
-        <StatCard label="Contributors" value={s.total_contributors} />
+        <StatCard label="Contributing Agents" value={s.contributing_agents} />
         <StatCard label="Outcome Records" value={s.total_outcome_records} />
         <StatCard label="Contributions" value={s.total_contributions} />
         <StatCard label="Credits Issued" value={s.total_routing_credits_issued} highlight />
         <StatCard label="Reputation Issued" value={s.total_reputation_points_issued} />
         <StatCard label="Mission Claims" value={s.total_mission_claims} />
         <StatCard label="Agent Runs" value={s.total_agent_runs} />
-        <StatCard label="Active Skills" value={s.active_skills_in_catalog} />
+        <StatCard label="Total Skills in Catalog" value={s.total_skills_in_catalog} />
+        <StatCard label="Skills with Outcome Data" value={s.skills_with_outcome_data} />
         <StatCard label="Model Decisions" value={s.model_routing_decisions} />
         <StatCard label="Model Reports" value={s.model_outcome_reports} />
         <StatCard label="Challenges" value={s.workflow_challenges} />
