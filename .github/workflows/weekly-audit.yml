@@ -1,0 +1,199 @@
+name: Weekly Audit
+
+# Runs every Sunday at 06:00 UTC. Hits the live ToolRoute API with read-only
+# smoke tests and a version-drift check. If anything fails, opens a GitHub
+# issue tagged `audit`. If everything passes, prints a summary and exits 0.
+#
+# Manual run: Actions tab → Weekly Audit → Run workflow.
+
+on:
+  schedule:
+    - cron: '0 6 * * 0'
+  workflow_dispatch:
+
+permissions:
+  issues: write
+  contents: read
+
+env:
+  # Override by setting a repository variable named TOOLROUTE_BASE_URL.
+  TOOLROUTE_BASE_URL: ${{ vars.TOOLROUTE_BASE_URL || 'https://toolroute.io' }}
+
+jobs:
+  audit:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout
+        uses: actions/checkout@v4
+
+      - name: Set up Node
+        uses: actions/setup-node@v4
+        with:
+          node-version: '20'
+
+      - name: Smoke tests + version drift
+        env:
+          GH_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+        run: |
+          set +e
+          FAILURES_FILE="$RUNNER_TEMP/audit-failures.md"
+          : > "$FAILURES_FILE"
+
+          pass() { echo "PASS: $1"; }
+          fail() {
+            echo "FAIL: $1 — $2"
+            echo "- **$1** — $2" >> "$FAILURES_FILE"
+          }
+
+          base="$TOOLROUTE_BASE_URL"
+          echo "=== Smoke tests against $base ==="
+
+          # 1. GET /api/health
+          if out=$(curl --fail-with-body --max-time 10 --silent "$base/api/health"); then
+            echo "$out" | grep -q '"status"' \
+              && pass "GET /api/health" \
+              || fail "GET /api/health" 'response missing "status"'
+          else
+            fail "GET /api/health" "HTTP error or timeout"
+          fi
+
+          # 2. POST /api/route
+          body='{"task":"write a python function to sort a list"}'
+          if out=$(curl --fail-with-body --max-time 10 --silent -X POST \
+              -H "Content-Type: application/json" -d "$body" "$base/api/route"); then
+            echo "$out" | grep -q '"approach"' \
+              && pass "POST /api/route" \
+              || fail "POST /api/route" 'response missing "approach"'
+          else
+            fail "POST /api/route" "HTTP error or timeout"
+          fi
+
+          # 3. POST /api/route/model
+          if out=$(curl --fail-with-body --max-time 10 --silent -X POST \
+              -H "Content-Type: application/json" -d "$body" "$base/api/route/model"); then
+            echo "$out" | grep -q '"recommended_model"' \
+              && pass "POST /api/route/model" \
+              || fail "POST /api/route/model" 'response missing "recommended_model"'
+          else
+            fail "POST /api/route/model" "HTTP error or timeout"
+          fi
+
+          # 4. POST /api/agents/register — accept 200 or 409
+          reg_body='{"agent_name":"audit-probe","agent_kind":"autonomous"}'
+          status=$(curl --silent --max-time 10 -o /tmp/reg.json -w "%{http_code}" \
+            -X POST -H "Content-Type: application/json" -d "$reg_body" \
+            "$base/api/agents/register")
+          if [ "$status" = "200" ] || [ "$status" = "409" ]; then
+            pass "POST /api/agents/register (HTTP $status)"
+          else
+            fail "POST /api/agents/register" "HTTP $status (expected 200 or 409)"
+          fi
+
+          # 5. GET /api/challenges — handler returns {"challenges":[...], "total":...}
+          if out=$(curl --fail-with-body --max-time 10 --silent "$base/api/challenges"); then
+            echo "$out" | grep -q '"challenges"' \
+              && pass "GET /api/challenges" \
+              || fail "GET /api/challenges" 'response missing "challenges" key'
+          else
+            fail "GET /api/challenges" "HTTP error or timeout"
+          fi
+
+          # 6. GET /api/missions/available
+          if curl --fail-with-body --max-time 10 --silent "$base/api/missions/available" > /dev/null; then
+            pass "GET /api/missions/available"
+          else
+            fail "GET /api/missions/available" "HTTP error or timeout"
+          fi
+
+          # 7. GET /api/skills
+          if curl --fail-with-body --max-time 10 --silent "$base/api/skills" > /dev/null; then
+            pass "GET /api/skills"
+          else
+            fail "GET /api/skills" "HTTP error or timeout"
+          fi
+
+          # 8. POST /api/mcp tools/list — must return 16 tools
+          mcp_body='{"jsonrpc":"2.0","id":1,"method":"tools/list","params":{}}'
+          if out=$(curl --fail-with-body --max-time 10 --silent -X POST \
+              -H "Content-Type: application/json" -d "$mcp_body" "$base/api/mcp"); then
+            count=$(echo "$out" | jq -r '.result.tools | length' 2>/dev/null || echo "0")
+            if [ "$count" = "16" ]; then
+              pass "POST /api/mcp tools/list (16 tools)"
+            else
+              fail "POST /api/mcp tools/list" "got $count tools, expected 16"
+            fi
+          else
+            fail "POST /api/mcp tools/list" "HTTP error or timeout"
+          fi
+
+          # 9. GET /.well-known — must contain version 1.5.0
+          if out=$(curl --fail-with-body --max-time 10 --silent "$base/.well-known"); then
+            echo "$out" | grep -q '1.5.0' \
+              && pass "GET /.well-known (version 1.5.0)" \
+              || fail "GET /.well-known" 'response does not contain version "1.5.0"'
+          else
+            fail "GET /.well-known" "HTTP error or timeout"
+          fi
+
+          # 10. GET /api/badge/exa-mcp-server
+          if curl --fail-with-body --max-time 10 --silent "$base/api/badge/exa-mcp-server" > /dev/null; then
+            pass "GET /api/badge/exa-mcp-server"
+          else
+            fail "GET /api/badge/exa-mcp-server" "HTTP error or timeout"
+          fi
+
+          echo ""
+          echo "=== npm version drift ==="
+
+          local_hook=$(node -p "require('./hook/package.json').version" 2>/dev/null || echo "missing")
+          local_sdk=$(node -p "require('./sdk/package.json').version" 2>/dev/null || echo "missing")
+          npm_hook=$(npm view @toolroute/hook version 2>/dev/null || echo "not-published")
+          npm_sdk=$(npm view @toolroute/sdk version 2>/dev/null || echo "not-published")
+
+          echo "@toolroute/hook: local=$local_hook  npm=$npm_hook"
+          echo "@toolroute/sdk:  local=$local_sdk   npm=$npm_sdk"
+
+          check_drift() {
+            local pkg="$1" local_v="$2" npm_v="$3"
+            if [ "$npm_v" = "not-published" ] || [ "$local_v" = "missing" ]; then
+              return
+            fi
+            if [ "$local_v" != "$npm_v" ]; then
+              local newer
+              newer=$(printf '%s\n%s\n' "$local_v" "$npm_v" | sort -V | tail -1)
+              if [ "$newer" = "$local_v" ]; then
+                fail "$pkg version drift" "local v$local_v is ahead of published v$npm_v — needs publish"
+              fi
+            fi
+          }
+          check_drift "@toolroute/hook" "$local_hook" "$npm_hook"
+          check_drift "@toolroute/sdk"  "$local_sdk"  "$npm_sdk"
+
+          echo ""
+          echo "=== Summary ==="
+
+          if [ -s "$FAILURES_FILE" ]; then
+            count=$(grep -c '^-' "$FAILURES_FILE")
+            today=$(date -u +%Y-%m-%d)
+            echo "$count failure(s) — opening issue"
+
+            body=$(cat <<EOF
+          Weekly audit against \`$base\` on $today.
+
+          ## Failures ($count)
+
+          $(cat "$FAILURES_FILE")
+
+          ---
+
+          Workflow run: ${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}
+          EOF
+          )
+
+            gh issue create \
+              --title "[Weekly Audit] $today — $count failures" \
+              --body "$body" \
+              --label audit
+          else
+            echo "All checks passed."
+          fi
