@@ -5,6 +5,9 @@ import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { apiError } from '@/lib/api-error'
 import { getActiveNotices } from '@/lib/notices'
+import { detectTaskSignals, resolveModelTier } from '@/lib/model-routing'
+import { deriveTaskCluster } from '@/lib/task-cluster'
+import { getSkillRoutingMemory, type SkillRoutingMemory } from '@/lib/routing-memory'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -696,6 +699,61 @@ export async function POST(request: NextRequest) {
     ? { notices, ...(notices.length === 1 ? { migration_notice: notices[0] } : {}) }
     : {}
 
+  // Skill-routing decision log + memory lookup. The INSERT is
+  // fire-and-forget; the memory lookup is hard-bounded to 200ms inside
+  // getSkillRoutingMemory and never blocks the response.
+  //
+  // task_cluster uses the model-routing tier + signals as the prefix so
+  // cluster strings stay comparable with model_routing_decisions —
+  // future cross-endpoint analytics work without translation.
+  let skillRoutingMemory: SkillRoutingMemory | null = null
+  let confirmedByHistory = false
+
+  if (task) {
+    const signals = detectTaskSignals(task)
+    const tier = resolveModelTier(signals, task)
+    const taskClusterStr = deriveTaskCluster(tier, signals as Record<string, boolean | number>)
+
+    const recSkillSlug =
+      approach === 'multi_tool' ? (orchestration?.[0]?.recommended_skill ?? null) :
+      approach === 'mcp_server' ? top.slug : null
+    const recSkillId =
+      approach === 'mcp_server' ? (top.id ?? null) : null
+
+    supabase.from('skill_routing_decisions').insert({
+      agent_identity_id: agent_identity_id || null,
+      task_snippet: task.slice(0, 200),
+      task_hash: simpleHash(task),
+      task_cluster: taskClusterStr,
+      recommended_skill_id: recSkillId,
+      recommended_skill_slug: recSkillSlug,
+      approach,
+      confidence: Math.round(adjustedConfidence * 100) / 100,
+      signals_json: signals,
+    }).then(() => {}, () => {})
+
+    if (agent_identity_id) {
+      skillRoutingMemory = await getSkillRoutingMemory(supabase, agent_identity_id, taskClusterStr)
+      if (
+        skillRoutingMemory &&
+        skillRoutingMemory.success_rate >= 0.75 &&
+        skillRoutingMemory.historical_skill === recSkillSlug
+      ) {
+        confirmedByHistory = true
+      }
+    }
+  }
+
+  const memoryFields = skillRoutingMemory && skillRoutingMemory.success_rate >= 0.75
+    ? {
+        skill_routing_memory: {
+          ...skillRoutingMemory,
+          note: `Based on your past ${skillRoutingMemory.sample_size} similar skill outcomes`,
+        },
+        ...(confirmedByHistory ? { confirmed_by_history: true } : {}),
+      }
+    : {}
+
   return NextResponse.json({
     approach,
     ...(approach === 'multi_tool' ? {
@@ -782,6 +840,7 @@ export async function POST(request: NextRequest) {
       },
     }),
     ...noticeFields,
+    ...memoryFields,
   })
 }
 
@@ -852,6 +911,19 @@ async function getRecommendedCombo(
  * MCP-required tasks: web search, scraping, API calls, file operations,
  * database queries, sending messages, calendar operations, etc.
  */
+// Cheap, deterministic task hash for the skill_routing_decisions log.
+// Matches the function in /api/route/model so the two endpoints' task
+// hashes share the same shape — useful when joining decisions across
+// model and skill sides of the routing pipeline.
+function simpleHash(str: string): string {
+  let h = 0
+  for (let i = 0; i < str.length; i++) {
+    h = ((h << 5) - h) + str.charCodeAt(i)
+    h |= 0
+  }
+  return h.toString(36)
+}
+
 function detectMcpNeed(task: string): boolean {
   const lower = task.toLowerCase()
 

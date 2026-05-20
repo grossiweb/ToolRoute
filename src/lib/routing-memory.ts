@@ -102,3 +102,101 @@ async function lookup(
 
   return { historical_model, success_rate, sample_size, avg_quality }
 }
+
+// ── Skill-side counterpart to getRoutingMemory ─────────────────────────────
+//
+// outcome_records has no routing_decision_id linkage (unlike
+// model_outcome_records), so we approximate the "what worked for this
+// kind of task" lookup in two passes:
+//   1. Pull recent skill_routing_decisions for (agent, cluster) to
+//      learn which skills the agent has been recommended for this cluster.
+//   2. Pull this agent's recent outcomes for those skills.
+// Each outcome counts once; historical_skill is the slug of the
+// most-recent successful skill in the sample.
+
+export interface SkillRoutingMemory {
+  historical_skill: string | null
+  success_rate: number
+  sample_size: number
+  avg_quality: number | null
+}
+
+export async function getSkillRoutingMemory(
+  supabase: SupabaseClient,
+  agentIdentityId: string,
+  taskCluster: string,
+  limit = 5,
+  timeoutMs = DEFAULT_TIMEOUT_MS,
+): Promise<SkillRoutingMemory | null> {
+  if (!agentIdentityId || !taskCluster) return null
+
+  try {
+    const work = skillLookup(supabase, agentIdentityId, taskCluster, limit)
+    const timer = new Promise<null>(resolve => setTimeout(() => resolve(null), timeoutMs))
+    return await Promise.race([work, timer])
+  } catch {
+    return null
+  }
+}
+
+async function skillLookup(
+  supabase: SupabaseClient,
+  agentIdentityId: string,
+  taskCluster: string,
+  limit: number,
+): Promise<SkillRoutingMemory | null> {
+  // 1. Recent decisions for (agent, cluster). We use the set of
+  // recommended skills to bound the outcome query, and keep a
+  // skill_id → most-recent-slug map for the historical_skill output.
+  const { data: decisions, error: dErr } = await supabase
+    .from('skill_routing_decisions')
+    .select('recommended_skill_id, recommended_skill_slug, created_at')
+    .eq('agent_identity_id', agentIdentityId)
+    .eq('task_cluster', taskCluster)
+    .not('recommended_skill_id', 'is', null)
+    .order('created_at', { ascending: false })
+    .limit(limit * 4)
+  if (dErr || !decisions || decisions.length === 0) return null
+
+  const skillToSlug = new Map<string, string>()
+  for (const d of decisions as any[]) {
+    // First write wins because decisions arrive DESC.
+    if (!skillToSlug.has(d.recommended_skill_id)) {
+      skillToSlug.set(d.recommended_skill_id, d.recommended_skill_slug)
+    }
+  }
+  const skillIds = Array.from(skillToSlug.keys())
+
+  // 2. Recent outcomes for this agent on those skills. No outcome_status
+  // filter — failures count toward the rate so success_rate is meaningful.
+  const { data: outcomes, error: oErr } = await supabase
+    .from('outcome_records')
+    .select('skill_id, outcome_status, output_quality_rating, verified_quality, computed_quality, created_at')
+    .eq('agent_identity_id', agentIdentityId)
+    .in('skill_id', skillIds)
+    .order('created_at', { ascending: false })
+    .limit(limit * 4)
+  if (oErr || !outcomes || outcomes.length === 0) return null
+
+  const recent = (outcomes as any[]).slice(0, limit)
+  if (recent.length < MIN_SAMPLES) return null
+
+  const isOk = (status: string) => status === 'success' || status === 'partial_success'
+  const successful = recent.filter(o => isOk(o.outcome_status))
+  const sample_size = recent.length
+  const success_rate = Math.round((successful.length / sample_size) * 100) / 100
+
+  const historical_skill_id = successful[0]?.skill_id as string | undefined
+  const historical_skill = historical_skill_id
+    ? skillToSlug.get(historical_skill_id) ?? null
+    : null
+
+  const qualities = recent
+    .map(o => o.verified_quality ?? o.computed_quality ?? o.output_quality_rating ?? null)
+    .filter((q): q is number => q != null)
+  const avg_quality = qualities.length > 0
+    ? Math.round((qualities.reduce((s, q) => s + q, 0) / qualities.length) * 10) / 10
+    : null
+
+  return { historical_skill, success_rate, sample_size, avg_quality }
+}

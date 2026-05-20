@@ -15,7 +15,7 @@
 // supplies a canned response for each.
 
 import { describe, it, expect } from 'vitest'
-import { getRoutingMemory } from '../src/lib/routing-memory'
+import { getRoutingMemory, getSkillRoutingMemory } from '../src/lib/routing-memory'
 
 type CannedResponse = { data: any; error: any }
 
@@ -197,5 +197,160 @@ describe('getRoutingMemory', () => {
     )
     expect(await getRoutingMemory(sb, '', CLUSTER)).toBeNull()
     expect(await getRoutingMemory(sb, AGENT, '')).toBeNull()
+  })
+})
+
+// ── getSkillRoutingMemory ──────────────────────────────────────────────────
+// Mirrors the model-side specs above. Two queries: skill_routing_decisions
+// followed by outcome_records.
+
+function makeSkillSupabase(
+  decisionsResp: CannedResponse,
+  outcomesResp: CannedResponse,
+): any {
+  return {
+    from(table: string) {
+      const resp =
+        table === 'skill_routing_decisions' ? decisionsResp : outcomesResp
+      const chain: any = {}
+      const passthrough = ['select', 'eq', 'in', 'order', 'limit', 'not']
+      for (const m of passthrough) chain[m] = () => chain
+      chain.then = (resolve: any) => resolve(resp)
+      return chain
+    },
+  }
+}
+
+describe('getSkillRoutingMemory', () => {
+  it('returns null on decisions query error', async () => {
+    const sb = makeSkillSupabase(
+      { data: null, error: { message: 'boom' } },
+      { data: [], error: null },
+    )
+    expect(await getSkillRoutingMemory(sb, AGENT, CLUSTER)).toBeNull()
+  })
+
+  it('returns null on outcomes query error', async () => {
+    const sb = makeSkillSupabase(
+      {
+        data: [{
+          recommended_skill_id: 'sk-1',
+          recommended_skill_slug: 'firecrawl-mcp',
+          created_at: 't1',
+        }],
+        error: null,
+      },
+      { data: null, error: { message: 'boom' } },
+    )
+    expect(await getSkillRoutingMemory(sb, AGENT, CLUSTER)).toBeNull()
+  })
+
+  it('returns null when sample_size < 3 (MIN_SAMPLES)', async () => {
+    const decisions = [
+      {
+        recommended_skill_id: 'sk-firecrawl',
+        recommended_skill_slug: 'firecrawl-mcp',
+        created_at: '2026-05-20T10:00:00Z',
+      },
+    ]
+    const outcomes = [
+      {
+        skill_id: 'sk-firecrawl',
+        outcome_status: 'success',
+        verified_quality: 8,
+        computed_quality: null,
+        output_quality_rating: null,
+        created_at: '2026-05-20T10:05:00Z',
+      },
+      {
+        skill_id: 'sk-firecrawl',
+        outcome_status: 'success',
+        verified_quality: 7,
+        computed_quality: null,
+        output_quality_rating: null,
+        created_at: '2026-05-20T09:05:00Z',
+      },
+    ]
+    const sb = makeSkillSupabase(
+      { data: decisions, error: null },
+      { data: outcomes, error: null },
+    )
+    expect(await getSkillRoutingMemory(sb, AGENT, CLUSTER)).toBeNull()
+  })
+
+  it('returns correct fields when data exists', async () => {
+    // 2 distinct skills considered, 4 outcomes total (3 ok, 1 failure).
+    // Most-recent successful outcome is on sk-firecrawl → historical_skill
+    // resolves to 'firecrawl-mcp' via the decisions skill→slug map.
+    const decisions = [
+      {
+        recommended_skill_id: 'sk-firecrawl',
+        recommended_skill_slug: 'firecrawl-mcp',
+        created_at: '2026-05-20T10:00:00Z',
+      },
+      {
+        recommended_skill_id: 'sk-exa',
+        recommended_skill_slug: 'exa-mcp-server',
+        created_at: '2026-05-20T09:00:00Z',
+      },
+      {
+        recommended_skill_id: 'sk-firecrawl',
+        recommended_skill_slug: 'firecrawl-mcp',
+        created_at: '2026-05-20T08:00:00Z',
+      },
+    ]
+    const outcomes = [
+      {
+        skill_id: 'sk-firecrawl',
+        outcome_status: 'success',
+        verified_quality: 8,
+        computed_quality: null,
+        output_quality_rating: null,
+        created_at: '2026-05-20T10:05:00Z',
+      },
+      {
+        skill_id: 'sk-firecrawl',
+        outcome_status: 'partial_success',
+        verified_quality: 7,
+        computed_quality: null,
+        output_quality_rating: null,
+        created_at: '2026-05-20T09:30:00Z',
+      },
+      {
+        skill_id: 'sk-exa',
+        outcome_status: 'failure',
+        verified_quality: null,
+        computed_quality: null,
+        output_quality_rating: null,
+        created_at: '2026-05-20T09:10:00Z',
+      },
+      {
+        skill_id: 'sk-firecrawl',
+        outcome_status: 'success',
+        verified_quality: 9,
+        computed_quality: null,
+        output_quality_rating: null,
+        created_at: '2026-05-20T08:30:00Z',
+      },
+    ]
+    const sb = makeSkillSupabase(
+      { data: decisions, error: null },
+      { data: outcomes, error: null },
+    )
+    const memory = await getSkillRoutingMemory(sb, AGENT, CLUSTER, 4)
+    expect(memory).not.toBeNull()
+    expect(memory!.sample_size).toBe(4)
+    expect(memory!.success_rate).toBe(0.75) // 3 of 4 ok
+    expect(memory!.historical_skill).toBe('firecrawl-mcp')
+    expect(memory!.avg_quality).toBeCloseTo(8.0, 1) // (8+7+9)/3
+  })
+
+  it('returns null and unblocks when the lookup exceeds the timeout', async () => {
+    const sb = makeHangingSupabase()
+    const start = Date.now()
+    const memory = await getSkillRoutingMemory(sb, AGENT, CLUSTER, 5, 50)
+    const elapsed = Date.now() - start
+    expect(memory).toBeNull()
+    expect(elapsed).toBeLessThan(500)
   })
 })
