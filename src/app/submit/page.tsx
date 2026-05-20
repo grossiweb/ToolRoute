@@ -171,14 +171,14 @@ export default function SubmitPage() {
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M9 12.75L11.25 15 15 9.75M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  Auto-approved — 10+ GitHub stars detected
+                  Auto-approved: 10+ GitHub stars detected
                 </div>
               ) : (
                 <div className="inline-flex items-center gap-2 bg-brand-light text-brand px-4 py-2 rounded-full text-sm font-semibold mb-4">
                   <svg className="w-4 h-4" fill="none" viewBox="0 0 24 24" strokeWidth={2} stroke="currentColor">
                     <path strokeLinecap="round" strokeLinejoin="round" d="M12 6v6h4.5m4.5 0a9 9 0 11-18 0 9 9 0 0118 0z" />
                   </svg>
-                  In review — typically approved within 48 hours
+                  In review: typically approved within 48 hours
                 </div>
               )}
 
@@ -230,7 +230,7 @@ export default function SubmitPage() {
         </div>
         <p className="text-[var(--text-2)] leading-relaxed max-w-2xl">
           ToolRoute is the open intelligence layer for MCP skills. Submit your MCP server and it enters
-          the benchmark pipeline — scored on output quality, reliability, efficiency, cost, and trust.
+          the benchmark pipeline, scored on output quality, reliability, efficiency, cost, and trust.
           Agents use these scores to route tasks to the best tool automatically.
         </p>
       </div>
@@ -349,7 +349,7 @@ export default function SubmitPage() {
                 onChange={e => setForm(f => ({ ...f, email: e.target.value }))}
                 className="w-full px-3.5 py-2.5 border border-[var(--border)] rounded-lg focus:outline-none focus:ring-2 focus:ring-brand/30 focus:border-brand text-sm transition-colors"
               />
-              <p className="text-xs text-[var(--text-3)] mt-1">For maintainer verification only — never shared publicly</p>
+              <p className="text-xs text-[var(--text-3)] mt-1">For maintainer verification only, never shared publicly</p>
             </div>
           </div>
         </section>

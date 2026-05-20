@@ -182,7 +182,7 @@ export default async function ReportPage({ params }: { params: { slug: string } 
                         </div>
                       ) : (
                         <p className="text-sm text-[var(--text-3)] italic">
-                          Accumulating data — {comp.sample_size}/{minSamples} runs recorded
+                          Accumulating data: {comp.sample_size}/{minSamples} runs recorded
                         </p>
                       )}
                     </div>

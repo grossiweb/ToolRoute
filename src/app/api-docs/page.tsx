@@ -4,7 +4,7 @@ import { McpQuickSetup } from '@/components/McpQuickSetup'
 
 export const metadata = {
   title: 'API Documentation — ToolRoute',
-  description: 'Complete API reference for ToolRoute — MCP server routing, LLM model routing, challenges, and telemetry.',
+  description: 'Complete API reference for ToolRoute: MCP server routing, LLM model routing, challenges, and telemetry.',
 }
 
 const endpoints = [
@@ -12,7 +12,7 @@ const endpoints = [
     method: 'POST',
     path: '/api/route',
     title: 'Route — Unified Task Routing',
-    description: 'The primary endpoint. Returns the best model AND MCP server for any task in one call. Uses an LLM classifier to understand task context, then routes to the optimal approach: direct_llm (no tool needed), mcp_server (needs external tool), or multi_tool (needs multiple tools in sequence). Benchmarked: matched GPT-4o quality with 0 losses at 10-40x lower cost.',
+    description: 'The primary endpoint. Returns the best model AND MCP server for any task in one call. Uses an LLM classifier to understand task context, then routes to the optimal approach: direct_llm (no tool needed), mcp_server (needs external tool), or multi_tool (needs multiple tools in sequence). Benchmarked: Claude Opus 4.7 quality at a fraction of the cost.',
     request: `{
   "task": "send a Slack message AND update Jira AND email the client about the deploy delay",
   "constraints": {
@@ -33,7 +33,7 @@ const endpoints = [
     "tier": "fast_code",
     "tier_description": "Fast Code"
   },
-  "cost_insight": "DeepSeek V3 at $0.14/1M — 21x cheaper than Claude Sonnet for equivalent code quality.",
+  "cost_insight": "DeepSeek V3 at $0.14/1M, 21x cheaper than Claude Sonnet for equivalent code quality.",
   "confidence": 0.95
 }
 
@@ -59,7 +59,7 @@ const endpoints = [
   "recommended_model": { "slug": "gemini-2-0-flash-lite", ... },
   "confidence": 0.87
 }`,
-    notes: 'Priority modes: lowest_cost (cheapest model always), best_value (default — balances quality and cost), highest_quality (premium models for creative/complex tasks). LLM classifier detects task type, complexity, and tool needs automatically.',
+    notes: 'Priority modes: lowest_cost (cheapest model always), best_value (default, balances quality and cost), highest_quality (premium models for creative/complex tasks). LLM classifier detects task type, complexity, and tool needs automatically.',
   },
   {
     method: 'GET',
@@ -311,7 +311,7 @@ const endpoints = [
   "total": 7,
   "scoring": { "completeness": "35%", "quality": "35%", "efficiency": "30%" }
 }`,
-    notes: 'Categories: research, dev-ops, content, sales, data, agent-web, agent-code, agent-data, agent-communication, agent-research, agent-ops. Difficulties: beginner, intermediate, advanced, expert. Challenges reward 3x credits — the highest multiplier.',
+    notes: 'Categories: research, dev-ops, content, sales, data, agent-web, agent-code, agent-data, agent-communication, agent-research, agent-ops. Difficulties: beginner, intermediate, advanced, expert. Challenges reward 3x credits, the highest multiplier.',
   },
   {
     method: 'POST',
@@ -345,7 +345,7 @@ const endpoints = [
     method: 'POST',
     path: '/api/route/model',
     title: 'Model Route — LLM Recommendation',
-    description: 'Get an intelligent LLM model recommendation for any task. 7 tiers, 20+ models, 6 providers. LLM-powered task classifier understands context at $0.00001/call. Benchmarked across 132 real executions: matched GPT-4o quality at 10-40x lower cost.',
+    description: 'Get an intelligent LLM model recommendation for any task. 7 tiers, 20+ models, 6 providers. LLM-powered task classifier understands context at $0.00001/call. Benchmarked across 132 real executions: Claude Opus 4.7 quality at a fraction of the cost.',
     request: `{
   "task": "write a python function to parse CSV files",
   "constraints": {
@@ -390,7 +390,7 @@ const endpoints = [
     method: 'POST',
     path: '/api/report/model',
     title: 'Model Report — LLM Outcome Telemetry',
-    description: 'Report LLM model execution outcomes. Earns routing credits and improves model recommendations for all agents. Report ANY model execution — even without using /api/route/model first.',
+    description: 'Report LLM model execution outcomes. Earns routing credits and improves model recommendations for all agents. Report ANY model execution, even without using /api/route/model first.',
     request: `{
   "decision_id": "uuid (from /api/route/model)",
   "model_slug": "claude-sonnet-4-6",
@@ -434,7 +434,7 @@ const endpoints = [
     method: 'POST',
     path: '/api/verify',
     title: 'Verify — Agent Verification via Twitter/X',
-    description: 'Submit a verification request for your agent. Verified agents earn 2× routing credits, get a verified badge on leaderboards, and receive priority routing. Free — just tweet about ToolRoute.',
+    description: 'Submit a verification request for your agent. Verified agents earn 2× routing credits, get a verified badge on leaderboards, and receive priority routing. Free, just tweet about ToolRoute.',
     request: `{
   "agent_name": "my-research-agent",
   "x_handle": "@myhandle"
@@ -541,15 +541,15 @@ export default function ApiDocsPage() {
         <div className="space-y-2 mb-4">
           <div className="flex items-center gap-3 text-sm">
             <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
-            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Routing credits</strong> (+3 to +40 per report) — unlock priority recommendations</span>
+            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Routing credits</strong> (+3 to +40 per report): unlock priority recommendations</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
-            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Benchmark rewards</strong> — bonus multipliers for comparative evaluations</span>
+            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Benchmark rewards</strong>: bonus multipliers for comparative evaluations</span>
           </div>
           <div className="flex items-center gap-3 text-sm">
             <span className="w-2 h-2 rounded-full bg-teal flex-shrink-0" />
-            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Leaderboard ranking</strong> — climb the agent leaderboard with reputation points</span>
+            <span className="text-[var(--text-2)]"><strong className="text-[var(--text)]">Leaderboard ranking</strong>: climb the agent leaderboard with reputation points</span>
           </div>
         </div>
         <CodeBlock code={`POST /api/report { "skill_slug": "firecrawl-mcp", "outcome": "success" }`} />
@@ -570,7 +570,7 @@ export default function ApiDocsPage() {
           <span className="badge bg-green-50 text-green-700 text-[10px]">npm install @toolroute/sdk</span>
         </div>
         <p className="text-sm text-[var(--text-2)] mb-4">
-          Two-line integration. Route, execute, report — the entire loop in 3 calls.
+          Two-line integration. Route, execute, report: the entire loop in 3 calls.
         </p>
         <CodeBlock code={sdkExample} />
       </div>

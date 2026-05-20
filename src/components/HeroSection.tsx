@@ -39,9 +39,9 @@ function MCPTooltip() {
           pointerEvents: 'none',
         }}>
           <strong style={{ color: 'var(--text)', display: 'block', marginBottom: 4 }}>Model Context Protocol</strong>
-          <span>The standard that lets your agent use real tools — GitHub, Slack, Stripe, Gmail — without writing custom integrations.</span>
+          <span>The standard that lets your agent use real tools (GitHub, Slack, Stripe, Gmail) without writing custom integrations.</span>
           <span style={{ display: 'block', marginTop: 8, color: 'var(--text-3)', fontSize: 12 }}>Add GitHub → your agent can open PRs. Add Slack → it can send messages. Zero code.</span>
-          <span style={{ display: 'block', marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 8, fontStyle: 'italic', color: 'var(--text-3)', fontSize: 12 }}>🥋 &ldquo;I know kung fu.&rdquo; — Neo, <em>The Matrix</em> (1999)</span>
+          <span style={{ display: 'block', marginTop: 8, borderTop: '1px solid var(--border)', paddingTop: 8, fontStyle: 'italic', color: 'var(--text-3)', fontSize: 12 }}>🥋 &ldquo;I know kung fu.&rdquo; Neo, <em>The Matrix</em> (1999)</span>
         </span>
       )}
     </span>
@@ -169,7 +169,7 @@ export function HeroSection() {
         fontSize: 18, color: 'var(--text-2)', maxWidth: 560,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server{' '}<MCPTooltip />{' '}for each task — matched GPT-4o quality at 10-40x lower cost across 132 real benchmark runs.
+        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server{' '}<MCPTooltip />{' '}for each task: Claude Opus 4.7 quality at a fraction of the cost across 132 real benchmark runs.
       </p>
 
       {/* CTA buttons */}

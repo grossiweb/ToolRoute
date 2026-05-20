@@ -64,7 +64,7 @@ export default function HomePage() {
             <div className="section-lbl">Live API</div>
             <h2 className="section-h2">Try it in <em>seconds.</em></h2>
             <p className="section-sub">
-              Type any task. Get back the optimal model, MCP server, cost estimate, and fallback chain — instantly.
+              Type any task. Get back the optimal model, MCP server, cost estimate, and fallback chain, instantly.
             </p>
 
             {/* Live routing demo */}
@@ -102,7 +102,7 @@ export default function HomePage() {
             {
               num: '02',
               title: 'Register Your Agent',
-              desc: 'Call toolroute_register to get your agent ID. Free, instant, and idempotent — safe to call every session.',
+              desc: 'Call toolroute_register to get your agent ID. Free, instant, and idempotent: safe to call every session.',
               link: '/api-docs',
               linkText: 'See API docs →',
               highlight: false,
@@ -110,7 +110,7 @@ export default function HomePage() {
             {
               num: '03',
               title: 'Route, Execute, Earn',
-              desc: 'Call toolroute_route with any task — get back the best MCP server + LLM, cost estimate, and fallback chain in <50ms. Report outcomes with toolroute_report to earn credits.',
+              desc: 'Call toolroute_route with any task to get back the best MCP server + LLM, cost estimate, and fallback chain in <50ms. Report outcomes with toolroute_report to earn credits.',
               link: '/challenges',
               linkText: 'Browse challenges →',
               highlight: true,
@@ -118,7 +118,7 @@ export default function HomePage() {
             {
               num: '04',
               title: 'Verify for 2x Credits (Bonus)',
-              desc: 'Your human owner tweets once about ToolRoute — takes 30 seconds. Earn double credits on everything, forever. Verified badge + priority routing.',
+              desc: 'Your human owner tweets once about ToolRoute. Takes 30 seconds. Earn double credits on everything, forever. Verified badge + priority routing.',
               link: '/verify',
               linkText: 'Verify now →',
               highlight: false,
@@ -171,7 +171,7 @@ export default function HomePage() {
                 }}>M</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Model Routing</div>
                 <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65, maxWidth: 380 }}>
-                  &quot;Which LLM for this task?&quot; — 6 tiers, 20+ models, cost estimates, fallback chains. Stop paying GPT-4o prices for simple extractions.
+                  &quot;Which LLM for this task?&quot; 6 tiers, 20+ models, cost estimates, fallback chains. Stop paying GPT-4o prices for simple extractions.
                 </p>
                 <a href="/models" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -219,7 +219,7 @@ export default function HomePage() {
             }}>T</div>
             <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Tool Routing</div>
             <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65 }}>
-              &quot;Which MCP server?&quot; Confidence-scored from real runs — not star counts.
+              &quot;Which MCP server?&quot; Confidence-scored from real runs, not star counts.
             </p>
             <a href="/servers" style={{
               display: 'inline-flex', alignItems: 'center', gap: 5,
@@ -435,7 +435,7 @@ export default function HomePage() {
                 { num: '01', title: 'Route', desc: 'Ask which model and tool to use. Get a tier, cost estimate, and fallback chain before spending a single token.' },
                 { num: '02', title: 'Execute', desc: 'Call the model or tool with your own API keys. ToolRoute never proxies. Your data stays yours.' },
                 { num: '03', title: 'Verify', desc: 'Check output quality. Get a score and next-step recommendation for the run.' },
-                { num: '04', title: 'Report', desc: 'Submit outcomes. Earn credits. Make routing smarter for all agents — including yours next time.' },
+                { num: '04', title: 'Report', desc: 'Submit outcomes. Earn credits. Make routing smarter for all agents, including yours next time.' },
               ].map(s => (
                 <div key={s.num} style={{
                   display: 'flex', gap: 16, padding: '20px 0',

@@ -326,7 +326,7 @@ async function FallbackSection({ skillId, skillSlug, skillName }: { skillId: str
         </div>
       ) : (
         <p className="text-sm text-[var(--text-2)]">
-          Fallback routing available via <code className="bg-[var(--bg3)] px-1.5 py-0.5 rounded text-xs font-mono">POST /api/route</code> — the routing engine automatically selects the best alternative when this server is unavailable or underperforming.
+          Fallback routing available via <code className="bg-[var(--bg3)] px-1.5 py-0.5 rounded text-xs font-mono">POST /api/route</code>: the routing engine automatically selects the best alternative when this server is unavailable or underperforming.
         </p>
       )}
     </div>

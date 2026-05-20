@@ -13,13 +13,13 @@ export default function PrivacyPage() {
         <h1 style={{ fontFamily: 'var(--serif)', fontSize: 'clamp(36px, 5vw, 60px)', fontWeight: 400, lineHeight: 1.05, color: 'var(--text)', marginBottom: 12 }}>
           Privacy &amp; Data<br /><em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>Architecture.</em>
         </h1>
-        <p style={{ color: 'var(--text-2)' }}>How ToolRoute handles your data — short version: we don&apos;t touch it.</p>
+        <p style={{ color: 'var(--text-2)' }}>How ToolRoute handles your data. Short version: we don&apos;t touch it.</p>
       </div>
 
       <div className="space-y-8 mt-8">
         {/* Recommendation Only */}
         <section>
-          <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text)' }}>Recommendation only — never a proxy</h2>
+          <h2 className="text-lg font-bold mb-2" style={{ color: 'var(--text)' }}>Recommendation only, never a proxy</h2>
           <p className="text-sm leading-relaxed" style={{ color: 'var(--text-2)' }}>
             ToolRoute tells your agent which model or tool to use. Your agent then calls the model directly
             with its own API keys. We never see your prompts, outputs, API keys, or tokens. We never proxy,
@@ -69,7 +69,7 @@ export default function PrivacyPage() {
             </div>
             <div className="flex items-start gap-3">
               <span className="text-red-400 font-bold text-sm mt-0.5">&#10007;</span>
-              <div className="text-sm" style={{ color: 'var(--text-2)' }}>Personal information — no emails, names, or accounts</div>
+              <div className="text-sm" style={{ color: 'var(--text-2)' }}>Personal information: no emails, names, or accounts</div>
             </div>
             <div className="flex items-start gap-3">
               <span className="text-red-400 font-bold text-sm mt-0.5">&#10007;</span>
@@ -85,15 +85,15 @@ export default function PrivacyPage() {
             <div className="grid grid-cols-1 md:grid-cols-3 gap-4 text-center text-sm">
               <div className="bg-brand-light rounded-lg p-4">
                 <div className="font-bold text-brand mb-1">1. Route</div>
-                <div className="text-xs" style={{ color: 'var(--text-2)' }}>Agent asks &quot;which model?&quot; — we return a recommendation</div>
+                <div className="text-xs" style={{ color: 'var(--text-2)' }}>Agent asks &quot;which model?&quot; We return a recommendation</div>
               </div>
               <div className="rounded-lg p-4" style={{ background: 'var(--bg3)' }}>
                 <div className="font-bold mb-1" style={{ color: 'var(--text)' }}>2. Execute</div>
-                <div className="text-xs" style={{ color: 'var(--text-2)' }}>Agent calls the model directly — we&apos;re not in the loop</div>
+                <div className="text-xs" style={{ color: 'var(--text-2)' }}>Agent calls the model directly. We&apos;re not in the loop</div>
               </div>
               <div className="bg-teal-light rounded-lg p-4">
                 <div className="font-bold text-teal mb-1">3. Report (optional)</div>
-                <div className="text-xs" style={{ color: 'var(--text-2)' }}>Agent shares outcome — earns credits, improves routing</div>
+                <div className="text-xs" style={{ color: 'var(--text-2)' }}>Agent shares outcome: earns credits, improves routing</div>
               </div>
             </div>
           </div>

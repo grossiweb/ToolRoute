@@ -138,7 +138,7 @@ const STATIC_DEFAULT_RESULT = {
   earn_more: {
     challenges: {
       message:
-        'Workflow Challenges pay 3x credits — pick a business task, choose your own model + tools, compete for Gold.',
+        'Workflow Challenges pay 3x credits: pick a business task, choose your own model + tools, compete for Gold.',
       endpoint: 'GET /api/challenges',
     },
     mcp_routing: {
@@ -235,7 +235,7 @@ ${result.reasoning || ''}`
           What do you want your agent to do?
         </label>
         <p className="text-xs md:text-sm text-[var(--text-2)] mb-3 md:mb-4">
-          Describe a task — we&apos;ll pick the cheapest model that works. Live API call, not a demo.
+          Describe a task and we&apos;ll pick the cheapest model that works. Live API call, not a demo.
         </p>
 
         <div className="flex flex-col md:flex-row gap-2 md:gap-3 mb-3">

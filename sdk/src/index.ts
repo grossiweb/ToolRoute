@@ -90,6 +90,18 @@ export interface RouteResponse {
   non_mcp_alternative: Record<string, string> | null
   routing_metadata: Record<string, any>
   wanted_telemetry: Record<string, any>
+  /** Skill-side routing memory — present when the caller has matching history
+   *  (sample_size ≥ 3, success_rate ≥ 0.75). Use it to decide whether to
+   *  follow the live recommendation or reuse what worked before. */
+  skill_routing_memory?: {
+    historical_skill: string | null
+    success_rate: number
+    sample_size: number
+    avg_quality: number | null
+    note?: string
+  }
+  /** True when the live recommendation matches what worked historically. */
+  confirmed_by_history?: boolean
 }
 
 export interface ReportRequest {
@@ -174,6 +186,40 @@ export interface ModelRouteResponse {
   wanted_telemetry?: Record<string, any>
   register_hint?: Record<string, any>
   earn_more?: Record<string, any>
+  /** Model-side routing memory — present when the caller has matching history
+   *  (sample_size ≥ 3, success_rate ≥ 0.75). */
+  routing_memory?: {
+    historical_model: string | null
+    success_rate: number
+    sample_size: number
+    avg_quality: number | null
+    note?: string
+  }
+  /** True when the live recommendation matches what worked historically. */
+  confirmed_by_history?: boolean
+}
+
+export interface PreferencesRequest {
+  /** Agent UUID from /api/agents/register. */
+  agent_identity_id: string
+  /** Routing preferences. Any field omitted is left unchanged on the server. */
+  preferences?: {
+    allow_china?: boolean
+    regulated_industries?: string[]
+    /** Provider allowlist — non-empty array constrains routing to these
+     *  providers. Empty array clears the constraint. */
+    available_providers?: string[]
+  }
+  /** Project fingerprint stored on the agent record. Shallow-merged with the
+   *  existing value; pass an empty object only if you really mean to clear. */
+  project_context?: Record<string, unknown>
+}
+
+export interface PreferencesResponse {
+  agent_identity_id: string
+  preferences: Record<string, unknown>
+  project_context: Record<string, unknown>
+  resolved_profile?: string
 }
 
 export interface ModelReportRequest {
@@ -495,6 +541,22 @@ export class ToolRoute {
       if (!res.ok) return { error: 'Registration failed' }
       return await res.json()
     } catch { return { error: 'unreachable' } }
+  }
+
+  /** Update routing preferences and/or project_context on an existing agent.
+   *  Either field may be omitted; present keys overwrite, absent keys keep
+   *  the existing value. Returns the merged state. */
+  async preferences(request: PreferencesRequest): Promise<PreferencesResponse | { error: string }> {
+    try {
+      const res = await this.fetch('POST', '/api/agents/preferences', request)
+      if (!res.ok) {
+        const detail = await res.json().catch(() => ({}))
+        return { error: detail?.error || `HTTP ${res.status}` }
+      }
+      return await res.json()
+    } catch {
+      return { error: 'unreachable' }
+    }
   }
 
   /** Check your real credit balance. */

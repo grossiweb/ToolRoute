@@ -182,7 +182,7 @@ export default function DashboardPage() {
                     {data.agent.agent_name}
                     {(data.agent.trust_tier === 'trusted' || data.agent.trust_tier === 'production' || data.agent.trust_tier === 'enterprise') && (
                       <span
-                        title="Verified agent — earns 2x credits"
+                        title="Verified agent: earns 2x credits"
                         className="inline-flex items-center justify-center w-5 h-5 rounded-full bg-brand text-white text-[10px] font-bold"
                       >
                         {'\u2713'}
@@ -251,8 +251,8 @@ export default function DashboardPage() {
                 </div>
                 <div style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.5 }}>
                   {data.balance.total_routing_credits > 0
-                    ? `This agent has earned ${data.balance.total_routing_credits.toLocaleString()} credits — verified agents would have earned ${(data.balance.total_routing_credits * 2).toLocaleString()}. Tweet once and this agent earns double forever.`
-                    : 'Verified agents earn 2x credits on every action. Tweet about ToolRoute and confirm — takes 30 seconds.'}
+                    ? `This agent has earned ${data.balance.total_routing_credits.toLocaleString()} credits; verified agents would have earned ${(data.balance.total_routing_credits * 2).toLocaleString()}. Tweet once and this agent earns double forever.`
+                    : 'Verified agents earn 2x credits on every action. Tweet about ToolRoute and confirm. Takes 30 seconds.'}
                 </div>
               </div>
               <a

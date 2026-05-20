@@ -200,7 +200,7 @@ export default async function OlympicsPage() {
                   </div>
                 ) : (
                   <div className="border-t border-[var(--border)] pt-4 text-center text-sm text-[var(--text-3)] py-4">
-                    No competitors yet — <Link href="/api-docs" className="text-brand hover:underline">submit telemetry</Link> to enter MCP servers.
+                    No competitors yet. <Link href="/api-docs" className="text-brand hover:underline">Submit telemetry</Link> to enter MCP servers.
                   </div>
                 )}
               </div>

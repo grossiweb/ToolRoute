@@ -159,7 +159,7 @@ export default async function ModelsPage() {
             lineHeight: 1.6, maxWidth: 420, margin: '0 auto 24px',
           }}>
             Use the ToolRoute API or SDK to get optimal model recommendations
-            for any task — with cost, quality, and speed scoring built in.
+            for any task, with cost, quality, and speed scoring built in.
           </p>
           <div style={{ display: 'flex', justifyContent: 'center', gap: 12 }}>
             <Link href="/api-docs" style={{

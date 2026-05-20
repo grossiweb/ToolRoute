@@ -25,7 +25,7 @@ export function ConnectBlock() {
   const [copied, setCopied] = useState(false)
 
   const plainCode: Record<Tab, string> = {
-    'claude-code': `# One command — done in 3 seconds
+    'claude-code': `# One command, done in 3 seconds
 claude mcp add toolroute \\
   --transport sse \\
   --url https://toolroute.io/api/mcp
@@ -101,7 +101,7 @@ response = litellm.completion(
   const highlightedCode: Record<Tab, JSX.Element> = {
     'claude-code': (
       <>
-        <span style={cc}>{'# One command — done in 3 seconds'}</span>{'\n'}
+        <span style={cc}>{'# One command, done in 3 seconds'}</span>{'\n'}
         {'claude mcp add toolroute \\\n'}
         {'  --transport sse \\\n'}
         {'  --url '}<span style={cs}>https://toolroute.io/api/mcp</span>{'\n'}
