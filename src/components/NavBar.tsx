@@ -155,7 +155,10 @@ export function NavBar() {
           href="/register"
           className="nav-btn-desktop"
           style={{
-            background: 'transparent',
+            // amber-dim fill gives the text its own backdrop so the
+            // amber stays readable on white (light theme) and remains
+            // visually distinct from the solid amber "API" button.
+            background: 'var(--amber-dim)',
             border: '1px solid var(--amber)',
             color: 'var(--amber)',
             padding: '8px 16px',
