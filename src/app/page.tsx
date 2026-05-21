@@ -50,10 +50,52 @@ export default function HomePage() {
           </div>
 
           {/* Right: Code demo */}
-          <div>
+          <div style={{ minWidth: 0 }}>
             <ConnectBlock />
           </div>
         </div>
+      </div>
+
+      {/* Why register? — value prop + CTA */}
+      <div className="home-section" style={{ padding: '64px 40px 0', maxWidth: 1240, margin: '0 auto' }}>
+        <div style={{
+          background: 'linear-gradient(135deg, rgba(251,191,36,0.06) 0%, rgba(251,191,36,0.01) 100%)',
+          border: '1px solid rgba(251,191,36,0.2)',
+          borderRadius: 'var(--radius-lg)',
+          padding: '32px 36px',
+          display: 'grid',
+          gridTemplateColumns: '1fr auto',
+          gap: 32,
+          alignItems: 'center',
+        }} className="why-register-card">
+          <div>
+            <div className="section-lbl" style={{ marginBottom: 10 }}>Why register?</div>
+            <h2 style={{
+              fontFamily: 'var(--serif)', fontSize: 28, fontWeight: 400,
+              color: 'var(--text)', marginBottom: 10, lineHeight: 1.2,
+            }}>
+              Anonymous calls work fine. Registered agents get <em style={{ fontStyle: 'italic', color: 'var(--amber)' }}>routing memory.</em>
+            </h2>
+            <p style={{ fontSize: 14, color: 'var(--text-2)', lineHeight: 1.65, maxWidth: 620 }}>
+              ToolRoute tracks which models and tools worked for your specific tasks and automatically improves recommendations over time. One-time setup, no API key needed, free forever.
+            </p>
+          </div>
+          <a href="/register" style={{
+            background: 'var(--amber)', color: '#000',
+            padding: '12px 24px', borderRadius: 8,
+            fontSize: 14, fontWeight: 700, fontFamily: 'var(--sans)',
+            textDecoration: 'none', whiteSpace: 'nowrap',
+            transition: 'transform .15s, box-shadow .15s',
+            boxShadow: '0 6px 16px rgba(245,158,11,.2)',
+          }}>
+            Register with GitHub →
+          </a>
+        </div>
+        <style>{`
+          @media (max-width: 720px) {
+            .why-register-card { grid-template-columns: 1fr !important; gap: 20px !important; }
+          }
+        `}</style>
       </div>
 
       {/* Get Started in 4 Steps */}

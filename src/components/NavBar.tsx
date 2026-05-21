@@ -88,6 +88,7 @@ export function NavBar() {
             { href: '/challenges', label: 'Challenges' },
             { href: '/leaderboards', label: 'Leaderboards' },
             { href: '/api-docs', label: 'Docs' },
+            { href: '/register', label: 'Register' },
           ].map(link => (
             <li key={link.href}>
               <Link
@@ -215,6 +216,7 @@ export function NavBar() {
             { href: '/challenges', label: 'Challenges' },
             { href: '/leaderboards', label: 'Leaderboards' },
             { href: '/api-docs', label: 'Docs' },
+            { href: '/register', label: 'Register' },
             { href: '/verify', label: 'Verify Agent' },
             { href: '/submit', label: 'Submit Server' },
           ].map(link => (

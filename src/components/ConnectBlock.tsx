@@ -203,9 +203,16 @@ response = litellm.completion(
         padding: '10px 14px',
         borderBottom: '1px solid var(--border)',
         background: 'var(--bg3)',
-        flexWrap: 'wrap', gap: 6,
+        gap: 6,
+        minWidth: 0,
       }}>
-        <div style={{ display: 'flex', gap: 2, flexWrap: 'wrap' }}>
+        {/* Tab row: horizontal scroll on narrow viewports instead of wrapping. */}
+        <div style={{
+          display: 'flex', gap: 2,
+          flex: '1 1 0', minWidth: 0,
+          overflowX: 'auto', overflowY: 'hidden',
+          scrollbarWidth: 'none',
+        }}>
           {TAB_ORDER.map(t => (
             <button
               key={t}

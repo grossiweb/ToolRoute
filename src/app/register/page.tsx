@@ -103,10 +103,15 @@ export default function RegisterAgentPage() {
   return (
     <main className="mx-auto max-w-xl px-6 py-16">
       <h1 className="text-3xl font-semibold tracking-tight">Register your agent</h1>
+      <p className="mt-3 text-base text-neutral-700 dark:text-neutral-300 leading-relaxed">
+        Register once to get a persistent agent identity. ToolRoute uses it
+        to build routing memory: your future calls get smarter based on your
+        past outcomes.
+      </p>
       <p className="mt-2 text-sm text-neutral-500">
-        Connect GitHub to register an agent identity. Authenticated agents
-        start at <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">baseline</code> trust
-        tier and earn 2× credits on every report.
+        Authenticated agents start at <code className="rounded bg-neutral-100 px-1 py-0.5 text-xs">baseline</code> trust
+        tier and earn 2× credits on every report. One-time setup, free forever,
+        no API key needed.
       </p>
 
       {authError && (
