@@ -30,6 +30,35 @@ export interface ToolRouteConfig {
    * Register public key: include public_key in POST /api/agents/register
    */
   signingKey?: string
+  /**
+   * Called once per notice attached to a route() or model.route() response.
+   * The SDK reads `response.notices[]` (and the legacy singular
+   * `response.migration_notice` if present) and fires this callback for
+   * each. Errors thrown by the callback are swallowed so they can't
+   * break routing for the caller.
+   */
+  onNotice?: (notice: MigrationNotice) => void
+  /**
+   * Called once when a route() or model.route() response includes the
+   * `agent_health` field (typically with top_flag NO_TELEMETRY etc).
+   * Pull GET /api/agents/{id}/directives for the full diagnostic feed.
+   */
+  onAgentHealth?: (health: AgentHealthHint) => void
+}
+
+export interface MigrationNotice {
+  severity: 'info' | 'warning' | 'critical'
+  message: string
+  hint?: string | null
+  correct_endpoint?: string | null
+  docs_url?: string | null
+  effective_date?: string
+}
+
+export interface AgentHealthHint {
+  status: 'degraded' | 'critical'
+  top_flag: 'NO_ROUTING_CALLS' | 'NO_TELEMETRY' | 'LOW_TELEMETRY_RATE' | 'STALE_AGENT' | string
+  check: string
 }
 
 export interface RouteRequest {
@@ -102,6 +131,12 @@ export interface RouteResponse {
   }
   /** True when the live recommendation matches what worked historically. */
   confirmed_by_history?: boolean
+  /** Active migration notices attached by the server (broadcast or targeted). */
+  notices?: MigrationNotice[]
+  /** Legacy singular form when exactly one notice is active. */
+  migration_notice?: MigrationNotice
+  /** Hint that the agent's integration is degraded — pull the directives feed. */
+  agent_health?: AgentHealthHint
 }
 
 export interface ReportRequest {
@@ -197,6 +232,12 @@ export interface ModelRouteResponse {
   }
   /** True when the live recommendation matches what worked historically. */
   confirmed_by_history?: boolean
+  /** Active migration notices attached by the server. */
+  notices?: MigrationNotice[]
+  /** Legacy singular form when exactly one notice is active. */
+  migration_notice?: MigrationNotice
+  /** Hint that the agent's integration is degraded — pull the directives feed. */
+  agent_health?: AgentHealthHint
 }
 
 export interface PreferencesRequest {
@@ -454,6 +495,8 @@ export class ToolRoute {
   private modelFamily?: string
   private hostClient?: string
   private signingKey?: string
+  private onNotice?: (notice: MigrationNotice) => void
+  private onAgentHealth?: (health: AgentHealthHint) => void
 
   constructor(config: ToolRouteConfig = {}) {
     this.baseUrl = (config.baseUrl || 'https://toolroute.io').replace(/\/$/, '')
@@ -463,6 +506,33 @@ export class ToolRoute {
     this.modelFamily = config.modelFamily
     this.hostClient = config.hostClient
     this.signingKey = config.signingKey
+    this.onNotice = config.onNotice
+    this.onAgentHealth = config.onAgentHealth
+  }
+
+  /**
+   * Fire onNotice / onAgentHealth callbacks for any matching fields on
+   * a response. Swallows callback errors so user-thrown exceptions
+   * can't break the routing path.
+   */
+  private fireResponseCallbacks(
+    response: { notices?: MigrationNotice[]; migration_notice?: MigrationNotice; agent_health?: AgentHealthHint } | null | undefined,
+  ): void {
+    if (!response) return
+    if (this.onNotice) {
+      try {
+        if (Array.isArray(response.notices)) {
+          for (const n of response.notices) this.onNotice(n)
+        } else if (response.migration_notice) {
+          this.onNotice(response.migration_notice)
+        }
+      } catch { /* swallow */ }
+    }
+    if (this.onAgentHealth && response.agent_health) {
+      try {
+        this.onAgentHealth(response.agent_health)
+      } catch { /* swallow */ }
+    }
   }
 
   /**
@@ -532,7 +602,9 @@ export class ToolRoute {
       if (!res.ok) {
         return this.fallbackRouteResponse(request)
       }
-      return await res.json()
+      const data = await res.json()
+      this.fireResponseCallbacks(data)
+      return data
     } catch {
       return this.fallbackRouteResponse(request)
     }
@@ -624,7 +696,9 @@ export class ToolRoute {
       try {
         const res = await this.fetch('POST', '/api/route/model', request)
         if (!res.ok) return unreachableResponse('unreachable')
-        return await res.json()
+        const data = await res.json()
+        this.fireResponseCallbacks(data)
+        return data
       } catch {
         return unreachableResponse('timeout')
       }
