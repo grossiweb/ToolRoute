@@ -11,7 +11,7 @@ import { buildAgentDirectives } from '@/lib/agent-directives'
  * This endpoint makes ToolRoute itself queryable as an MCP server.
  * Agents can call ToolRoute tools using the standard MCP protocol.
  *
- * Tools exposed (18):
+ * Tools exposed (17):
  *   - toolroute_register: Register agent identity (START HERE)
  *   - toolroute_help: Guided walkthrough + current status
  *   - toolroute_balance: Check real credit balance (anti-hallucination)
