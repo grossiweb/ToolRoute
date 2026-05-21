@@ -88,7 +88,6 @@ export function NavBar() {
             { href: '/challenges', label: 'Challenges' },
             { href: '/leaderboards', label: 'Leaderboards' },
             { href: '/api-docs', label: 'Docs' },
-            { href: '/register', label: 'Register' },
           ].map(link => (
             <li key={link.href}>
               <Link
@@ -150,6 +149,25 @@ export function NavBar() {
           }}
         >
           Submit
+        </Link>
+
+        <Link
+          href="/register"
+          className="nav-btn-desktop"
+          style={{
+            background: 'transparent',
+            border: '1px solid var(--amber)',
+            color: 'var(--amber)',
+            padding: '8px 16px',
+            borderRadius: 8,
+            fontSize: 14,
+            fontFamily: 'var(--sans)',
+            fontWeight: 600,
+            textDecoration: 'none',
+            transition: 'all .2s',
+          }}
+        >
+          Register
         </Link>
 
         <Link

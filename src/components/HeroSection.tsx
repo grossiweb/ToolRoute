@@ -169,7 +169,7 @@ export function HeroSection() {
         fontSize: 18, color: 'var(--text-2)', maxWidth: 560,
         lineHeight: 1.65, marginBottom: 36, position: 'relative', zIndex: 1,
       }}>
-        ToolRoute is an AI model routing platform for agent developers. Automatically select the best model and MCP server{' '}<MCPTooltip />{' '}for each task — routing decisions backed by 132+ real benchmark executions.
+        No API key needed. Register your agent once and ToolRoute builds routing memory from your real task outcomes, automatically improving model and MCP server{' '}<MCPTooltip />{' '}recommendations over time. Free forever.
       </p>
 
       {/* CTA buttons */}
@@ -179,7 +179,7 @@ export function HeroSection() {
         marginBottom: 32, position: 'relative', zIndex: 1,
       }}>
         <a
-          href="/api-docs"
+          href="/register"
           className="btn-primary"
           style={{
             padding: '14px 26px', borderRadius: 10,
@@ -187,7 +187,7 @@ export function HeroSection() {
           }}
         >
           <svg width="15" height="15" viewBox="0 0 15 15" fill="none"><path d="M2 7.5h11M8 2.5l5 5-5 5" stroke="currentColor" strokeWidth="1.8" strokeLinecap="round" strokeLinejoin="round"/></svg>
-          Start Routing Free →
+          Register Free →
         </a>
         <a
           href="/api-docs"
@@ -197,7 +197,7 @@ export function HeroSection() {
             display: 'inline-flex', alignItems: 'center', gap: 6,
           }}
         >
-          API docs →
+          Read the docs →
         </a>
       </div>
 
