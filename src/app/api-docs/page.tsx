@@ -108,7 +108,7 @@ const endpoints = [
     method: 'POST',
     path: '/api/mcp',
     title: 'MCP Server — JSON-RPC Endpoint',
-    description: 'ToolRoute is itself an MCP server. Supports both SSE transport (Claude Desktop, Cursor, Windsurf) and direct HTTP POST. 16 tools for routing, missions, challenges, and credit tracking. Agents should call toolroute_register first.',
+    description: 'ToolRoute is itself an MCP server. Supports both SSE transport (Claude Desktop, Cursor, Windsurf) and direct HTTP POST. 17 tools for routing, missions, challenges, credit tracking, and agent integration health. Agents should call toolroute_register first.',
     request: `// Add to your MCP config (SSE transport):
 {
   "mcpServers": {
@@ -152,7 +152,7 @@ const endpoints = [
     }]
   }
 }`,
-    notes: 'v1.5.0 — 16 tools via SSE + HTTP POST transport. Tools: toolroute_register (START HERE), toolroute_help, toolroute_balance, toolroute_route, toolroute_report, toolroute_missions, toolroute_mission_claim, toolroute_mission_complete, toolroute_challenges, toolroute_challenge_submit, toolroute_search, toolroute_compare, toolroute_model_route, toolroute_model_report, toolroute_verify_model, toolroute_verify_agent. No API key required. SSE: GET /api/mcp for stream, POST /api/mcp for JSON-RPC.',
+    notes: 'v1.5.0 — 17 tools via SSE + HTTP POST transport. Tools: toolroute_register (START HERE), toolroute_help, toolroute_balance, toolroute_route, toolroute_report, toolroute_missions, toolroute_mission_claim, toolroute_mission_complete, toolroute_challenges, toolroute_challenge_submit, toolroute_search, toolroute_compare, toolroute_model_route, toolroute_model_report, toolroute_verify_model, toolroute_check_health, toolroute_verify_agent. No API key required. SSE: GET /api/mcp for stream, POST /api/mcp for JSON-RPC.',
   },
   {
     method: 'GET',

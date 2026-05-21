@@ -74,7 +74,7 @@ export function McpQuickSetup() {
       </div>
 
       <p style={{ fontSize: 13, color: 'var(--text-2)', marginBottom: 16, lineHeight: 1.5 }}>
-        ToolRoute is an MCP server. Paste this config and your agent gets 16 tools for routing, missions, and credit tracking. No API key needed.
+        ToolRoute is an MCP server. Paste this config and your agent gets 17 tools for routing, missions, credit tracking, and integration health checks. No API key needed.
       </p>
 
       {/* Tabs */}

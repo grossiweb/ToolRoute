@@ -8,6 +8,7 @@ import { getActiveNotices } from '@/lib/notices'
 import { detectTaskSignals, resolveModelTier } from '@/lib/model-routing'
 import { deriveTaskCluster } from '@/lib/task-cluster'
 import { getSkillRoutingMemory, type SkillRoutingMemory } from '@/lib/routing-memory'
+import { checkAgentHealthHint } from '@/lib/agent-directives'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -87,7 +88,7 @@ export async function GET() {
       'POST /api/report': 'Report ANY skill execution — earns credits (GET for full docs)',
       'GET /api/report': 'Documentation for reporting — what to report, examples, credit rewards',
       'POST /api/contributions': 'Advanced telemetry — A/B tests, fallback chains, benchmark packages',
-      'POST /api/mcp': 'JSON-RPC MCP endpoint (16 tools)',
+      'POST /api/mcp': 'JSON-RPC MCP endpoint (17 tools)',
       'GET /api/skills': 'Search the MCP server catalog',
       'GET /api/missions/available': 'List available benchmark missions (10 events)',
       'POST /api/missions/claim': 'Claim a benchmark mission',
@@ -744,6 +745,19 @@ export async function POST(request: NextRequest) {
     }
   }
 
+  // Agent health hint — bounded 150ms inside checkAgentHealthHint.
+  const healthHint = agent_identity_id
+    ? await checkAgentHealthHint(supabase, agent_identity_id, 'outcome_records', 'skill_routing_decisions')
+    : null
+  const healthFields = healthHint
+    ? {
+        agent_health: {
+          ...healthHint,
+          check: `GET https://toolroute.io/api/agents/${agent_identity_id}/directives`,
+        },
+      }
+    : {}
+
   const memoryFields = skillRoutingMemory && skillRoutingMemory.success_rate >= 0.75
     ? {
         skill_routing_memory: {
@@ -853,6 +867,7 @@ export async function POST(request: NextRequest) {
     }),
     ...noticeFields,
     ...memoryFields,
+    ...healthFields,
     ...hintsField,
   })
 }

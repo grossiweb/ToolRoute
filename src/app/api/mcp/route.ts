@@ -3,6 +3,7 @@ import { createServerSupabaseClient } from '@/lib/supabase/server'
 import { semanticMatchWorkflow } from '@/lib/embeddings'
 import { matchWorkflowFromTask, calcTaskConfidence } from '@/lib/matching'
 import { getVerificationNudge } from '@/lib/verification-nudge'
+import { buildAgentDirectives } from '@/lib/agent-directives'
 
 /**
  * ToolRoute MCP Server — JSON-RPC over HTTP
@@ -10,7 +11,7 @@ import { getVerificationNudge } from '@/lib/verification-nudge'
  * This endpoint makes ToolRoute itself queryable as an MCP server.
  * Agents can call ToolRoute tools using the standard MCP protocol.
  *
- * Tools exposed (16):
+ * Tools exposed (18):
  *   - toolroute_register: Register agent identity (START HERE)
  *   - toolroute_help: Guided walkthrough + current status
  *   - toolroute_balance: Check real credit balance (anti-hallucination)
@@ -313,6 +314,19 @@ const TOOLS = [
         agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
       },
       required: ['model_slug', 'task', 'output_snippet'],
+    },
+  },
+  {
+    name: 'toolroute_check_health',
+    description: 'Check your agent\'s integration health. Returns active flags (NO_ROUTING_CALLS, NO_TELEMETRY, LOW_TELEMETRY_RATE, STALE_AGENT), 30-day routing/outcome counts, last-call timestamp, and specific action items. Call this if you suspect your integration is misconfigured or if you see agent_health in a route response.',
+    title: 'Check Integration Health',
+    annotations: { title: 'Check Integration Health', readOnlyHint: true, destructiveHint: false, idempotentHint: true, openWorldHint: true },
+    inputSchema: {
+      type: 'object',
+      properties: {
+        agent_identity_id: { type: 'string', description: 'Your agent UUID from toolroute_register' },
+      },
+      required: ['agent_identity_id'],
     },
   },
   {
@@ -1261,6 +1275,19 @@ async function handleToolCall(id: any, params: any) {
       const result = await res.json()
       result.next_step = 'Call toolroute_balance to check your updated credits.'
       return toolResult(id, JSON.stringify(result, null, 2))
+    }
+
+    /* ── toolroute_check_health ── */
+    case 'toolroute_check_health': {
+      const id_ = (args || {}).agent_identity_id
+      if (!id_) {
+        return toolResult(id, JSON.stringify({ error: 'agent_identity_id is required' }))
+      }
+      const directives = await buildAgentDirectives(supabase, id_)
+      if (!directives) {
+        return toolResult(id, JSON.stringify({ error: 'Agent not found', agent_identity_id: id_ }))
+      }
+      return toolResult(id, JSON.stringify(directives, null, 2))
     }
 
     /* ── toolroute_verify_agent ── */

@@ -19,6 +19,7 @@ import { apiError } from '@/lib/api-error'
 import { getActiveNotices } from '@/lib/notices'
 import { deriveTaskCluster } from '@/lib/task-cluster'
 import { getRoutingMemory } from '@/lib/routing-memory'
+import { checkAgentHealthHint } from '@/lib/agent-directives'
 
 // GET /api/route/model — Self-documenting guide
 export async function GET() {
@@ -315,7 +316,10 @@ export async function POST(request: NextRequest) {
       response.agent = { agent_name: agent.agent_name, trust_tier: agent.trust_tier, recognized: true }
     }
 
-    const memory = await getRoutingMemory(supabase, agent_identity_id, taskCluster)
+    const [memory, healthHint] = await Promise.all([
+      getRoutingMemory(supabase, agent_identity_id, taskCluster),
+      checkAgentHealthHint(supabase, agent_identity_id, 'model_outcome_records', 'model_routing_decisions'),
+    ])
     if (memory && memory.success_rate >= 0.75) {
       response.routing_memory = {
         ...memory,
@@ -323,6 +327,12 @@ export async function POST(request: NextRequest) {
       }
       if (memory.historical_model === primary.id) {
         response.confirmed_by_history = true
+      }
+    }
+    if (healthHint) {
+      response.agent_health = {
+        ...healthHint,
+        check: `GET https://toolroute.io/api/agents/${agent_identity_id}/directives`,
       }
     }
   } else {

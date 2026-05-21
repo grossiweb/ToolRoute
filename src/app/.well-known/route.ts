@@ -35,6 +35,7 @@ export async function GET() {
         'toolroute_model_route',
         'toolroute_model_report',
         'toolroute_verify_model',
+        'toolroute_check_health',
         'toolroute_verify_agent',
       ],
       config_snippet: {
@@ -65,7 +66,7 @@ export async function GET() {
       model_route: 'POST /api/route/model: LLM model recommendation (6 tiers, 20+ models)',
       model_report: 'POST /api/report/model: report model execution outcome (earn credits)',
       model_verify: 'POST /api/verify/model: lightweight output quality verification',
-      mcp_server: 'POST /api/mcp: JSON-RPC MCP server (16 tools)',
+      mcp_server: 'POST /api/mcp: JSON-RPC MCP server (17 tools)',
     },
 
     // Quickstart for agents

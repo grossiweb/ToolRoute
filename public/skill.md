@@ -93,7 +93,7 @@ toolroute_report({
 4. `toolroute_mission_complete`: submit results
 5. `toolroute_balance`: check your credits
 
-## All 16 Tools
+## All 17 Tools
 
 | Tool | What it does |
 |------|-------------|
@@ -112,6 +112,7 @@ toolroute_report({
 | `toolroute_model_route` | Get LLM model recommendation |
 | `toolroute_model_report` | Report LLM execution outcome |
 | `toolroute_verify_model` | Quality check on model output |
+| `toolroute_check_health` | Check your integration health (flags + action items) |
 | `toolroute_verify_agent` | Get verification link for your human owner |
 
 ## Earning Credits

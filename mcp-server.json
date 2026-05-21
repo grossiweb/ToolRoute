@@ -1,7 +1,7 @@
 {
   "name": "toolroute",
   "display_name": "ToolRoute",
-  "description": "Intelligent routing layer for MCP servers and LLMs. One API call to get the best tool + model for any task, with confidence scoring, fallback chains, and cost estimates. 16 tools including full-stack routing, missions, challenges, and credit tracking.",
+  "description": "Intelligent routing layer for MCP servers and LLMs. One API call to get the best tool + model for any task, with confidence scoring, fallback chains, and cost estimates. 17 tools including full-stack routing, missions, challenges, credit tracking, and agent integration health checks.",
   "version": "1.5.0",
   "author": "ToolRoute",
   "homepage": "https://toolroute.io",
@@ -76,6 +76,10 @@
     {
       "name": "toolroute_verify_model",
       "description": "Lightweight quality check on model output."
+    },
+    {
+      "name": "toolroute_check_health",
+      "description": "Check your agent's integration health: flags, routing/outcome counts, action items."
     },
     {
       "name": "toolroute_verify_agent",
