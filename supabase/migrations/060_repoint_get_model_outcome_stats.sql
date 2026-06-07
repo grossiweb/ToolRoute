@@ -1,5 +1,5 @@
 -- 060_repoint_get_model_outcome_stats.sql
--- Applied manually via Supabase UI on: __________ (pending — fill in when run)
+-- Applied via Supabase (MCP apply_migration) on 2026-06-07; verified signature is text[].
 --
 -- Companion to 059. The read/aggregation path was dead from the same
 -- uuid-vs-slug mismatch: get_model_outcome_stats took uuid[] and grouped by the
@@ -13,6 +13,11 @@
 --
 -- APPLY LAST: after 059 and after the handler edits are deployed and writing
 -- model_slug (otherwise this aggregates an empty column).
+
+-- Drop the legacy uuid[] overload first. Without this, CREATE OR REPLACE on the
+-- text[] signature would add a SECOND overload, making the supabase-js rpc call
+-- ambiguous (PostgREST PGRST203). The uuid path is dead post-migration-059 anyway.
+DROP FUNCTION IF EXISTS public.get_model_outcome_stats(uuid[]);
 
 CREATE OR REPLACE FUNCTION public.get_model_outcome_stats(model_ids text[])
  RETURNS TABLE(model_id text, avg_quality numeric, success_rate numeric,
