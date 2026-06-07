@@ -261,16 +261,14 @@ export async function POST(request: NextRequest) {
     .then(({ data: model }) => {
       if (!model) return
 
-      // Insert outcome record
+      // Insert outcome record. Store the canonical slug in model_slug;
+      // the legacy uuid model_id is left null (tech-debt #6). The `notes`
+      // column does not exist on model_outcome_records — dropped.
       supabase.from('model_outcome_records').insert({
-        model_id: model.id,
+        model_slug: model.id,
         outcome_status: verified ? 'success' : 'failure',
         output_quality_rating: Math.round(qualityScore * 10),
         proof_type: 'automated_verification',
-        notes: JSON.stringify({
-          recommendation,
-          checks: { not_empty: notEmpty.pass, length_adequate: lengthAdequate.pass, not_refusal: notRefusal.pass, format_valid: formatValid.pass, coherence: coherence.overlap },
-        }),
       }).then(() => {})
 
       // If decision_id provided, update the routing decision

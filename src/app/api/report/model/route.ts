@@ -182,10 +182,11 @@ export async function POST(request: NextRequest) {
     }, { status: 400 })
   }
 
-  // Resolve model_id from slug. The models table's `id` column IS the
+  // Resolve the model by slug. The models table's `id` column IS the
   // canonical slug (see Strategy D Phase 1) — no separate slug column.
-  // Legacy model_registry kept around for FK linkage only; see its
-  // table COMMENT for the deprecation note.
+  // We store this slug in model_outcome_records.model_slug; the legacy
+  // uuid model_id (FK to model_registry) is left null on new rows and
+  // is retired as part of tech-debt #6.
   const { data: model } = await supabase
     .from('models')
     .select('id')
@@ -228,7 +229,7 @@ export async function POST(request: NextRequest) {
     .from('model_outcome_records')
     .insert({
       routing_decision_id: validDecisionId,
-      model_id: model.id,
+      model_slug: model.id,
       outcome_status,
       latency_ms: latency_ms ?? null,
       input_tokens: input_tokens ?? null,
