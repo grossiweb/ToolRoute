@@ -237,7 +237,7 @@ export async function POST(request: NextRequest) {
     signals_json: signals,
     task_cluster: taskCluster,
     resolved_tier: tier,
-    recommended_model_id: primary.id,
+    recommended_model_slug: primary.id,
     recommended_alias: `toolroute/${tier}`,
     fallback_chain: fallbackChain.map(f => f.slug),
     confidence,

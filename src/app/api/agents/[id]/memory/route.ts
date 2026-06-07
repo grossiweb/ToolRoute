@@ -112,7 +112,7 @@ export async function GET(
 async function buildModelSummary(supabase: any, agentId: string) {
   const { data: decisions, error: decErr } = await supabase
     .from('model_routing_decisions')
-    .select('id, recommended_model_id, task_cluster, created_at')
+    .select('id, recommended_model_slug, task_cluster, created_at')
     .eq('agent_identity_id', agentId)
     .not('task_cluster', 'is', null)
     .order('created_at', { ascending: false })
@@ -173,7 +173,7 @@ async function buildModelSummary(supabase: any, agentId: string) {
         s.success_count++
         // First write wins (DESC order) → most-recent successful pick.
         if (!s.most_recent_success_model) {
-          s.most_recent_success_model = d.recommended_model_id as string
+          s.most_recent_success_model = d.recommended_model_slug as string
           s.most_recent_decision_at = d.created_at as string
         }
       }

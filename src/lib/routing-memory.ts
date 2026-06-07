@@ -50,7 +50,7 @@ async function lookup(
   // because some decisions may lack outcome records (agent didn't report).
   const { data: decisions, error: dErr } = await supabase
     .from('model_routing_decisions')
-    .select('id, recommended_model_id, created_at')
+    .select('id, recommended_model_slug, created_at')
     .eq('agent_identity_id', agentIdentityId)
     .eq('task_cluster', taskCluster)
     .order('created_at', { ascending: false })
@@ -89,7 +89,7 @@ async function lookup(
   const successful = paired.filter(({ o }) => isOk(o.outcome_status))
   const sample_size = paired.length
   const success_rate = Math.round((successful.length / sample_size) * 100) / 100
-  const historical_model = (successful[0]?.dec.recommended_model_id as string | undefined) ?? null
+  const historical_model = (successful[0]?.dec.recommended_model_slug as string | undefined) ?? null
 
   const qualities = paired
     .map(({ o }) =>
