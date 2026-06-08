@@ -838,7 +838,23 @@ export async function POST(request: NextRequest) {
         },
       } : {}),
     },
-    wanted_telemetry: {
+    wanted_telemetry: approach === 'direct_llm' ? {
+      // LLM run → model telemetry endpoint. Top-level fields, NOT a payload wrapper.
+      report_endpoint: '/api/report/model',
+      reward_multiplier: 1.5,
+      bonus_path: {
+        note: 'The 1.5x decision bonus needs a decision_id, which only POST /api/route/model returns. /api/route does not issue a model decision_id.',
+        action: 'For the bonus: call POST /api/route/model, then POST /api/report/model with the returned decision_id.',
+      },
+      estimated_credits: {
+        run_report: '+3 to +10 routing credits',
+        comparative_eval: '+8 to +25 routing credits (POST /api/contributions)',
+      },
+      fields: ['model_slug', 'outcome_status', 'latency_ms', 'input_tokens', 'output_tokens', 'estimated_cost_usd', 'output_quality_rating'],
+      payload_shape: 'Send fields at the top level. Do NOT wrap in payload/contribution_type — that envelope is for /api/contributions skill telemetry only.',
+      one_liner: `POST /api/report/model { "model_slug": "${recommendedModel?.slug || 'your-model'}", "outcome_status": "success", "latency_ms": 1200 }`,
+    } : {
+      // MCP skill run → skill telemetry endpoint.
       report_endpoint: '/api/report',
       reward_multiplier: 1.5,
       comparative_bonus: 2.5,
@@ -848,10 +864,8 @@ export async function POST(request: NextRequest) {
         fallback_chain: '+5 to +15 routing credits',
         benchmark_package: '+15 to +40 routing credits',
       },
-      fields: ['latency_ms', 'cost_usd', 'quality_rating', 'outcome', 'fallback_chain'],
-      one_liner: approach === 'direct_llm'
-        ? `toolroute.report({ model: '${recommendedModel?.slug || 'your-model'}', outcome: 'success', quality_rating: 8, latency_ms: 1200 })`
-        : `toolroute.report({ skill: '${top.slug}', outcome: 'success', latency_ms: 2340 })`,
+      fields: ['skill_slug', 'outcome', 'latency_ms', 'cost_usd', 'quality_rating'],
+      one_liner: `POST /api/report { "skill_slug": "${top.slug}", "outcome": "success", "latency_ms": 2340 }`,
     },
     model_details: modelDetails,
     cost_estimate: costEstimate,
