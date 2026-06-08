@@ -20,6 +20,7 @@ import { getActiveNotices } from '@/lib/notices'
 import { deriveTaskCluster } from '@/lib/task-cluster'
 import { getRoutingMemory } from '@/lib/routing-memory'
 import { checkAgentHealthHint } from '@/lib/agent-directives'
+import { registerHint, MODEL_REPORT_FIELDS } from '@/lib/agent-signposts'
 
 // GET /api/route/model — Self-documenting guide
 export async function GET() {
@@ -298,7 +299,7 @@ export async function POST(request: NextRequest) {
       report_endpoint: '/api/report/model',
       decision_id: decisionId,
       reward_multiplier: 1.5,
-      fields: ['latency_ms', 'input_tokens', 'output_tokens', 'estimated_cost_usd', 'output_quality_rating', 'outcome_status'],
+      fields: [...MODEL_REPORT_FIELDS],
       one_liner: 'Report how this model performed → earn routing credits → improve routing for all agents',
     },
   }
@@ -336,11 +337,7 @@ export async function POST(request: NextRequest) {
       }
     }
   } else {
-    response.register_hint = {
-      message: 'Register your agent for 2x credit bonuses on model telemetry reports.',
-      action: 'POST /api/agents/register',
-      body: { agent_name: 'your-agent-name' },
-    }
+    response.register_hint = registerHint('Register your agent for 2x credit bonuses on model telemetry reports.')
   }
 
   response.earn_more = {

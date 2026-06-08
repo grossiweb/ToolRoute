@@ -9,6 +9,7 @@ import { detectTaskSignals, resolveModelTier } from '@/lib/model-routing'
 import { deriveTaskCluster } from '@/lib/task-cluster'
 import { getSkillRoutingMemory, type SkillRoutingMemory } from '@/lib/routing-memory'
 import { checkAgentHealthHint } from '@/lib/agent-directives'
+import { registerHint, MODEL_REPORT_FIELDS } from '@/lib/agent-signposts'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -850,7 +851,7 @@ export async function POST(request: NextRequest) {
         run_report: '+3 to +10 routing credits',
         comparative_eval: '+8 to +25 routing credits (POST /api/contributions)',
       },
-      fields: ['model_slug', 'outcome_status', 'latency_ms', 'input_tokens', 'output_tokens', 'estimated_cost_usd', 'output_quality_rating'],
+      fields: [...MODEL_REPORT_FIELDS],
       payload_shape: 'Send fields at the top level. Do NOT wrap in payload/contribution_type — that envelope is for /api/contributions skill telemetry only.',
       one_liner: `POST /api/report/model { "model_slug": "${recommendedModel?.slug || 'your-model'}", "outcome_status": "success", "latency_ms": 1200 }`,
     } : {
@@ -873,10 +874,8 @@ export async function POST(request: NextRequest) {
     agent: agentContext,
     ...(agent_identity_id ? {} : {
       register_hint: {
-        message: 'Register your agent to earn 2x credits on every report and unlock mission claiming.',
-        action: 'POST /api/agents/register',
-        body: { agent_name: 'your-agent-name' },
-        then: 'Include the returned agent_identity_id in this request and in POST /api/report',
+        ...registerHint('Register your agent to earn 2x credits on every report and unlock mission claiming.'),
+        then: 'Include the returned agent_identity_id in this request and in your report calls.',
       },
     }),
     ...noticeFields,

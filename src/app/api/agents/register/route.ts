@@ -5,6 +5,7 @@ import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { getVerificationNudge } from '@/lib/verification-nudge'
 import { validatePublicKey } from '@/lib/commitment'
 import { apiError } from '@/lib/api-error'
+import { REGISTER_FIELDS } from '@/lib/agent-signposts'
 
 export async function POST(request: NextRequest) {
   const rlKey = getRateLimitKey(request)
@@ -221,16 +222,10 @@ export async function GET(request: NextRequest) {
       description: 'Register an agent identity or look up an existing one. Idempotent — safe to call every time.',
       register: {
         method: 'POST',
-        body: {
-          agent_name: '(required) Unique name for your agent',
-          agent_kind: '(optional) autonomous | copilot | workflow-agent | evaluation-agent | hybrid',
-          host_client_slug: '(optional) cursor | claude-desktop | vscode | custom',
-          model_family: '(optional) claude | gpt | gemini | llama',
-          webhook_url: '(optional) URL to receive notifications (credits earned, verification approved, etc.)',
-          public_key: '(optional) PEM-encoded Ed25519 public key — enables signed reports (proof_type: client_signed, anti-gaming bypassed)',
-          project_context: '(optional) Object describing the agent\'s project: { framework, language, project_type, stack_tags[] }. Used by the routing layer to cluster decisions by project type.',
-        },
-        returns: 'agent_identity_id — use in /api/route and /api/report',
+        body: REGISTER_FIELDS,
+        example: { agent_name: 'my-agent', host_client_slug: 'claude-code', project_context: { language: 'typescript', framework: 'next' } },
+        idempotent: 'Re-POST the same agent_name (plus host_client_slug if you send one) to get the same agent_identity_id back with already_registered: true.',
+        returns: 'agent_identity_id — use it in /api/route, /api/route/model, and /api/report*',
       },
       lookup: {
         method: 'GET',
