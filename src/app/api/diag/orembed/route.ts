@@ -15,23 +15,23 @@ export async function GET() {
         'HTTP-Referer': 'https://toolroute.io',
         'X-Title': 'ToolRoute Embed Diag',
       },
-      body: JSON.stringify({ model: 'google/gemini-embedding-001', input: 'diagnostic ping' }),
+      body: JSON.stringify({ model: 'google/gemini-embedding-001', input: 'diagnostic ping', dimensions: 1536 }),
     })
     const text = await res.text()
     let dims: number | null = null
-    let sample: number[] | null = null
     try {
       const j = JSON.parse(text)
       const v = j?.data?.[0]?.embedding
-      if (Array.isArray(v)) { dims = v.length; sample = v.slice(0, 3) }
+      if (Array.isArray(v)) { dims = v.length }
     } catch { /* non-JSON error body */ }
     return NextResponse.json({
       key_present: true,
       model: 'google/gemini-embedding-001',
+      requested_dimensions: 1536,
       status: res.status,
       ok: res.ok,
-      dims,
-      sample,
+      returned_dims: dims,
+      param_honored: dims === 1536,
       body: dims ? null : text.slice(0, 500),
     })
   } catch (e: any) {
