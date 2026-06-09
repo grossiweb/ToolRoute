@@ -94,26 +94,34 @@ Respond with ONLY a single integer 0-10. No explanation.
  * Returns null on any error — never throws.
  */
 export async function callLlmEvaluator(task: string, snippet: string): Promise<number | null> {
-  const apiKey = process.env.GOOGLE_AI_API_KEY
+  // Repointed from Google's generativelanguage API to OpenRouter — same
+  // OpenAI-compatible chat-completions format, same OPENROUTER_API_KEY and
+  // google/gemini-3.1-flash-lite the classifier uses. No GOOGLE_AI_API_KEY.
+  const apiKey = process.env.OPENROUTER_API_KEY
+  // No-snippet / no-task is a normal skip, NOT a failure — return without warning.
+  if (!task || !snippet) return null
   if (!apiKey) {
-    console.warn('[quality-verifier] GOOGLE_AI_API_KEY not set — skipping LLM quality evaluation')
+    console.warn('[quality-verifier] OPENROUTER_API_KEY not set — skipping LLM quality evaluation')
     return null
   }
-  if (!task || !snippet) return null
 
   try {
-    const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
-      {
-        method: 'POST',
-        headers: { 'Content-Type': 'application/json' },
-        body: JSON.stringify({
-          contents: [{ parts: [{ text: EVALUATOR_PROMPT(task, snippet) }] }],
-          generationConfig: { temperature: 0, maxOutputTokens: 8 },
-        }),
-        signal: AbortSignal.timeout(8000),
-      }
-    )
+    const res = await fetch('https://openrouter.ai/api/v1/chat/completions', {
+      method: 'POST',
+      headers: {
+        'Authorization': `Bearer ${apiKey}`,
+        'Content-Type': 'application/json',
+        'HTTP-Referer': 'https://toolroute.io',
+        'X-Title': 'ToolRoute Quality Verifier',
+      },
+      body: JSON.stringify({
+        model: 'google/gemini-3.1-flash-lite',
+        messages: [{ role: 'user', content: EVALUATOR_PROMPT(task, snippet) }],
+        max_tokens: 8,
+        temperature: 0,
+      }),
+      signal: AbortSignal.timeout(8000),
+    })
 
     if (!res.ok) {
       console.warn(`[quality-verifier] evaluator HTTP ${res.status} — returning null`)
@@ -121,7 +129,7 @@ export async function callLlmEvaluator(task: string, snippet: string): Promise<n
     }
 
     const json = await res.json()
-    const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
+    const text: string = json?.choices?.[0]?.message?.content?.trim() ?? ''
     const score = parseInt(text, 10)
     if (isNaN(score) || score < 0 || score > 10) return null
     return score

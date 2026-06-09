@@ -36,7 +36,10 @@ let workflowEmbeddingsCache: Map<string, number[]> | null = null
 
 async function getEmbedding(text: string): Promise<number[] | null> {
   const apiKey = process.env.OPENAI_API_KEY
-  if (!apiKey) return null
+  if (!apiKey) {
+    console.warn('[embeddings] OPENAI_API_KEY not set — semantic matching disabled')
+    return null
+  }
 
   try {
     const res = await fetch('https://api.openai.com/v1/embeddings', {
@@ -51,11 +54,16 @@ async function getEmbedding(text: string): Promise<number[] | null> {
       }),
     })
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      console.warn(`[embeddings] OpenAI embeddings HTTP ${res.status} — ${body.slice(0, 300)}`)
+      return null
+    }
 
     const data = await res.json()
     return data.data?.[0]?.embedding ?? null
-  } catch {
+  } catch (err) {
+    console.warn('[embeddings] OpenAI embeddings error:', err)
     return null
   }
 }
@@ -80,7 +88,11 @@ async function getWorkflowEmbeddings(): Promise<Map<string, number[]>> {
       }),
     })
 
-    if (!res.ok) return new Map()
+    if (!res.ok) {
+      const body = await res.text().catch(() => '')
+      console.warn(`[embeddings] OpenAI batch embeddings HTTP ${res.status} — ${body.slice(0, 300)}`)
+      return new Map()
+    }
 
     const data = await res.json()
     const embeddings = data.data as Array<{ embedding: number[]; index: number }>
@@ -93,8 +105,40 @@ async function getWorkflowEmbeddings(): Promise<Map<string, number[]>> {
 
     workflowEmbeddingsCache = cache
     return cache
-  } catch {
+  } catch (err) {
+    console.warn('[embeddings] OpenAI batch embeddings error:', err)
     return new Map()
+  }
+}
+
+/**
+ * TEMPORARY diagnostic — exercises the OpenAI embeddings call once and returns
+ * the raw status/body so we can see why semantic matching silently disables.
+ * Returns NO secret material (only key presence + a non-sensitive prefix flag).
+ * Remove with the /api/_diag/embedding route once the cause is captured.
+ */
+export async function diagnoseEmbedding(): Promise<Record<string, unknown>> {
+  const apiKey = process.env.OPENAI_API_KEY
+  const meta = {
+    env_var: 'OPENAI_API_KEY',
+    key_present: !!apiKey,
+    key_length: apiKey ? apiKey.length : 0,
+    // OpenRouter keys start "sk-or-"; real OpenAI keys start "sk-"/"sk-proj-".
+    // This flags the most likely misconfig without leaking the key.
+    looks_like_openrouter_key: apiKey ? apiKey.startsWith('sk-or-') : false,
+    model: 'text-embedding-3-small',
+  }
+  if (!apiKey) return { ...meta, called: false }
+  try {
+    const res = await fetch('https://api.openai.com/v1/embeddings', {
+      method: 'POST',
+      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
+      body: JSON.stringify({ model: 'text-embedding-3-small', input: 'diagnostic ping' }),
+    })
+    const body = await res.text()
+    return { ...meta, called: true, status: res.status, ok: res.ok, body: body.slice(0, 500) }
+  } catch (err: any) {
+    return { ...meta, called: true, error: String(err?.message ?? err) }
   }
 }
 
