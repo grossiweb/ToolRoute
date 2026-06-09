@@ -11,6 +11,7 @@ import { getSkillRoutingMemory, type SkillRoutingMemory } from '@/lib/routing-me
 import { checkAgentHealthHint } from '@/lib/agent-directives'
 import { registerHint, MODEL_REPORT_FIELDS } from '@/lib/agent-signposts'
 import { matchTask, type MatcherResult } from '@/lib/task-matcher'
+import { resolveNamedTool } from '@/lib/named-tool'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -501,6 +502,49 @@ export async function POST(request: NextRequest) {
       sorted.unshift(top)
     }
   }
+  // Named-tool guard: when the task names a specific product, honor it. If we
+  // have a skill for it (catalog or vendor alias), route there; if we genuinely
+  // don't, return unresolved rather than asserting a different-brand substitute
+  // (fixes LinkedIn/WhatsApp -> wrong tool; routes Jira -> atlassian-mcp). Only on
+  // the LLM/workflow path — the semantic-task path already ranked by per-task priors.
+  const namedTool = (taskClassification as any)?.named_tool
+  if (matchMethod !== ('semantic_task' as any) && needsMcpServer && namedTool) {
+    const namedSkill = await resolveNamedTool(supabase, namedTool)
+    if (!namedSkill) {
+      return NextResponse.json({
+        recommended_skill: null,
+        recommended_skill_name: null,
+        confidence: 0.2,
+        resolution: 'unresolved',
+        approach: 'mcp_server',
+        message: `No MCP server for "${namedTool}" yet — not asserting a different tool.`,
+        named_tool: namedTool,
+        suggestions: sorted.slice(0, 3).map((s: any) => ({ slug: s.slug, name: s.canonical_name })),
+        suggestions_note: 'Nearest catalog tools, NOT a match for the named platform.',
+        hint: `ToolRoute has no skill for ${namedTool}. Use it directly, or pick a supported tool — GET /api/skills to browse.`,
+        match_method: matchMethod,
+      })
+    }
+    if (namedSkill !== top.slug) {
+      let namedRow: any = sorted.find((s: any) => s.slug === namedSkill)
+      if (!namedRow) {
+        const { data } = await supabase
+          .from('skills')
+          .select(SKILL_SELECT)
+          .eq('status', 'active')
+          .eq('slug', namedSkill)
+          .maybeSingle()
+        namedRow = data || null
+      }
+      if (namedRow) {
+        const idx = sorted.findIndex((s: any) => s.slug === namedSkill)
+        if (idx >= 0) sorted.splice(idx, 1)
+        sorted.unshift(namedRow)
+        top = namedRow
+      }
+    }
+  }
+
   const alternatives = sorted.slice(1, 4).map((s: any) => s.slug)
 
   // Fetch outcome count for the recommended skill (more data = higher confidence)

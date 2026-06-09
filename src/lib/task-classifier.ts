@@ -13,6 +13,7 @@
 
 export interface TaskClassification {
   needs_external_tool: boolean
+  named_tool: string | null     // specific third-party product the task targets (e.g. "Salesforce", "WhatsApp"), else null
   task_type: 'code' | 'writing' | 'creative_writing' | 'analysis' | 'structured' | 'translation' | 'general'
   complexity: 'simple' | 'medium' | 'complex'
   tool_category: string | null  // primary tool category (backward compat)
@@ -30,6 +31,7 @@ Respond ONLY with valid JSON, no other text:
 
 {
   "needs_external_tool": boolean,
+  "named_tool": string | null,
   "task_type": "code" | "writing" | "creative_writing" | "analysis" | "structured" | "translation" | "general",
   "complexity": "simple" | "medium" | "complex",
   "tool_category": string | null,
@@ -37,6 +39,12 @@ Respond ONLY with valid JSON, no other text:
   "is_multi_tool": boolean,
   "reasoning": "one sentence why"
 }
+
+NAMED TOOL EXTRACTION:
+- named_tool = the SPECIFIC third-party product/platform the task targets by name, e.g. "Salesforce", "HubSpot", "Stripe", "Zendesk", "Shopify", "WhatsApp", "LinkedIn", "Jira", "Notion".
+- null when the task names no specific product (e.g. "send a message to the team", "scrape a webpage").
+- Use the brand/product name as written, not a category. "post to our LinkedIn page" → "LinkedIn". "send a Slack message" → "Slack". "create a Jira ticket" → "Jira".
+- This is independent of needs_external_tool — extract the name even if you are unsure a tool is needed.
 
 MULTI-TOOL DETECTION:
 - is_multi_tool = true when the task explicitly requires 2+ DIFFERENT external tools
@@ -156,6 +164,7 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
 
     return {
       needs_external_tool: Boolean(parsed.needs_external_tool),
+      named_tool: typeof parsed.named_tool === 'string' && parsed.named_tool.trim() ? parsed.named_tool.trim() : null,
       task_type: parsed.task_type || 'general',
       complexity: parsed.complexity || 'medium',
       tool_category: parsed.tool_category || null,
@@ -223,6 +232,7 @@ function keywordFallback(task: string): TaskClassification {
 
   return {
     needs_external_tool,
+    named_tool: null,
     task_type,
     complexity,
     tool_category,
