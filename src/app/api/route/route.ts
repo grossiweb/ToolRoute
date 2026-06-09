@@ -10,6 +10,7 @@ import { deriveTaskCluster } from '@/lib/task-cluster'
 import { getSkillRoutingMemory, type SkillRoutingMemory } from '@/lib/routing-memory'
 import { checkAgentHealthHint } from '@/lib/agent-directives'
 import { registerHint, MODEL_REPORT_FIELDS } from '@/lib/agent-signposts'
+import { matchTask, type MatcherResult } from '@/lib/task-matcher'
 
 // GET /api/route — Self-documenting API guide for agents
 export async function GET() {
@@ -203,6 +204,41 @@ export async function POST(request: NextRequest) {
   let confidence = explicitWorkflow ? 0.95 : 0.5
   let matchMethod: 'explicit' | 'semantic' | 'keyword' = explicitWorkflow ? 'explicit' : 'keyword'
 
+  // ── Phase 2 semantic task matcher (TOOL PRECISION only) ────────────────────
+  // Runs only when a tool is actually needed — classifyTask already owns the
+  // do/explain decision and is left untouched. A confident task match sources
+  // candidates from per-task skill_tasks priors (Stripe vs Salesforce, Jira vs
+  // GitLab). Anything uncertain degrades to the existing workflow path below.
+  let matchedTaskSlugs: string[] | null = null
+  let matcherConfidence = 0
+  const relevanceBySlug = new Map<string, number>()
+
+  if (!explicitWorkflow && task && needsMcpServer) {
+    const matcher: MatcherResult = await matchTask(supabase, task)
+    if (matcher.status === 'unresolved') {
+      // Tool needed but nothing in the catalog is close enough — do not assert.
+      // This is the fix for the Section-7 gap-FAILs (e.g. WhatsApp -> slack@0.98).
+      return NextResponse.json({
+        recommended_skill: null,
+        recommended_skill_name: null,
+        confidence: parseFloat(matcher.confidence.toFixed(2)),
+        resolution: 'unresolved',
+        approach: 'mcp_server',
+        message: 'No catalog task confidently matches this request — not asserting a recommendation.',
+        nearest_tasks: matcher.candidates.map(c => ({ task: c.slug, score: parseFloat(c.score.toFixed(3)) })),
+        hint: 'Rephrase with the concrete action and target, or pass workflow_slug. GET /api/route for the workflow list.',
+        match_method: 'semantic_task',
+      })
+    }
+    if (matcher.status === 'confident') {
+      matchedTaskSlugs = matcher.skill_candidates.map(s => s.slug)
+      matcherConfidence = matcher.confidence
+      for (const s of matcher.skill_candidates) relevanceBySlug.set(s.slug, s.relevance_score)
+    }
+    // 'ambiguous' / 'fallback' (incl. empty priors / embedding failure) → fall
+    // through to the existing classifyTask -> workflow -> skill_workflows path.
+  }
+
   if (!explicitWorkflow && task) {
     // Use LLM classification if available (most accurate)
     if (taskClassification && taskClassification.method === 'llm') {
@@ -260,7 +296,34 @@ export async function POST(request: NextRequest) {
   let candidates: any[] = []
   let junctionFiltered = false
 
-  if (resolvedWorkflow) {
+  const SKILL_SELECT = `
+        id, slug, canonical_name, short_description, vendor_type,
+        skill_scores ( overall_score, trust_score, reliability_score, output_score, efficiency_score, cost_score, value_score ),
+        skill_metrics ( github_stars, days_since_last_commit ),
+        skill_cost_models ( monthly_base_cost_usd, pricing_model )
+      `
+
+  // Confident semantic-task match → candidates are the matched task's skill priors.
+  if (matchedTaskSlugs && matchedTaskSlugs.length > 0) {
+    const { data: taskSkills } = await supabase
+      .from('skills')
+      .select(SKILL_SELECT)
+      .eq('status', 'active')
+      .not('skill_scores', 'is', null)
+      .in('slug', matchedTaskSlugs)
+    if (taskSkills && taskSkills.length > 0) {
+      candidates = taskSkills
+      junctionFiltered = true
+      matchMethod = 'semantic_task' as any
+      confidence = matcherConfidence
+    } else {
+      // Priors exist but the skills are inactive/unscored — degrade to the
+      // workflow path (do not surface an error or a null recommendation).
+      matchedTaskSlugs = null
+    }
+  }
+
+  if (candidates.length === 0 && resolvedWorkflow) {
     // Step 1: look up workflow ID by slug
     const { data: workflowRecord } = await supabase
       .from('workflows')
@@ -412,6 +475,13 @@ export async function POST(request: NextRequest) {
     if (!sa || !sb) return 0
     const boostA = agentPreferredSlugs.has(a.slug) ? PERSONALIZATION_BOOST : 0
     const boostB = agentPreferredSlugs.has(b.slug) ? PERSONALIZATION_BOOST : 0
+    // Semantic-task match: rank by the per-task skill prior (relevance_score),
+    // not the global value_score — this is the whole point of the tasks layer.
+    if (matchMethod === ('semantic_task' as any)) {
+      const ra = relevanceBySlug.get(a.slug) ?? 0
+      const rb = relevanceBySlug.get(b.slug) ?? 0
+      return (rb + boostB) - (ra + boostA)
+    }
     switch (priority) {
       case 'best_quality': return ((sb.output_score || 0) + boostB) - ((sa.output_score || 0) + boostA)
       case 'best_efficiency': return ((sb.efficiency_score || 0) + boostB) - ((sa.efficiency_score || 0) + boostA)
@@ -432,7 +502,9 @@ export async function POST(request: NextRequest) {
 
   // If classifier has a preferred skill for this tool_category, prioritize it
   let top = sorted[0] as any
-  const preferredSlug = (taskClassification as any)?._preferredSkill
+  // The tool_category preferred-skill nudge is for the workflow path only — a
+  // semantic-task match already ranked by per-task priors, so don't override it.
+  const preferredSlug = matchMethod === ('semantic_task' as any) ? null : (taskClassification as any)?._preferredSkill
   if (preferredSlug) {
     const preferredIdx = sorted.findIndex((s: any) => s.slug === preferredSlug)
     if (preferredIdx > 0) {
