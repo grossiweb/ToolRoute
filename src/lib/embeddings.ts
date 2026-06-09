@@ -111,37 +111,6 @@ async function getWorkflowEmbeddings(): Promise<Map<string, number[]>> {
   }
 }
 
-/**
- * TEMPORARY diagnostic — exercises the OpenAI embeddings call once and returns
- * the raw status/body so we can see why semantic matching silently disables.
- * Returns NO secret material (only key presence + a non-sensitive prefix flag).
- * Remove with the /api/_diag/embedding route once the cause is captured.
- */
-export async function diagnoseEmbedding(): Promise<Record<string, unknown>> {
-  const apiKey = process.env.OPENAI_API_KEY
-  const meta = {
-    env_var: 'OPENAI_API_KEY',
-    key_present: !!apiKey,
-    key_length: apiKey ? apiKey.length : 0,
-    // OpenRouter keys start "sk-or-"; real OpenAI keys start "sk-"/"sk-proj-".
-    // This flags the most likely misconfig without leaking the key.
-    looks_like_openrouter_key: apiKey ? apiKey.startsWith('sk-or-') : false,
-    model: 'text-embedding-3-small',
-  }
-  if (!apiKey) return { ...meta, called: false }
-  try {
-    const res = await fetch('https://api.openai.com/v1/embeddings', {
-      method: 'POST',
-      headers: { 'Authorization': `Bearer ${apiKey}`, 'Content-Type': 'application/json' },
-      body: JSON.stringify({ model: 'text-embedding-3-small', input: 'diagnostic ping' }),
-    })
-    const body = await res.text()
-    return { ...meta, called: true, status: res.status, ok: res.ok, body: body.slice(0, 500) }
-  } catch (err: any) {
-    return { ...meta, called: true, error: String(err?.message ?? err) }
-  }
-}
-
 function cosineSimilarity(a: number[], b: number[]): number {
   let dotProduct = 0
   let normA = 0
