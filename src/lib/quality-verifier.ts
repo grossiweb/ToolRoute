@@ -95,12 +95,15 @@ Respond with ONLY a single integer 0-10. No explanation.
  */
 export async function callLlmEvaluator(task: string, snippet: string): Promise<number | null> {
   const apiKey = process.env.GOOGLE_AI_API_KEY
-  if (!apiKey) return null
+  if (!apiKey) {
+    console.warn('[quality-verifier] GOOGLE_AI_API_KEY not set — skipping LLM quality evaluation')
+    return null
+  }
   if (!task || !snippet) return null
 
   try {
     const res = await fetch(
-      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash-lite:generateContent?key=${apiKey}`,
+      `https://generativelanguage.googleapis.com/v1beta/models/gemini-2.5-flash-lite:generateContent?key=${apiKey}`,
       {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -112,14 +115,18 @@ export async function callLlmEvaluator(task: string, snippet: string): Promise<n
       }
     )
 
-    if (!res.ok) return null
+    if (!res.ok) {
+      console.warn(`[quality-verifier] evaluator HTTP ${res.status} — returning null`)
+      return null
+    }
 
     const json = await res.json()
     const text: string = json?.candidates?.[0]?.content?.parts?.[0]?.text?.trim() ?? ''
     const score = parseInt(text, 10)
     if (isNaN(score) || score < 0 || score > 10) return null
     return score
-  } catch {
+  } catch (err) {
+    console.warn('[quality-verifier] evaluator error — returning null:', err)
     return null
   }
 }

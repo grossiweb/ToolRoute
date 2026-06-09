@@ -114,6 +114,7 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
   const openrouterKey = process.env.OPENROUTER_API_KEY
 
   if (!openrouterKey) {
+    console.warn('[task-classifier] OPENROUTER_API_KEY not set — using keyword fallback')
     return keywordFallback(task)
   }
 
@@ -127,7 +128,7 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
         'X-Title': 'ToolRoute Task Classifier',
       },
       body: JSON.stringify({
-        model: 'google/gemini-2.0-flash-lite-001',
+        model: 'google/gemini-3.1-flash-lite',
         messages: [
           { role: 'user', content: CLASSIFICATION_PROMPT + task }
         ],
@@ -137,6 +138,7 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
     })
 
     if (!res.ok) {
+      console.warn(`[task-classifier] classifier HTTP ${res.status} — using keyword fallback`)
       return keywordFallback(task)
     }
 
@@ -144,6 +146,7 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
     const content = data.choices?.[0]?.message?.content?.trim()
 
     if (!content) {
+      console.warn('[task-classifier] empty classifier response — using keyword fallback')
       return keywordFallback(task)
     }
 
@@ -161,7 +164,8 @@ export async function classifyTask(task: string): Promise<TaskClassification> {
       reasoning: parsed.reasoning || '',
       method: 'llm',
     }
-  } catch {
+  } catch (err) {
+    console.warn('[task-classifier] classifier error — using keyword fallback:', err)
     return keywordFallback(task)
   }
 }

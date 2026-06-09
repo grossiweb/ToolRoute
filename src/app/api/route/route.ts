@@ -299,8 +299,44 @@ export async function POST(request: NextRequest) {
     }
   }
 
-  // Fallback: if no workflow or no workflow-specific skills found, fetch all
+  // No workflow resolved (or no workflow-specific skills). Do NOT fall back to
+  // "top-50 skills by global value_score" — that asserts the most popular skill
+  // for a task we did not understand (the "top-50 trap": a scrape query got
+  // plaid-mcp because plaid has the highest value_score in the catalog).
   if (candidates.length === 0) {
+    if (needsMcpServer) {
+      // A tool IS needed but we could not map the task to a workflow. Return an
+      // explicit low-confidence "unresolved" response with clearly-labeled
+      // guesses — never an asserted recommendation.
+      const { data: guessRows } = await supabase
+        .from('skills')
+        .select('slug, canonical_name, skill_scores ( value_score )')
+        .eq('status', 'active')
+        .not('skill_scores', 'is', null)
+        .limit(20)
+      const suggestions = (guessRows || [])
+        .sort((a: any, b: any) => (b.skill_scores?.value_score ?? 0) - (a.skill_scores?.value_score ?? 0))
+        .slice(0, 3)
+        .map((s: any) => ({ slug: s.slug, name: s.canonical_name }))
+
+      return NextResponse.json({
+        recommended_skill: null,
+        recommended_skill_name: null,
+        confidence: 0.2,
+        resolution: 'unresolved',
+        approach: 'mcp_server',
+        message: 'Could not confidently map this task to a tool category — not asserting a recommendation.',
+        suggestions,
+        suggestions_note: 'Popular general tools, NOT matched to your task. Do not treat these as a recommendation.',
+        hint: 'Rephrase with the concrete action and target (e.g. "crawl a URL and extract links with a web scraper"), or pass workflow_slug. GET /api/route for the workflow list.',
+        resolved_workflow: resolvedWorkflow || null,
+        match_method: matchMethod,
+      })
+    }
+
+    // No external tool needed → direct_llm. Keep the unfiltered fetch so the
+    // downstream model/tier + direct_llm path is unchanged (the skill is nulled
+    // for direct_llm responses, so this is never asserted as a tool pick).
     const { data: allSkills, error: skillsError } = await supabase
       .from('skills')
       .select(`
