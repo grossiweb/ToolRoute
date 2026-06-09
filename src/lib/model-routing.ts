@@ -77,6 +77,10 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'compile', 'syntax', 'import', 'module', 'library',
     'sql query', 'sql', 'select from', 'join', 'having clause',
     'regex', 'regular expression',
+    // Frameworks + scaffolding terms (word-boundary matched, so 'express' won't
+    // hit 'expression', 'spring' won't hit 'offspring', etc.)
+    'express', 'django', 'flask', 'rails', 'fastapi', 'spring', 'laravel',
+    'nextjs', 'nuxt', 'api endpoint', 'rest api', 'boilerplate', 'scaffold',
   ],
   complex_reasoning: [
     'plan', 'design', 'architect', 'analyze', 'multi-step', 'strategy',
@@ -85,6 +89,10 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'research paper', 'deep analysis', 'long-form',
     'comprehensive', 'in-depth', 'detailed analysis', 'technical analysis',
     'worked example', 'case study analysis', 'tradeoff analysis',
+    // Expert-analysis terms — these tasks must not fall to cheap_chat.
+    'race condition', 'deadlock', 'concurrency', 'memory leak',
+    'performance issue', 'bottleneck', 'security audit', 'architectural',
+    'single point of failure',
   ],
   creative_writing: [
     'cold email', 'outreach email', 'persuasive', 'compelling', 'engaging',
@@ -94,6 +102,10 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'social media post', 'thread', 'newsletter',
     'tone', 'voice', 'brand voice', 'professional email',
     'announcement', 'press release', 'case study',
+    // Creative formats. NOTE: dropped bare 'story'/'verse' from the requested
+    // list — these are substring-matched, so 'story' would hit 'history' and
+    // 'verse' would hit 'universe'/'reverse'. 'poem' + 'short story' cover intent.
+    'limerick', 'haiku', 'poem', 'rhyme', 'narrative', 'ballad', 'short story',
   ],
 }
 
