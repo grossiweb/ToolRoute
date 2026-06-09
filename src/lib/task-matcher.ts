@@ -80,10 +80,13 @@ export async function matchTask(supabase: SupabaseClient, query: string): Promis
   const top3 = matches as TaskMatch[]
   const top = top3[0]
 
-  // Confidence gate: nothing close enough -> unresolved. Fixes the Section-7
-  // gap-FAILs (a tool with no task, e.g. WhatsApp, scores low and won't assert).
+  // Confidence gate: below threshold -> defer to the existing LLM classifyTask ->
+  // workflow path (NOT a hard unresolved). The matched task is usually correct but
+  // low-scoring on paraphrases, so falling back avoids regressing legit queries.
+  // The matcher only ever ADDS precision on confident matches; it never regresses.
+  // (Gap-FAILs like WhatsApp/Jira are a catalog-coverage problem, handled separately.)
   if (top.score < CONFIDENCE_THRESHOLD) {
-    return { status: 'unresolved', top, candidates: top3, recommended_skill: null, skill_candidates: [], confidence: top.score }
+    return FALLBACK
   }
 
   // Two-level / ambiguity: top-2 nearly tied -> defer to the LLM workflow path

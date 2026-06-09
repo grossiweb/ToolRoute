@@ -215,21 +215,9 @@ export async function POST(request: NextRequest) {
 
   if (!explicitWorkflow && task && needsMcpServer) {
     const matcher: MatcherResult = await matchTask(supabase, task)
-    if (matcher.status === 'unresolved') {
-      // Tool needed but nothing in the catalog is close enough — do not assert.
-      // This is the fix for the Section-7 gap-FAILs (e.g. WhatsApp -> slack@0.98).
-      return NextResponse.json({
-        recommended_skill: null,
-        recommended_skill_name: null,
-        confidence: parseFloat(matcher.confidence.toFixed(2)),
-        resolution: 'unresolved',
-        approach: 'mcp_server',
-        message: 'No catalog task confidently matches this request — not asserting a recommendation.',
-        nearest_tasks: matcher.candidates.map(c => ({ task: c.slug, score: parseFloat(c.score.toFixed(3)) })),
-        hint: 'Rephrase with the concrete action and target, or pass workflow_slug. GET /api/route for the workflow list.',
-        match_method: 'semantic_task',
-      })
-    }
+    // Below-threshold / ambiguous / fallback all fall through to the existing
+    // classifyTask -> workflow path below — the matcher only adds precision on
+    // confident matches and never hard-unresolves (option b).
     if (matcher.status === 'confident') {
       matchedTaskSlugs = matcher.skill_candidates.map(s => s.slug)
       matcherConfidence = matcher.confidence
