@@ -824,7 +824,12 @@ export async function POST(request: NextRequest) {
   // Re-read needs_external_tool from taskClassification — it may have been overridden
   // (e.g. calculation tasks are redirected to direct LLM after initial classification)
   const effectiveNeedsMcp = taskClassification ? taskClassification.needs_external_tool : needsMcpServer
-  const isMultiTool = taskClassification?.is_multi_tool && (taskClassification.tool_categories?.length ?? 0) >= 2
+  // A confident semantic-task match (≥0.70) is a single-skill answer — don't let
+  // the multi_tool flag veto it (W8: "navigate + test validations" is ONE browser
+  // tool, not two). multi_tool is for ambiguous/below-threshold queries on the LLM
+  // path, so only honor it when the matcher did NOT confidently resolve.
+  const isMultiTool = matchMethod !== ('semantic_task' as any)
+    && taskClassification?.is_multi_tool && (taskClassification.tool_categories?.length ?? 0) >= 2
   const approach = isMultiTool ? 'multi_tool' : (effectiveNeedsMcp ? 'mcp_server' : 'direct_llm')
 
   // Build orchestration chain for multi-tool tasks
