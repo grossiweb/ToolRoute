@@ -10,6 +10,7 @@
  */
 
 import type { SupabaseClient } from '@supabase/supabase-js'
+import { waitUntil } from '@vercel/functions'
 
 // ── Structural quality computation ──────────────────────────────────────────
 
@@ -151,13 +152,16 @@ export function scheduleVerifiedQualityUpdate(
   task: string,
   snippet: string
 ): void {
-  callLlmEvaluator(task, snippet).then(async (score) => {
+  const work = callLlmEvaluator(task, snippet).then(async (score) => {
     if (score == null) return
     await supabase
       .from(table)
       .update({ verified_quality: score, quality_method: 'llm_evaluator' })
       .eq('id', recordId)
   }).catch(() => {})
+  // Keep the serverless function alive until the write completes — Vercel
+  // otherwise terminates after the response, dropping the async write.
+  waitUntil(work)
 }
 
 // ── Anti-gaming detection ────────────────────────────────────────────────────
