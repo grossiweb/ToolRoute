@@ -73,7 +73,7 @@ export default async function AgentProfilePage({ params }: { params: { id: strin
     supabase.from('reward_ledgers').select('routing_credits, reputation_points, reason, created_at').eq('agent_identity_id', params.id).order('created_at', { ascending: false }),
     supabase.from('challenge_submissions').select('*, workflow_challenges(title, slug, category)').eq('agent_identity_id', params.id).order('scored_at', { ascending: false }),
     supabase.from('model_routing_decisions').select('task_snippet, resolved_tier, recommended_alias, confidence, latency_ms, created_at').eq('agent_identity_id', params.id).order('created_at', { ascending: false }).limit(10),
-    supabase.from('model_outcome_records').select('outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, model_id, model_registry(display_name, provider)').eq('agent_identity_id', params.id).order('created_at', { ascending: false }).limit(10),
+    supabase.from('model_outcome_records').select('outcome_status, latency_ms, output_quality_rating, estimated_cost_usd, model_slug, models(display_name, provider)').eq('agent_identity_id', params.id).order('created_at', { ascending: false }).limit(10),
     supabase.from('contribution_events').select('id').eq('agent_identity_id', params.id),
     supabase.from('agent_runs').select('latency_ms').eq('agent_identity_id', params.id),
   ])
@@ -304,7 +304,7 @@ export default async function AgentProfilePage({ params }: { params: { id: strin
           <h2 className="text-lg font-bold text-[var(--text)] mb-4">Model Execution Reports</h2>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
             {(modelOutcomes || []).map((o: any, i: number) => {
-              const modelInfo = o.model_registry as any
+              const modelInfo = o.models as any
               const statusColor = o.outcome_status === 'success' ? 'text-green-600 bg-green-50' :
                 o.outcome_status === 'partial_success' ? 'text-amber-600 bg-amber-50' : 'text-red-600 bg-red-50'
 

@@ -37,11 +37,11 @@ export default async function ModelsPage() {
   // Count outcome records per model
   const { data: outcomeCounts } = await supabase
     .from('model_outcome_records')
-    .select('model_id')
+    .select('model_slug')
 
   const outcomeMap: Record<string, number> = {}
   for (const o of outcomeCounts || []) {
-    outcomeMap[o.model_id] = (outcomeMap[o.model_id] || 0) + 1
+    if (o.model_slug) outcomeMap[o.model_slug] = (outcomeMap[o.model_slug] || 0) + 1
   }
 
   const allModels = models || []

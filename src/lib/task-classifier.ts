@@ -357,7 +357,7 @@ export function classificationToModelTier(
   // best_value (default): balance quality and cost
   switch (c.task_type) {
     case 'code': return 'fast_code'
-    case 'creative_writing': return c.complexity === 'complex' ? 'creative_writing' : 'cheap_chat'
+    case 'creative_writing': return 'creative_writing'
     case 'structured': return 'cheap_structured'
     case 'translation': return 'cheap_chat'
     case 'writing': return c.complexity === 'complex' ? 'reasoning_pro' : 'cheap_chat'
