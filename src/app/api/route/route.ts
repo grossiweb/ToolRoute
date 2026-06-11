@@ -212,6 +212,7 @@ export async function POST(request: NextRequest) {
   // GitLab). Anything uncertain degrades to the existing workflow path below.
   let matchedTaskSlugs: string[] | null = null
   let matcherConfidence = 0
+  let namedOverrideSkill: string | null = null      // Priority 1b: within-task named_tool steer
   const relevanceBySlug = new Map<string, number>()
 
   if (!explicitWorkflow && task && needsMcpServer) {
@@ -502,12 +503,41 @@ export async function POST(request: NextRequest) {
       sorted.unshift(top)
     }
   }
+  // The specific product named in the query (null if generic). Used by both the
+  // semantic-task steering (just below) and the LLM-path guard (further down).
+  const namedTool = (taskClassification as any)?.named_tool
+  // Within-task named_tool steering (Priority 1b): on a confident semantic_task
+  // match, honor an explicitly named platform when it is one of THIS task's own
+  // priors — but never override a same-brand, MORE-SPECIFIC semantic pick (e.g.
+  // "deploy to AWS Lambda" keeps aws-lambda-mcp even though named "AWS" -> aws-mcp
+  // is also a cloud-deployment prior). Steers only within the matched task's
+  // skill_tasks set, so it can never route outside the semantically-correct task.
+  // matchMethod stays 'semantic_task' so the W8 multi_tool veto (below) and the
+  // LLM-path guard stay correctly gated; the override is surfaced separately.
+  if (matchMethod === ('semantic_task' as any) && needsMcpServer && namedTool) {
+    const namedSkill = await resolveNamedTool(supabase, namedTool)
+    const brandToken = String(namedTool).toLowerCase().replace(/[^a-z0-9]+/g, '-').replace(/^-+|-+$/g, '')
+    if (
+      namedSkill &&
+      namedSkill !== top.slug &&            // not already the top prior
+      relevanceBySlug.has(namedSkill) &&    // (a) named skill IS one of this task's priors
+      !top.slug.startsWith(brandToken)      // (b) top prior isn't the same brand, more specific
+    ) {
+      const idx = sorted.findIndex((s: any) => s.slug === namedSkill)
+      if (idx >= 0) {
+        const namedRow = sorted[idx]
+        sorted.splice(idx, 1)
+        sorted.unshift(namedRow)
+        top = namedRow
+        namedOverrideSkill = namedSkill
+      }
+    }
+  }
   // Named-tool guard: when the task names a specific product, honor it. If we
   // have a skill for it (catalog or vendor alias), route there; if we genuinely
   // don't, return unresolved rather than asserting a different-brand substitute
   // (fixes LinkedIn/WhatsApp -> wrong tool; routes Jira -> atlassian-mcp). Only on
   // the LLM/workflow path — the semantic-task path already ranked by per-task priors.
-  const namedTool = (taskClassification as any)?.named_tool
   if (matchMethod !== ('semantic_task' as any) && needsMcpServer && namedTool) {
     const namedSkill = await resolveNamedTool(supabase, namedTool)
     if (!namedSkill) {
@@ -966,7 +996,8 @@ export async function POST(request: NextRequest) {
       junction_table_filtered: junctionFiltered,
       trust_floor_applied: trust_floor,
       latency_preference: latency_preference,
-      match_method: matchMethod,
+      match_method: namedOverrideSkill ? ('semantic_task_named_override' as any) : matchMethod,
+      ...(namedOverrideSkill ? { named_override: namedOverrideSkill } : {}),
       routing_profile: routingProfile,
       ...(tierResolution ? {
         tier_fallback_chain: tierResolution.fallbacks,
