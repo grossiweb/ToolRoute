@@ -349,6 +349,27 @@ export async function POST(request: NextRequest) {
         economic_credits_usd: parseFloat((0.008 * overallScore * multiplier * trustMod).toFixed(4)),
         reason: `model_telemetry:${model_slug} (score: ${overallScore.toFixed(2)})`,
       }).then(() => {})
+
+      // Mirror model-run telemetry into contribution_events so the contributions
+      // counter (frozen since the dogfooding agent moved to the model path on
+      // 2026-05-03) tracks model reports too. contributor_id reused from the same
+      // lookup the reward insert uses (NOT NULL). Accepted-only — same gate as rewards.
+      supabase.from('contribution_events').insert({
+        contributor_id: agentRow.contributor_id,
+        agent_identity_id,
+        contribution_type: 'run_telemetry',
+        run_count: 1,
+        payload_json: {
+          model_slug,
+          outcome_status,
+          output_quality_rating: output_quality_rating ?? null,
+          latency_ms: latency_ms ?? null,
+          decision_id: validDecisionId ?? null,
+          overall_score: overallScore,
+        },
+        proof_type: proofType,
+        accepted,
+      }).then(() => {})
     }
 
     supabase.rpc('update_agent_stats', {
