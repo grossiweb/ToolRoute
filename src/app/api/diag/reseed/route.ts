@@ -9,15 +9,22 @@ const CLUSTER = new Set([
   'knowledge-base-search', 'documentation-lookup', 'caption-images',
 ])
 
+let lastEmbedError = ''
 async function embedBatch(key: string, inputs: string[]): Promise<number[][] | null> {
   const res = await fetch('https://openrouter.ai/api/v1/embeddings', {
     method: 'POST',
     headers: { 'Authorization': `Bearer ${key}`, 'Content-Type': 'application/json', 'HTTP-Referer': 'https://toolroute.io', 'X-Title': 'ToolRoute Reseed' },
     body: JSON.stringify({ model: 'google/gemini-embedding-001', input: inputs, dimensions: 1536 }),
   })
-  if (!res.ok) return null
+  if (!res.ok) {
+    lastEmbedError = `HTTP ${res.status}: ${(await res.text()).slice(0, 400)}`
+    return null
+  }
   const j = await res.json()
-  if (!Array.isArray(j?.data)) return null
+  if (!Array.isArray(j?.data)) {
+    lastEmbedError = `non-array data: ${JSON.stringify(j).slice(0, 400)}`
+    return null
+  }
   const out: number[][] = []
   for (const it of j.data) out[it.index] = it.embedding
   return out
@@ -33,7 +40,7 @@ export async function GET() {
 
   const corpus = await embedBatch(key, tasks.map((t: any) => `${t.name}. ${t.description || ''} ${t.example_query || ''}`.trim()))
   const queries = await embedBatch(key, tasks.map((t: any) => t.example_query || ''))
-  if (!corpus || !queries) return NextResponse.json({ error: 'embed failed' })
+  if (!corpus || !queries) return NextResponse.json({ error: 'embed failed', detail: lastEmbedError })
 
   let seeded = 0
   for (let i = 0; i < tasks.length; i++) {
