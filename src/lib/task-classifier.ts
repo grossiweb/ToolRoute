@@ -41,10 +41,11 @@ Respond ONLY with valid JSON, no other text:
 }
 
 NAMED TOOL EXTRACTION:
-- named_tool = the SPECIFIC third-party product/platform the task targets by name, e.g. "Salesforce", "HubSpot", "Stripe", "Zendesk", "Shopify", "WhatsApp", "LinkedIn", "Jira", "Notion".
+- named_tool = the SPECIFIC third-party product/platform the task targets by name, e.g. "Salesforce", "HubSpot", "Stripe", "Zendesk", "Shopify", "WhatsApp", "LinkedIn", "Jira", "Notion", "AWS", "Azure", "GCP", "Terraform", "Obsidian".
 - null when the task names no specific product (e.g. "send a message to the team", "scrape a webpage").
 - Use the brand/product name as written, not a category. "post to our LinkedIn page" → "LinkedIn". "send a Slack message" → "Slack". "create a Jira ticket" → "Jira".
 - Colloquial brand references count: "post a tweet" / "tweet" / "retweet" / "post on X" → "Twitter".
+- Cloud/infra platforms count too: "deploy to AWS" → "AWS", "deploy to Azure" → "Azure", "set up on GCP" / "on Google Cloud" → "GCP", "apply a Terraform plan" → "Terraform", "save to my Obsidian vault" → "Obsidian".
 - This is independent of needs_external_tool — extract the name even if you are unsure a tool is needed.
 
 MULTI-TOOL DETECTION:

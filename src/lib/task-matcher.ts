@@ -52,7 +52,8 @@ async function embedQuery(text: string): Promise<number[] | null> {
       signal: AbortSignal.timeout(4000),
     })
     if (!res.ok) {
-      console.warn(`[task-matcher] embeddings HTTP ${res.status} — deferring to fallback`)
+      const body = await res.text().catch(() => '')
+      console.warn(`[task-matcher] embeddings HTTP ${res.status} — ${body.slice(0, 300)} — deferring to fallback`)
       return null
     }
     const j = await res.json()

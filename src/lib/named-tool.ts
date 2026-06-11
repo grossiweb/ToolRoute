@@ -21,6 +21,15 @@ const VENDOR_ALIASES: Record<string, string> = {
   confluence: 'confluence-mcp',
   trello: 'atlassian-mcp',
   bitbucket: 'atlassian-mcp',
+  // Cloud platforms whose canonical_name loses the ilike: "Azure MCP" isn't
+  // featured and loses the alphabetical tiebreak to azure-computer-vision;
+  // "Google Cloud MCP" contains neither "gcp" nor "google cloud platform".
+  // (aws/terraform/obsidian need no alias — their -mcp is featured and wins.)
+  azure: 'azure-mcp',
+  'microsoft azure': 'azure-mcp',
+  gcp: 'gcp-mcp',
+  'google cloud': 'gcp-mcp',
+  'google cloud platform': 'gcp-mcp',
 }
 
 export async function resolveNamedTool(
