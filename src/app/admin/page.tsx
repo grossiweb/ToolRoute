@@ -178,6 +178,20 @@ export default function AdminPage() {
               data={(trends.verified_quality_daily || []).map((d: any) => ({ date: d.date, value: d.avg }))}
               yFormat={(v) => v.toFixed(1)}
             />
+            {/* (c) Semantic matcher hit rate. Accumulates forward-only — there is
+                no historical data before the match_method write deployed (1e5f49c),
+                so early days read 0% until post-deploy routing traffic builds up. */}
+            <div style={{ gridColumn: '1 / -1' }}>
+              <TrendChart
+                title="Semantic Matcher Hit Rate / day"
+                subtitle="skill_routing_decisions.signals_json"
+                kind="bar"
+                color="var(--blue)"
+                yMax={100}
+                data={(trends.semantic_rate_daily || []).map((d: any) => ({ date: d.date, value: d.pct }))}
+                yFormat={(v) => v.toFixed(1) + '%'}
+              />
+            </div>
           </div>
         </div>
       )}
