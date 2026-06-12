@@ -1,6 +1,7 @@
 'use client'
 
 import { useState } from 'react'
+import { TrendChart } from './TrendChart'
 
 export default function AdminPage() {
   const [secret, setSecret] = useState('')
@@ -8,6 +9,14 @@ export default function AdminPage() {
   const [loading, setLoading] = useState(false)
   const [error, setError] = useState('')
   const [stats, setStats] = useState<any>(null)
+  const [trends, setTrends] = useState<any>(null)
+
+  async function fetchTrends(sec: string) {
+    try {
+      const res = await fetch('/api/admin/trends', { headers: { Authorization: `Bearer ${sec}` } })
+      if (res.ok) setTrends(await res.json())
+    } catch {}
+  }
 
   async function fetchStats() {
     setLoading(true)
@@ -25,6 +34,7 @@ export default function AdminPage() {
       const data = await res.json()
       setStats(data)
       setAuthenticated(true)
+      fetchTrends(secret)
     } catch (e: any) {
       setError(e.message || 'Network error')
     }
@@ -38,6 +48,7 @@ export default function AdminPage() {
         headers: { Authorization: `Bearer ${secret}` },
       })
       if (res.ok) setStats(await res.json())
+      fetchTrends(secret)
     } catch {}
     setLoading(false)
   }
@@ -141,6 +152,35 @@ export default function AdminPage() {
           <HealthCard label="Provider Constraint" value={g.agents_with_provider_constraint ?? 0} unit="" color="var(--blue)" note="Phase 2 adoption" />
         </div>
       </div>
+
+      {/* Trends (30d) — daily series from /api/admin/trends. (c) semantic-rate
+          chart is intentionally deferred until match_method data accumulates. */}
+      {trends && (
+        <div style={{ marginBottom: 32 }}>
+          <h2 style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+            Trends — last {trends.window_days ?? 30} days
+          </h2>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12 }}>
+            <TrendChart
+              title="Routing Decisions / day"
+              subtitle="model_routing_decisions"
+              kind="bar"
+              color="var(--amber)"
+              data={(trends.routing_decisions_daily || []).map((d: any) => ({ date: d.date, value: d.count }))}
+              yFormat={(v) => Math.round(v).toString()}
+            />
+            <TrendChart
+              title="Verified Quality avg / day"
+              subtitle="model_outcome_records.verified_quality"
+              kind="line"
+              color="var(--green)"
+              yMax={10}
+              data={(trends.verified_quality_daily || []).map((d: any) => ({ date: d.date, value: d.avg }))}
+              yFormat={(v) => v.toFixed(1)}
+            />
+          </div>
+        </div>
+      )}
 
       {/* Trust Tier + Top Skills side by side */}
       {(g.trust_tier_breakdown || g.top_skills) && (

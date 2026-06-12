@@ -906,7 +906,14 @@ export async function POST(request: NextRequest) {
       recommended_skill_slug: recSkillSlug,
       approach,
       confidence: Math.round(adjustedConfidence * 100) / 100,
-      signals_json: signals,
+      // Fold the routing match_method into signals_json (jsonb, no migration) so
+      // the admin semantic-matcher-hit-rate trend has a source. Override label is
+      // written here even though internal matchMethod stays 'semantic_task'.
+      signals_json: {
+        ...signals,
+        match_method: namedOverrideSkill ? 'semantic_task_named_override' : matchMethod,
+        ...(namedOverrideSkill ? { named_override: namedOverrideSkill } : {}),
+      },
     }).then(() => {}, () => {})
 
     if (agent_identity_id) {
