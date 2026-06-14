@@ -160,7 +160,20 @@ export function detectTaskSignals(task: string): TaskSignals {
   const tools_needed = matchesWordBoundary(lower, SIGNAL_KEYWORDS.tools_needed)
   const structured_output_needed = matchesWordBoundary(lower, SIGNAL_KEYWORDS.structured_output_needed)
   const code_present = matchesWordBoundary(lower, SIGNAL_KEYWORDS.code_present)
-  const complex_reasoning = matchesWordBoundary(lower, SIGNAL_KEYWORDS.complex_reasoning)
+  let complex_reasoning = matchesWordBoundary(lower, SIGNAL_KEYWORDS.complex_reasoning)
+  // 'plan' is a broad complex_reasoning keyword that over-fires on trivial
+  // social/entertainment planning ("plan a birthday party" -> reasoning_pro).
+  // If complex_reasoning fired AND a trivial-context word is present, re-check
+  // WITHOUT 'plan': "plan a birthday party/trip/dinner" drops to cheap_chat, while
+  // "plan the system architecture" (no context word) and "analyze the wedding
+  // budget" (another reasoning keyword holds) stay reasoning_pro. Heuristic path
+  // only — the LLM path already classifies these correctly via complexity.
+  // ('party' deliberately excluded: it word-boundary-hits "third-party"/
+  // "counterparty"; 'birthday' already covers the birthday-party case.)
+  const TRIVIAL_CONTEXT = ['birthday', 'trip', 'vacation', 'dinner', 'holiday', 'wedding', 'celebration']
+  if (complex_reasoning && matchesWordBoundary(lower, TRIVIAL_CONTEXT)) {
+    complex_reasoning = matchesWordBoundary(lower, SIGNAL_KEYWORDS.complex_reasoning.filter(k => k !== 'plan'))
+  }
   const creative_writing = matchesWordBoundary(lower, SIGNAL_KEYWORDS.creative_writing)
 
   const signal_count = [tools_needed, structured_output_needed, code_present, complex_reasoning, creative_writing].filter(Boolean).length
