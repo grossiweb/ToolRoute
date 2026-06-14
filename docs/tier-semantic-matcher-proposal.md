@@ -1,5 +1,10 @@
 # Tier-Path Semantic Matcher — Proposal (Priority 7 follow-on)
 
+> **FAILED / FINDING (2026-06-14): pgvector approach disproven — embeddings encode
+> topic, not difficulty; tiers are quality bands, not topically distinct; 54%
+> self-match, 50% confident accuracy; LLM classifier is the correct tier decider.**
+> Objects dropped in migration 073.
+
 > **OUTCOME: APPROACH DOES NOT WORK — halted after seeding + embedding (2026-06-14).**
 > The 35 seeds embedded cleanly (35/35), but tier self-consistency is far too low to
 > ship: nearest-neighbor same-tier **54.3%**, and — critically — among matches that
