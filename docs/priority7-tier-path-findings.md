@@ -7,7 +7,7 @@
 > - **#4** GET-guide example corrected to `tool_agent` (tools+structured); Path B logic unchanged.
 >
 > **Documented residuals (intentionally not fixed):**
-> - `"plan a birthday party"` → `reasoning_pro` — the literal `plan` keyword in `complex_reasoning` is broad. **Investigated narrowing to compound phrases (2026-06-14) and rejected it as net-negative** — see "Plan-keyword narrowing" below. The real fix is the parked **tier-path semantic matcher** (intent-aware), not keyword surgery. Left unchanged.
+> - `"plan a birthday party"` → `reasoning_pro` — **FIXED in commit `d943c75` via TRIVIAL_CONTEXT guard** (`birthday, trip, vacation, dinner, holiday, wedding, celebration`) — re-checks `complex_reasoning` without `'plan'` when a trivial context word is present, so "plan a birthday party" drops to cheap_chat while "analyze the wedding budget" (`analyze` holds) and "plan the system architecture" (no context word) stay reasoning_pro. The tier-path semantic matcher was attempted (migrations 072/073) but disproven — embeddings encode topic, not difficulty. (Earlier the compound-phrase narrowing was rejected as net-negative — see "Plan-keyword narrowing" below.)
 > - `"complete security audit"` → `reasoning_pro` — scope cues are literal-adjacent phrases (`complete audit` ≠ `complete security audit`), as approved. `"do a complete audit"` does escalate.
 
 ---
