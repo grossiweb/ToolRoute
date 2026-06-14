@@ -1,6 +1,29 @@
 # Tier-Path Semantic Matcher — Proposal (Priority 7 follow-on)
 
-**Status:** Tier 1 investigation + proposal. No code yet.
+> **OUTCOME: APPROACH DOES NOT WORK — halted after seeding + embedding (2026-06-14).**
+> The 35 seeds embedded cleanly (35/35), but tier self-consistency is far too low to
+> ship: nearest-neighbor same-tier **54.3%**, and — critically — among matches that
+> clear the 0.70 confidence gate (only 6 of 35), accuracy is **50%** (coin flip).
+> top-3 majority vote is **65.7%**. Root cause: **embeddings encode topic/semantics,
+> not task difficulty.** The skill matcher hit 100% because skills are topically
+> distinct (refund ≠ deploy ≠ scrape); model tiers are cross-topic *difficulty bands*,
+> so `reasoning_pro` ("analyze the architectural tradeoffs") and `best_available`
+> ("complete architecture + implementation plan with tradeoff analysis") sit on top of
+> each other (cosine 0.78, wrong tier, above the gate). The matcher lib + `/api/route/model`
+> wire-in (steps 4-5) were **NOT built**.
+>
+> **Decision:** the LLM classifier (`classificationToModelTier`, already improved in
+> Priority 7 #3) is the correct tier decider — it reasons about task_type + complexity,
+> which is what tiers actually encode. Embeddings add no value here. The `plan` residual
+> is better addressed by the LLM classifier's complexity detection than by a vector match.
+> `tier_examples` (migration 072) + `match_tier_examples` are left inert (no runtime
+> consumer); drop via a follow-up migration if we want to reclaim them.
+>
+> The proposal below is retained as the design that was tested and the evidence against it.
+
+---
+
+**Status:** Tier 1 investigation + proposal. SUPERSEDED by the outcome above.
 **Date:** 2026-06-14. Mirrors the skill matcher (migrations 062/063, `task-matcher.ts`).
 
 ---
