@@ -7,8 +7,35 @@
 > - **#4** GET-guide example corrected to `tool_agent` (tools+structured); Path B logic unchanged.
 >
 > **Documented residuals (intentionally not fixed):**
-> - `"plan a birthday party"` → `reasoning_pro` — the literal `plan` keyword in `complex_reasoning` is broad; this is a keyword-breadth issue, not a substring bug. Candidate for keyword refinement or the future tier-path semantic matcher.
+> - `"plan a birthday party"` → `reasoning_pro` — the literal `plan` keyword in `complex_reasoning` is broad. **Investigated narrowing to compound phrases (2026-06-14) and rejected it as net-negative** — see "Plan-keyword narrowing" below. The real fix is the parked **tier-path semantic matcher** (intent-aware), not keyword surgery. Left unchanged.
 > - `"complete security audit"` → `reasoning_pro` — scope cues are literal-adjacent phrases (`complete audit` ≠ `complete security audit`), as approved. `"do a complete audit"` does escalate.
+
+---
+
+## Plan-keyword narrowing — investigated, rejected (2026-06-14)
+
+Proposal was to replace bare `plan` with compound phrases (`implementation plan`,
+`strategic plan`, `technical plan`, `project plan`, `action plan`) to stop trivial
+"plan a birthday party / trip / dinner" → reasoning_pro.
+
+Confirmed empirically (re-probed each genuine task with the word `plan` removed):
+
+| Task | Without `plan` | Verdict |
+|---|---|---|
+| "plan **the system architecture** for a payments service" | cheap_chat (CR=False) | **regresses** |
+| "plan **our go-to-market approach**" | cheap_chat (CR=False) | **regresses** |
+| "plan **the quarterly product roadmap**" | cheap_chat (CR=False) | **regresses** |
+| "plan a database migration **strategy**" | reasoning_pro (via `strategy`) | safe |
+| "**implementation plan** / **strategic plan** …" | covered by compound | safe |
+
+The proposed compounds are all **noun phrases**, but genuine planning often uses
+`plan` as a **verb** ("plan the architecture/roadmap/go-to-market/data pipeline").
+Those carry no other reasoning keyword, so narrowing under-routes them to
+`cheap_chat` (Gemini Flash Lite). That trade is net-negative: it fixes a mild, rare
+over-route (party-planning → Opus 4.6) at the cost of a quality failure on a core
+use case (technical/business planning → cheapest model). No keyword set cleanly
+separates "plan a party" from "plan an architecture" — only intent does. **Decision:
+leave `plan` unchanged; defer to the tier-path semantic matcher.**
 
 **Status:** Tier 1 read-only investigation. Findings only — fixes proposed separately.
 **Date:** 2026-06-12. Grounded against live `POST /api/route/model` (deploy current).
