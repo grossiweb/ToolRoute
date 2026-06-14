@@ -13,7 +13,9 @@
 import { readFileSync } from 'fs'
 import { join } from 'path'
 
-const MODEL = process.env.PROPOSE_MODEL || 'google/gemini-3.1-pro'
+// Default to the model the live classifier already uses (verified-valid on
+// OpenRouter). Override with PROPOSE_MODEL for a stronger suggester.
+const MODEL = process.env.PROPOSE_MODEL || 'google/gemini-3.1-flash-lite'
 
 const SYSTEM = `You are a routing-systems engineer for ToolRoute, an LLM/MCP routing layer.
 You are given failing cases from a routing benchmark. For EACH failure, propose the
