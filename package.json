@@ -7,7 +7,9 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test": "vitest run"
+    "test": "vitest run",
+    "bench": "npx tsx scripts/autoloop/run-benchmark.ts",
+    "bench:propose": "npx tsx scripts/autoloop/propose.ts"
   },
   "dependencies": {
     "@supabase/ssr": "^0.3.0",

@@ -26,6 +26,9 @@ sdk/.mcpregistry_*
 CLAUDE.md
 launch/
 
+# AutoResearch live-loop reports (local only)
+autoresearch-reports/
+
 # Vercel project linkage (contains org/project IDs, kept local)
 .vercel/project.json
 
