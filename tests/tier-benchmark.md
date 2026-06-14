@@ -24,7 +24,7 @@ reasoning_pro↔best_available miss costs little; a cheap_chat↔best_available 
 | plan a birthday party for my kid | cheap_chat | model | plan pair / TRIVIAL_CONTEXT guard |
 | plan a trip to Paris | cheap_chat | model | TRIVIAL_CONTEXT guard |
 | extract these fields into a json object | cheap_structured | model | structured extraction |
-| classify these support tickets as bug or feature | cheap_structured | model | classification |
+| classify these support tickets as bug or feature | cheap_chat | model | cheap_chat acceptable for simple labeling; cheap_structured would require a structured-output keyword which risks false positives |
 | parse this CSV and return the column names | cheap_structured | model | parsing |
 | write a python function to reverse a linked list | fast_code | model | P7 positive |
 | refactor this typescript class and fix the bug | fast_code | model | P7 positive |

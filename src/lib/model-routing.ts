@@ -64,6 +64,9 @@ const SIGNAL_KEYWORDS: Record<keyof Omit<TaskSignals, 'signal_count'>, string[]>
     'execute command', 'run command', 'call api', 'api call',
     'use tools', 'with tools', 'tool_choice', 'invoke tools', 'orchestrate tools',
     'use mcp', 'connect to mcp', 'via mcp',
+    // Web-search phrasing — clear external-tool intent the heuristic missed
+    // ("search the web for competitor pricing" was falling to cheap_chat).
+    'search the web', 'search online', 'look up online',
   ],
   structured_output_needed: [
     'json', 'structured output', 'structured_output', 'json schema',
