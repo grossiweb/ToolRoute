@@ -308,10 +308,9 @@ type ClassifierTier_Inline =
 export function detectCostAwareTier(task: string): ClassifierTier_Inline | null {
   if (!task) return null
   const lower = task.toLowerCase()
+  // Word-boundary match (not substring) so 'seo'⊄"Seoul" etc. (Priority 7 fix #1).
   for (const { keywords, tier } of COST_AWARE_PATTERNS) {
-    for (const kw of keywords) {
-      if (lower.includes(kw)) return tier
-    }
+    if (keywords.some(kw => new RegExp(`\\b${kw.replace(/[.*+?^${}()|[\]\\]/g, '\\$&')}\\b`, 'i').test(lower))) return tier
   }
   return null
 }

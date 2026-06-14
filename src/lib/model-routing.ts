@@ -146,16 +146,16 @@ export function detectTaskSignals(task: string): TaskSignals {
 
   const lower = task.toLowerCase()
 
-  const tools_needed = SIGNAL_KEYWORDS.tools_needed.some(kw => lower.includes(kw))
-  const structured_output_needed = SIGNAL_KEYWORDS.structured_output_needed.some(kw => lower.includes(kw))
-  // code_present uses word-boundary matching to prevent false positives:
-  //   - 'class' substring-matches "classification", "classify", "classroom"
-  //   - 'import' substring-matches "important", "importance"
-  // Without word boundaries, "binary classification" and "content moderation check"
-  // get incorrectly routed to fast_code instead of cheap_chat.
+  // All lists use word-boundary matching (not substring) so short keywords don't
+  // match inside unrelated words. Without it: 'class'⊂classification (fast_code),
+  // 'tone'⊂Yellowstone + 'voice'⊂invoice + 'article'⊂particle (creative_writing),
+  // 'plan'⊂explanation (best_available), 'import'⊂important. Previously only
+  // code_present was guarded; the rest used substring includes() (Priority 7 fix #1).
+  const tools_needed = matchesWordBoundary(lower, SIGNAL_KEYWORDS.tools_needed)
+  const structured_output_needed = matchesWordBoundary(lower, SIGNAL_KEYWORDS.structured_output_needed)
   const code_present = matchesWordBoundary(lower, SIGNAL_KEYWORDS.code_present)
-  const complex_reasoning = SIGNAL_KEYWORDS.complex_reasoning.some(kw => lower.includes(kw))
-  const creative_writing = SIGNAL_KEYWORDS.creative_writing.some(kw => lower.includes(kw))
+  const complex_reasoning = matchesWordBoundary(lower, SIGNAL_KEYWORDS.complex_reasoning)
+  const creative_writing = matchesWordBoundary(lower, SIGNAL_KEYWORDS.creative_writing)
 
   const signal_count = [tools_needed, structured_output_needed, code_present, complex_reasoning, creative_writing].filter(Boolean).length
 
@@ -168,7 +168,7 @@ export function resolveModelTier(signals: TaskSignals, task?: string): ModelTier
   // Explicit best_available override
   if (task) {
     const lower = task.toLowerCase()
-    if (BEST_AVAILABLE_KEYWORDS.some(kw => lower.includes(kw))) {
+    if (matchesWordBoundary(lower, BEST_AVAILABLE_KEYWORDS)) {
       return 'best_available'
     }
   }
