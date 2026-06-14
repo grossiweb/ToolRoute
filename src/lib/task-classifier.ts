@@ -345,8 +345,11 @@ export function classificationToModelTier(
     switch (c.task_type) {
       case 'code': return 'fast_code'
       case 'creative_writing': return 'creative_writing'
-      case 'writing': return c.complexity === 'complex' ? 'reasoning_pro' : 'creative_writing'
-      case 'analysis': return 'reasoning_pro'
+      // Priority 7 #3: under highest_quality, complex writing/analysis reaches
+      // best_available (the LLM path otherwise caps at reasoning_pro). best_value
+      // is intentionally NOT changed — premium escalation is opt-in via priority.
+      case 'writing': return c.complexity === 'complex' ? 'best_available' : 'creative_writing'
+      case 'analysis': return c.complexity === 'complex' ? 'best_available' : 'reasoning_pro'
       case 'structured': return 'cheap_structured'
       case 'translation': return 'cheap_chat'
       case 'general': return 'cheap_chat'

@@ -61,7 +61,7 @@ export async function GET() {
       },
       {
         task: 'Use tools to research competitors and extract pricing data into JSON',
-        expected_tier: 'best_available',
+        expected_tier: 'tool_agent',
         signals: { tools_needed: true, structured_output_needed: true, code_present: false, complex_reasoning: false },
       },
       {

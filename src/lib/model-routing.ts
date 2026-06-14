@@ -118,6 +118,12 @@ const BEST_AVAILABLE_KEYWORDS = [
   'formal proof', 'mathematical proof',
   'dissertation', 'thesis',
   'comprehensive technical', 'in-depth report',
+  // Scope cues — task breadth that warrants the top tier (Priority 7 #2).
+  // NB: bare 'comprehensive' deliberately excluded (too broad — a "comprehensive
+  // summary" is not an Opus task); only the 'comprehensive technical' phrase above.
+  'exhaustive', 'end-to-end', 'full specification',
+  'complete architecture', 'complete spec', 'complete specification',
+  'complete analysis', 'complete audit', 'complete assessment',
 ]
 
 // ── Signal Detection ──
@@ -175,6 +181,10 @@ export function resolveModelTier(signals: TaskSignals, task?: string): ModelTier
 
   // Multi-signal escalation
   if (signals.tools_needed && signals.complex_reasoning) return 'best_available'
+  // Intensity escalation (Priority 7 #2): a reasoning-heavy task that also trips
+  // another signal (code, structured, creative, or tools) is complex enough for
+  // the top tier. Single-signal complex_reasoning still falls to reasoning_pro.
+  if (signals.complex_reasoning && signals.signal_count >= 2) return 'best_available'
 
   // Single-signal rules (first match wins)
   if (signals.tools_needed) return 'tool_agent'
