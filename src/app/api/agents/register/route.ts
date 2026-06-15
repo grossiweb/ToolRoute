@@ -98,6 +98,32 @@ export async function POST(request: NextRequest) {
     )
   }
 
+  // Owner-scoped idempotency (Phase 3.1 dup fix): an authenticated user
+  // re-submitting registration must get back their canonical identity, not a
+  // second one. The prior agent_name+host check missed this — a differing
+  // host_client_slug (e.g. null vs 'youtube') created a duplicate per owner.
+  // Keyed on (owner_user_id, agent_name) to match the unique index (migration
+  // 075); returns the existing row instead of hitting the DB constraint.
+  if (verifiedOwnerUserId) {
+    const { data: ownerExisting } = await supabase
+      .from('agent_identities')
+      .select('id, agent_name, trust_tier, is_active, created_at')
+      .eq('owner_user_id', verifiedOwnerUserId)
+      .eq('agent_name', agent_name)
+      .maybeSingle()
+    if (ownerExisting) {
+      return NextResponse.json({
+        agent_identity_id: ownerExisting.id,
+        agent_name: ownerExisting.agent_name,
+        trust_tier: ownerExisting.trust_tier,
+        is_active: ownerExisting.is_active,
+        created_at: ownerExisting.created_at,
+        already_registered: true,
+        message: 'Agent already registered. Use agent_identity_id for routing and telemetry.',
+      })
+    }
+  }
+
   // Check if agent with same name + host already exists
   let existingQuery = supabase
     .from('agent_identities')
