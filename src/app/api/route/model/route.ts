@@ -231,6 +231,12 @@ export async function POST(request: NextRequest) {
   const taskHash = simpleHash(task)
   const decisionId = crypto.randomUUID()
 
+  // NOTE: recommended_model_slug is written reliably here (the only writer of
+  // model_routing_decisions). ~87% of rows in a 30-day window are NULL slug, but
+  // those are LEGACY: all predate 2026-05-20 (migration 061, which added/populated
+  // the column) and age out of the window over time — not a current gap. The admin
+  // cost tracker works off resolved_tier (≈100% coverage incl. legacy) rather than
+  // this slug. See docs / handoff backlog.
   supabase.from('model_routing_decisions').insert({
     id: decisionId,
     task_hash: taskHash,

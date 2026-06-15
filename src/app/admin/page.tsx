@@ -196,6 +196,54 @@ export default function AdminPage() {
         </div>
       )}
 
+      {/* Cost Savings Est. — stat card (not a trend chart). Driven by resolved_tier
+          counts + per-tier primary-model prices; all figures estimated. */}
+      {trends?.cost_summary && (() => {
+        const cs = trends.cost_summary
+        return (
+          <div style={{ marginBottom: 32 }}>
+            <h2 style={{ fontSize: 12, fontFamily: 'var(--mono)', color: 'var(--text-3)', textTransform: 'uppercase', letterSpacing: 1, marginBottom: 12 }}>
+              Cost Savings Est.
+            </h2>
+            <div style={{ background: 'var(--bg2)', border: '1px solid var(--border)', borderRadius: 14, padding: '18px 20px' }}>
+              {/* Headline */}
+              <div style={{ display: 'flex', gap: 28, flexWrap: 'wrap', marginBottom: 18 }}>
+                <Headline value={`${cs.est_savings_pct}%`} label="est. cost reduction" color="var(--green)" />
+                <Headline value={`$${cs.est_savings_usd}`} label={`est. saved / ${trends.window_days}d`} color="var(--amber)" />
+                <Headline value={`${cs.pct_below_best_available}%`} label="routed below best_available" color="var(--blue)" />
+              </div>
+              {/* Tier distribution bars */}
+              <div style={{ marginBottom: 16 }}>
+                {cs.by_tier.map((t: any) => (
+                  <div key={t.tier} style={{ display: 'flex', alignItems: 'center', gap: 8, marginBottom: 4 }}>
+                    <span style={{ width: 130, fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-3)' }}>{t.tier}</span>
+                    <div style={{ flex: 1, background: 'var(--bg3)', borderRadius: 4, height: 14, overflow: 'hidden' }}>
+                      <div style={{ width: `${t.share_pct}%`, background: 'var(--amber)', height: '100%' }} />
+                    </div>
+                    <span style={{ width: 110, textAlign: 'right', fontSize: 11, fontFamily: 'var(--mono)', color: 'var(--text-2)' }}>{t.decisions} ({t.share_pct}%)</span>
+                  </div>
+                ))}
+              </div>
+              {/* Price table */}
+              <Table
+                headers={['Tier', 'Model', '$/1M in', '$/1M out', 'Share', 'est $/call']}
+                rows={cs.by_tier.map((t: any) => [
+                  t.tier, t.model_slug || '—',
+                  t.input_price_per_m == null ? '—' : `$${t.input_price_per_m}`,
+                  t.output_price_per_m == null ? '—' : `$${t.output_price_per_m}`,
+                  `${t.share_pct}%`,
+                  t.cost_per_call == null ? '—' : `$${t.cost_per_call}`,
+                ])}
+              />
+              <p style={{ fontSize: 10, color: 'var(--text-3)', marginTop: 10, fontFamily: 'var(--mono)' }}>
+                *Estimated. Assumes {cs.token_assumption.input} input + {cs.token_assumption.output} output tokens/call;
+                baseline = {cs.baseline.model_slug}. Token counts are not recorded.
+              </p>
+            </div>
+          </div>
+        )
+      })()}
+
       {/* Trust Tier + Top Skills side by side */}
       {(g.trust_tier_breakdown || g.top_skills) && (
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 12, marginBottom: 24 }}>
@@ -371,6 +419,15 @@ function HealthCard({ label, value, unit, color, note }: { label: string; value:
         {value}{unit}
       </span>
       {note && <span style={{ fontSize: 10, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>{note}</span>}
+    </div>
+  )
+}
+
+function Headline({ value, label, color }: { value: string; label: string; color: string }) {
+  return (
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 2 }}>
+      <span style={{ fontSize: 30, fontFamily: 'var(--serif)', fontWeight: 400, color }}>{value}</span>
+      <span style={{ fontSize: 11, color: 'var(--text-3)', fontFamily: 'var(--mono)' }}>{label}</span>
     </div>
   )
 }
