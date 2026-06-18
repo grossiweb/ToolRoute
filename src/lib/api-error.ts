@@ -23,6 +23,24 @@
 
 import { NextResponse } from 'next/server'
 
+// Builds just the response body object (no NextResponse). Use when the caller
+// returns { status, body } rather than a NextResponse directly — e.g. shared
+// lib logic invoked in-process by more than one route handler.
+export function errorBody(
+  message: string,
+  hint?: string,
+  correctEndpoint?: string,
+  docs?: string,
+  extra?: Record<string, unknown>,
+): Record<string, unknown> {
+  const body: Record<string, unknown> = { error: message }
+  if (hint) body.hint = hint
+  if (correctEndpoint) body.correct_endpoint = correctEndpoint
+  if (docs) body.docs = docs
+  if (extra) Object.assign(body, extra)
+  return body
+}
+
 export function apiError(
   status: number,
   message: string,
@@ -31,10 +49,5 @@ export function apiError(
   docs?: string,
   extra?: Record<string, unknown>,
 ): NextResponse {
-  const body: Record<string, unknown> = { error: message }
-  if (hint) body.hint = hint
-  if (correctEndpoint) body.correct_endpoint = correctEndpoint
-  if (docs) body.docs = docs
-  if (extra) Object.assign(body, extra)
-  return NextResponse.json(body, { status })
+  return NextResponse.json(errorBody(message, hint, correctEndpoint, docs, extra), { status })
 }

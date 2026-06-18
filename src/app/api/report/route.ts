@@ -1,9 +1,10 @@
 import { NextRequest, NextResponse } from 'next/server'
 import { createServerSupabaseClient } from '@/lib/supabase/server'
-import { calcContributionScore, calcRoutingCredits, CONTRIBUTION_MULTIPLIERS } from '@/lib/scoring'
 import { rateLimit, getRateLimitKey } from '@/lib/rate-limit'
 import { getVerificationNudge } from '@/lib/verification-nudge'
 import { apiError } from '@/lib/api-error'
+import { processContribution } from '@/lib/contributions'
+import { coerceNumericField, SKILL_REPORT_FIELD_SPECS } from '@/lib/telemetry-validation'
 
 // GET /api/report — Self-documenting guide for telemetry reporting
 export async function GET() {
@@ -73,7 +74,7 @@ export async function POST(request: NextRequest) {
     return apiError(400, 'Invalid JSON', 'Request body must be valid JSON with Content-Type: application/json')
   }
 
-  const { skill_slug, outcome, latency_ms, cost_usd, quality_rating, task_fingerprint, agent_identity_id } = body
+  const { skill_slug, outcome, task_fingerprint, agent_identity_id } = body
 
   if (!skill_slug || !outcome) {
     // Help callers who tried to report a model execution to the wrong endpoint.
@@ -95,6 +96,19 @@ export async function POST(request: NextRequest) {
       'GET /api/report for the full schema',
     )
   }
+
+  // Numeric field validation: type errors -> 400, overflows -> clamp + warn
+  const warnings: string[] = []
+  const v: Record<string, number | null> = {}
+  for (const spec of SKILL_REPORT_FIELD_SPECS) {
+    const r = coerceNumericField(body[spec.field], spec)
+    if (r.error) return NextResponse.json(r.error, { status: 400 })
+    if (r.warning) warnings.push(r.warning)
+    v[spec.field] = r.value
+  }
+  const latency_ms = v.latency_ms
+  const cost_usd = v.cost_usd
+  const quality_rating = v.quality_rating
 
   // Resolve skill_id from slug
   const { data: skill } = await supabase
@@ -135,23 +149,18 @@ export async function POST(request: NextRequest) {
     task_fingerprint: task_fingerprint ?? null,
   }
 
-  // Forward to internal contributions logic via fetch
-  const origin = request.nextUrl.origin
-  const res = await fetch(`${origin}/api/contributions`, {
-    method: 'POST',
-    headers: { 'Content-Type': 'application/json' },
-    body: JSON.stringify({
-      agent_identity_id: agent_identity_id ?? null,
-      contribution_type: 'run_telemetry',
-      payload: contributionPayload,
-      proof_type: 'self_reported',
-    }),
+  // Call the contributions write path directly (in-process) — no HTTP
+  // round-trip to self, which could throw uncaught on a non-JSON sub-response
+  // and surface as a generic 500.
+  const { status: contribStatus, body: result } = await processContribution(supabase, {
+    agent_identity_id: agent_identity_id ?? null,
+    contribution_type: 'run_telemetry',
+    payload: contributionPayload,
+    proof_type: 'self_reported',
   })
 
-  const result = await res.json()
-
-  if (!res.ok) {
-    return NextResponse.json(result, { status: res.status })
+  if (contribStatus >= 400) {
+    return NextResponse.json(result, { status: contribStatus })
   }
 
   const credits = result.rewards?.routing_credits ?? 0
@@ -197,6 +206,7 @@ export async function POST(request: NextRequest) {
   // Build response
   const response: any = {
     accepted: result.accepted,
+    ...(warnings.length ? { warnings } : {}),
     agent_identity_id: agent_identity_id ?? null,
     credits_earned: credits,
     reputation_earned: reputation,

@@ -70,3 +70,11 @@ export const MODEL_REPORT_FIELD_SPECS: NumericFieldSpec[] = [
   { field: 'retry_count', min: 0, max: 2147483647, integer: true },
   { field: 'human_correction_minutes', min: 0, max: 2147483647, integer: true },
 ]
+
+// Live column limits for outcome_records (skill telemetry via /api/report).
+// Note the /api/report field names differ from the model endpoint's.
+export const SKILL_REPORT_FIELD_SPECS: NumericFieldSpec[] = [
+  { field: 'quality_rating', min: 0, max: 9.99, hint: 'This field is 0-10. If sending a 0-100 percentage/confidence, divide by 10.' },
+  { field: 'cost_usd', min: 0, max: 999999.9999, hint: 'USD.' }, // outcome_records.estimated_cost_usd numeric(10,4)
+  { field: 'latency_ms', min: 0, max: 2147483647, integer: true, hint: 'Milliseconds.' },
+]
