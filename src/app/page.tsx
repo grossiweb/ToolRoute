@@ -186,7 +186,7 @@ export default function HomePage() {
                 }}>M</div>
                 <div style={{ fontSize: 18, fontWeight: 700, color: 'var(--text)', marginBottom: 8 }}>Model Routing</div>
                 <p style={{ fontSize: 13.5, color: 'var(--text-2)', lineHeight: 1.65, maxWidth: 380 }}>
-                  &quot;Which LLM for this task?&quot; 6 tiers, 20+ models, cost estimates, fallback chains. Stop paying GPT-4o prices for simple extractions.
+                  &quot;Which LLM for this task?&quot; 6 tiers, 39 models, cost estimates, fallback chains. Stop paying GPT-4o prices for simple extractions.
                 </p>
                 <a href="/models" style={{
                   display: 'inline-flex', alignItems: 'center', gap: 5,

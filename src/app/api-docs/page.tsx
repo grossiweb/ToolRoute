@@ -26,8 +26,8 @@ const endpoints = [
 {
   "approach": "direct_llm",
   "recommended_model": {
-    "slug": "deepseek-v3",
-    "display_name": "DeepSeek V3",
+    "slug": "deepseek-v3.2",
+    "display_name": "DeepSeek V3.2",
     "provider": "deepseek",
     "input_cost_per_mtok": 0.14,
     "tier": "fast_code",
@@ -42,7 +42,7 @@ const endpoints = [
   "approach": "mcp_server",
   "recommended_skill": "exa-mcp-server",
   "recommended_skill_name": "Exa MCP Server",
-  "recommended_model": { "slug": "gemini-2-0-flash-lite", ... },
+  "recommended_model": { "slug": "gemini-2.5-flash-lite", ... },
   "confidence": 0.92,
   "alternatives": ["brave-search-mcp", "tavily-mcp"],
   "fallback": "brave-search-mcp"
@@ -56,7 +56,7 @@ const endpoints = [
     { "step": 2, "tool_category": "ticketing", "recommended_skill": "atlassian-mcp", "action": "Update ticket" },
     { "step": 3, "tool_category": "email", "recommended_skill": "gmail-mcp", "action": "Email client" }
   ],
-  "recommended_model": { "slug": "gemini-2-0-flash-lite", ... },
+  "recommended_model": { "slug": "gemini-2.5-flash-lite", ... },
   "confidence": 0.87
 }`,
     notes: 'Priority modes: lowest_cost (cheapest model always), best_value (default, balances quality and cost), highest_quality (premium models for creative/complex tasks). LLM classifier detects task type, complexity, and tool needs automatically.',
@@ -93,6 +93,7 @@ const endpoints = [
 }`,
     response: `{
   "accepted": true,
+  "warnings": ["quality_rating clamped from 95 to 9.99. This field is 0-10. If sending a 0-100 percentage/confidence, divide by 10."],
   "credits_earned": 7,
   "reputation_earned": 4,
   "contribution_score": 0.72,
@@ -102,7 +103,7 @@ const endpoints = [
   },
   "message": "Thanks! +7 routing credits earned."
 }`,
-    notes: 'Minimal required fields: skill_slug, outcome. Outcome values: success, partial_success, failure, error. Credits: +3 to +10 per report.',
+    notes: 'Minimal required fields: skill_slug, outcome. Outcome values: success, partial_success, failure, error. Credits: +3 to +10 per report. warnings[] appears only when a numeric field (quality_rating, cost_usd, latency_ms) was out of range and clamped, or sent as a numeric string and coerced; a non-numeric value returns a 400 with a descriptive error instead.',
   },
   {
     method: 'POST',
@@ -398,7 +399,7 @@ Headers:
     method: 'POST',
     path: '/api/route/model',
     title: 'Model Route — LLM Recommendation',
-    description: 'Get an intelligent LLM model recommendation for any task. 7 tiers, 20+ models, 6 providers. LLM-powered task classifier understands context at $0.00001/call. Benchmarked across 132 real executions: Claude Opus 4.7 quality at a fraction of the cost.',
+    description: 'Get an intelligent LLM model recommendation for any task. 7 tiers, 39 models, 6 providers. LLM-powered task classifier understands context at $0.00001/call. Benchmarked across 132 real executions: Claude Opus 4.7 quality at a fraction of the cost.',
     request: `{
   "task": "write a python function to parse CSV files",
   "constraints": {
@@ -411,8 +412,8 @@ Headers:
     response: `{
   "recommended_model": "toolroute/fast_code",
   "model_details": {
-    "slug": "deepseek-v3",
-    "display_name": "DeepSeek V3",
+    "slug": "deepseek-v3.2",
+    "display_name": "DeepSeek V3.2",
     "provider": "deepseek",
     "provider_model_id": "deepseek/deepseek-chat-v3-0324",
     "input_cost_per_mtok": 0.14,
@@ -429,8 +430,8 @@ Headers:
   },
   "estimated_cost": { "estimated_usd": 0.0005 },
   "fallback_chain": [
-    { "slug": "gemini-2-0-flash", "provider": "google" },
-    { "slug": "gpt-4o-mini", "provider": "openai" }
+    { "slug": "gemini-2.5-flash", "provider": "google" },
+    { "slug": "gpt-5-nano", "provider": "openai" }
   ],
   "escalation": {
     "tier": "reasoning_pro",
@@ -458,6 +459,9 @@ Headers:
     response: `{
   "recorded": true,
   "outcome_id": "uuid",
+  "warnings": ["output_quality_rating clamped from 95 to 9.99. This field is 0-10. If sending a 0-100 percentage/confidence, divide by 10."],
+  "model_slug": "claude-sonnet-4-6",
+  "catalog_model": true,
   "contribution_score": 0.78,
   "accepted": true,
   "rewards": {
@@ -465,9 +469,70 @@ Headers:
     "reputation_points": 4,
     "decision_bonus": "1.5x applied"
   },
+  "integration_health": {
+    "status": "warning",
+    "checks": [
+      {
+        "code": "LOW_QUALITY_VARIANCE",
+        "severity": "warning",
+        "message": "Your quality ratings have very low variance (only 5 distinct values across 320 submissions). If hardcoded, this limits routing improvement. Measure actual task quality for best results.",
+        "docs": "/api/report/model"
+      }
+    ]
+  },
   "message": "+9 routing credits earned for model telemetry."
 }`,
-    notes: 'Required: model_slug, outcome_status (success | partial_success | failure | aborted). Optional: latency_ms, input_tokens, output_tokens, cost_usd, quality_rating. More fields = more credits. decision_id gives 1.5x bonus.',
+    notes: 'Required: model_slug, outcome_status (success | partial_success | failure | aborted). Optional: latency_ms, input_tokens, output_tokens, cost_usd, quality_rating. More fields = more credits. decision_id gives 1.5x bonus. warnings[] appears when a numeric field was clamped/coerced (non-numeric values return 400). catalog_model is false for slugs not yet in the ToolRoute catalog — the report is still accepted. integration_health is embedded periodically (~once per agent per 6h) with the same anomaly checks as GET /api/agent/status.',
+  },
+  {
+    method: 'GET',
+    path: '/api/agent/status',
+    title: 'Agent Status — Health, Tier Progress & Anomaly Checks',
+    description: 'Check your own integration health, trust-tier progress, and 30-day activity. No auth — pass your agent_identity_id as a query param. Tier advancement is driven by trust_score (not contribution count): score >= 25 baseline, >= 50 trusted, >= 75 production; score < 25 puts you in shadow mode (excluded from routing aggregates). trust_score moves via POST /api/report/model (+0.5 each, +2.0 with a decision_id); verification jumps straight to trusted.',
+    request: `GET /api/agent/status?agent_identity_id=<your-uuid>`,
+    response: `{
+  "agent_identity_id": "uuid",
+  "agent_name": "my-research-agent",
+  "registered_at": "2026-06-08T22:42:15Z",
+  "trust_tier": "unverified",
+  "trust_tier_progress": {
+    "current": "unverified",
+    "next": "baseline",
+    "current_trust_score": 3,
+    "next_tier_at_trust_score": 25,
+    "shadow_mode": true,
+    "requirements": [
+      "Raise trust_score from 3 to 25 (+22.0). Reports via POST /api/report/model move trust_score: +0.5 each, or +2.0 when linked to a decision_id from POST /api/route/model.",
+      "Or get verified to jump straight to 'trusted': see GET /api/verify."
+    ],
+    "hint": "trust_tier is derived from trust_score, not contribution count."
+  },
+  "activity_30d": {
+    "routing_decisions": 1175,
+    "outcomes_reported": 320,
+    "contributions_accepted": 247,
+    "avg_verified_quality": 5.52,
+    "success_rate_pct": 97.8,
+    "last_activity_at": "2026-06-18T19:07:52Z"
+  },
+  "integration_health": {
+    "status": "warning",
+    "checks": [
+      {
+        "code": "LOW_QUALITY_VARIANCE",
+        "severity": "warning",
+        "message": "Your quality ratings have very low variance (only 5 distinct values across 320 submissions). If hardcoded, this limits routing improvement. Measure actual task quality for best results.",
+        "docs": "/api/report/model"
+      }
+    ]
+  },
+  "docs": {
+    "routing": "POST /api/route",
+    "telemetry": "POST /api/report/model",
+    "contributions": "POST /api/contributions"
+  }
+}`,
+    notes: 'integration_health.status is the worst severity present: ok | advisory | warning. Anomaly checks: NO_ROUTING_CALLS (advisory — reporting outcomes but never routing), NO_TELEMETRY_FEEDBACK (advisory — routing but never reporting), LOW_QUALITY_VARIANCE (warning — <=5 distinct quality values across >=20 submissions), UNREALISTIC_SUCCESS_RATE (warning — >98% success across >=20 submissions). The same checks are embedded in /api/report/model and /api/report responses about once per agent per 6h.',
   },
   {
     method: 'GET',

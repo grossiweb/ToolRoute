@@ -69,7 +69,7 @@ export const TIER_MAP: Record<RoutingProfile, Record<ClassifierTier, TierResolut
       fallbacks: ['gpt-5.4', 'claude-opus-4-6'],
     },
     best_available: {
-      primary: 'claude-opus-4-7',
+      primary: 'claude-opus-4-8',
       fallbacks: ['claude-opus-4-6', 'gpt-5.4-pro'],
       required_effort_level: 'xhigh',
     },
@@ -100,7 +100,7 @@ export const TIER_MAP: Record<RoutingProfile, Record<ClassifierTier, TierResolut
       fallbacks: ['gpt-5.4', 'deepseek-v4'],
     },
     best_available: {
-      primary: 'claude-opus-4-7',
+      primary: 'claude-opus-4-8',
       fallbacks: ['claude-opus-4-6', 'gpt-5.4-pro'],
       required_effort_level: 'xhigh',
     },
@@ -131,7 +131,7 @@ export const TIER_MAP: Record<RoutingProfile, Record<ClassifierTier, TierResolut
       fallbacks: ['gpt-5.4', 'claude-opus-4-6'],
     },
     best_available: {
-      primary: 'claude-opus-4-7',
+      primary: 'claude-opus-4-8',
       fallbacks: ['claude-opus-4-6', 'gpt-5.4-pro'],
       required_effort_level: 'xhigh',
     },
@@ -183,7 +183,7 @@ export const ANTHROPIC_ONLY_MAP: Record<ClassifierTier, TierResolution> = {
     fallbacks: ['claude-haiku-4-5-20251001'],
   },
   best_available: {
-    primary: 'claude-opus-4-7',
+    primary: 'claude-opus-4-8',
     fallbacks: ['claude-opus-4-6'],
     required_effort_level: 'xhigh',
   },
@@ -210,6 +210,7 @@ export const MODEL_PROVIDERS: Record<string, string> = {
   'claude-sonnet-4-6':         'anthropic',
   'claude-opus-4-6':           'anthropic',
   'claude-opus-4-7':           'anthropic',
+  'claude-opus-4-8':           'anthropic',
   'deepseek-v3.2': 'deepseek',
   'deepseek-v4':   'deepseek',
   'deepseek-r1':   'deepseek',
