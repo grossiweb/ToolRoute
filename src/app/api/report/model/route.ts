@@ -8,6 +8,7 @@ import {
 } from '@/lib/quality-verifier'
 import { verifyCommitment, validateTimestamp } from '@/lib/commitment'
 import { reportAcceptedDelta, detectGamingPatterns } from '@/lib/trust-score'
+import { coerceNumericField, MODEL_REPORT_FIELD_SPECS } from '@/lib/telemetry-validation'
 
 // GET /api/report/model — Self-documenting guide
 export async function GET() {
@@ -108,15 +109,9 @@ export async function POST(request: NextRequest) {
     decision_id,
     model_slug,
     outcome_status,
-    latency_ms,
-    input_tokens,
-    output_tokens,
-    estimated_cost_usd,
-    output_quality_rating,
     output_snippet,
     task,
     task_description,
-    retry_count,
     structured_output_valid,
     tool_calls_succeeded,
     hallucination_detected,
@@ -124,7 +119,9 @@ export async function POST(request: NextRequest) {
     fallback_model_slug,
     agent_identity_id,
     human_correction_required,
-    human_correction_minutes,
+    // Numeric fields (latency_ms, input_tokens, output_tokens, estimated_cost_usd,
+    // output_quality_rating, retry_count, human_correction_minutes) are validated
+    // and clamped below, then redefined from the validated values.
     // Cryptographic commitment fields (Option B)
     commitment_hash,
     report_signature,
@@ -181,6 +178,23 @@ export async function POST(request: NextRequest) {
       error: `outcome_status must be one of: ${validOutcomes.join(', ')}`,
     }, { status: 400 })
   }
+
+  // ── Numeric field validation: type errors → 400, overflows → clamp + warn ──
+  const warnings: string[] = []
+  const v: Record<string, number | null> = {}
+  for (const spec of MODEL_REPORT_FIELD_SPECS) {
+    const r = coerceNumericField(body[spec.field], spec)
+    if (r.error) return NextResponse.json(r.error, { status: 400 })
+    if (r.warning) warnings.push(r.warning)
+    v[spec.field] = r.value
+  }
+  const latency_ms = v.latency_ms
+  const input_tokens = v.input_tokens
+  const output_tokens = v.output_tokens
+  const estimated_cost_usd = v.estimated_cost_usd
+  const output_quality_rating = v.output_quality_rating
+  const retry_count = v.retry_count
+  const human_correction_minutes = v.human_correction_minutes
 
   // Resolve the model by slug. The models table's `id` column IS the
   // canonical slug (see Strategy D Phase 1) — no separate slug column.
@@ -263,7 +277,12 @@ export async function POST(request: NextRequest) {
         hint: 'This commitment_hash has already been submitted. Each report requires a unique timestamp.',
       }, { status: 400 })
     }
-    return NextResponse.json({ error: 'Failed to record outcome', details: outcomeError?.message }, { status: 500 })
+    console.error('[report/model] outcome insert failed:', outcomeError) // raw error stays in logs only
+    return NextResponse.json({
+      error: 'Could not record telemetry',
+      detail: 'Your report was valid but the database rejected it. This has been logged on our side. Please retry; if it persists, contact support.',
+      docs: '/api/route/model#telemetry',
+    }, { status: 500 })
   }
 
   // Score the contribution — richer reports earn more
@@ -422,6 +441,7 @@ export async function POST(request: NextRequest) {
   const response: any = {
     recorded: true,
     outcome_id: outcome.id,
+    ...(warnings.length ? { warnings } : {}),
     model_slug,
     outcome_status,
     proof_type: proofType,
