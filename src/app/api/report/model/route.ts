@@ -207,11 +207,12 @@ export async function POST(request: NextRequest) {
     .eq('id', model_slug)
     .maybeSingle()
 
-  if (!model) {
-    return NextResponse.json({
-      error: `Unknown model_slug: ${model_slug}`,
-      hint: 'Check available models at GET /api/route/model or GET /models',
-    }, { status: 404 })
+  // Telemetry accepts ANY model an agent actually ran — not just catalogued
+  // ones. Uncatalogued slugs are stored raw (the model_slug FK was dropped in
+  // migration 076); routing/tier context is simply unavailable for them.
+  const catalogModel = !!model
+  if (!catalogModel) {
+    warnings.push(`model_slug '${model_slug}' is not in the ToolRoute catalog — report stored but routing context and quality scoring unavailable for uncatalogued models.`)
   }
 
   // Validate decision_id if provided
@@ -243,7 +244,7 @@ export async function POST(request: NextRequest) {
     .from('model_outcome_records')
     .insert({
       routing_decision_id: validDecisionId,
-      model_slug: model.id,
+      model_slug,
       outcome_status,
       latency_ms: latency_ms ?? null,
       input_tokens: input_tokens ?? null,
@@ -443,6 +444,7 @@ export async function POST(request: NextRequest) {
     outcome_id: outcome.id,
     ...(warnings.length ? { warnings } : {}),
     model_slug,
+    catalog_model: catalogModel,
     outcome_status,
     proof_type: proofType,
     contribution_score: parseFloat(overallScore.toFixed(2)),

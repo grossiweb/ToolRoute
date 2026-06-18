@@ -69,14 +69,14 @@ export default async function MCPServerPage({ params }: { params: { slug: string
   // Fetch total sample size across all benchmark profiles for trust signals
   const { data: rollupStats } = await supabase
     .from('skill_benchmark_rollups')
-    .select('sample_size, updated_at')
+    .select('sample_size, last_updated_at')
     .eq('skill_id', skill.id)
 
   const totalSampleSize = (rollupStats || []).reduce((sum: number, r: any) => sum + (r.sample_size ?? 0), 0)
   const lastUpdated = (rollupStats || []).reduce((latest: string | null, r: any) => {
-    if (!r.updated_at) return latest
-    if (!latest) return r.updated_at
-    return r.updated_at > latest ? r.updated_at : latest
+    if (!r.last_updated_at) return latest
+    if (!latest) return r.last_updated_at
+    return r.last_updated_at > latest ? r.last_updated_at : latest
   }, null as string | null)
   const daysSinceUpdate = lastUpdated
     ? Math.floor((Date.now() - new Date(lastUpdated).getTime()) / (1000 * 60 * 60 * 24))
