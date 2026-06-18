@@ -36,11 +36,11 @@ export default async function sitemap(): Promise<MetadataRoute.Sitemap> {
   // Dynamic combination pages
   const { data: combos } = await supabase
     .from('combinations')
-    .select('slug, updated_at')
+    .select('slug')
 
   const comboPages: MetadataRoute.Sitemap = (combos || []).map((combo) => ({
     url: `${baseUrl}/combinations/${combo.slug}`,
-    lastModified: combo.updated_at ? new Date(combo.updated_at) : new Date(),
+    lastModified: new Date(),
     changeFrequency: 'weekly' as const,
     priority: 0.6,
   }))
