@@ -5,6 +5,7 @@ import { getVerificationNudge } from '@/lib/verification-nudge'
 import { apiError } from '@/lib/api-error'
 import { processContribution } from '@/lib/contributions'
 import { coerceNumericField, SKILL_REPORT_FIELD_SPECS } from '@/lib/telemetry-validation'
+import { normalizeActivity, computeAnomalyChecks, buildIntegrationHealth, shouldRunAnomalyCheck, type AgentHealth30dRow } from '@/lib/agent-health'
 
 // GET /api/report — Self-documenting guide for telemetry reporting
 export async function GET() {
@@ -217,6 +218,9 @@ export async function POST(request: NextRequest) {
       : 'Report received but did not meet acceptance threshold. Add more fields for higher scores.',
   }
 
+  // Declared here so the integration-health embed below can read it.
+  let lastAnomalyCheckAt: string | null = null
+
   // If agent is not registered, nudge them to register for 2x credits
   if (!agent_identity_id) {
     response.register_for_more = {
@@ -230,11 +234,12 @@ export async function POST(request: NextRequest) {
     // Registered agent — nudge verification if not yet verified
     const { data: agentRow } = await supabase
       .from('agent_identities')
-      .select('trust_tier')
+      .select('trust_tier, last_anomaly_check_at')
       .eq('id', agent_identity_id)
       .maybeSingle()
     const verifyNudge = getVerificationNudge(agentRow?.trust_tier, credits)
     if (verifyNudge) response.verify_for_2x = verifyNudge
+    lastAnomalyCheckAt = agentRow?.last_anomaly_check_at ?? null
   }
 
   // Always nudge toward challenges and missions for higher rewards
@@ -251,6 +256,20 @@ export async function POST(request: NextRequest) {
     comparative_eval: {
       message: 'Compare 2+ tools on the same task via POST /api/contributions for 2.5x credits.',
     },
+  }
+
+  // Integration health — embedded at most once per agent per 6h (gated on
+  // last_anomaly_check_at) so the 30d aggregate RPC stays off the hot path.
+  if (agent_identity_id && shouldRunAnomalyCheck(lastAnomalyCheckAt)) {
+    const { data: healthRows } = await supabase.rpc('agent_health_30d', { p_agent_id: agent_identity_id })
+    const row = (Array.isArray(healthRows) ? healthRows[0] : healthRows) as AgentHealth30dRow | undefined
+    if (row) {
+      response.integration_health = buildIntegrationHealth(computeAnomalyChecks(normalizeActivity(row)))
+      supabase.from('agent_identities')
+        .update({ last_anomaly_check_at: new Date().toISOString() })
+        .eq('id', agent_identity_id)
+        .then(() => {}, () => {})
+    }
   }
 
   return NextResponse.json(response)

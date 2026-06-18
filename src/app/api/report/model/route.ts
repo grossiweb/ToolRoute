@@ -9,6 +9,7 @@ import {
 import { verifyCommitment, validateTimestamp } from '@/lib/commitment'
 import { reportAcceptedDelta, detectGamingPatterns } from '@/lib/trust-score'
 import { coerceNumericField, MODEL_REPORT_FIELD_SPECS } from '@/lib/telemetry-validation'
+import { normalizeActivity, computeAnomalyChecks, buildIntegrationHealth, shouldRunAnomalyCheck, type AgentHealth30dRow } from '@/lib/agent-health'
 
 // GET /api/report/model — Self-documenting guide
 export async function GET() {
@@ -331,10 +332,11 @@ export async function POST(request: NextRequest) {
   if (validDecisionId) multiplier *= 1.5 // bonus for linked decisions
   let trustMod = 1.0
   let agentTier: string | null = null
+  let lastAnomalyCheckAt: string | null = null
   if (agent_identity_id) {
     const { data: agent } = await supabase
       .from('agent_identities')
-      .select('trust_tier, trust_score, contributor_id')
+      .select('trust_tier, trust_score, contributor_id, last_anomaly_check_at')
       .eq('id', agent_identity_id)
       .maybeSingle()
 
@@ -342,6 +344,7 @@ export async function POST(request: NextRequest) {
       agentTier = agent.trust_tier
       trustMod = TRUST_TIER_MODIFIERS[agent.trust_tier as keyof typeof TRUST_TIER_MODIFIERS] || 1.0
     }
+    lastAnomalyCheckAt = agent?.last_anomaly_check_at ?? null
   }
 
   const credits = accepted ? calcRoutingCredits(8, overallScore, multiplier * trustMod) : 0
@@ -486,6 +489,20 @@ export async function POST(request: NextRequest) {
     challenges: {
       message: 'Workflow Challenges pay 3x credits — GET /api/challenges.',
     },
+  }
+
+  // Integration health — embedded at most once per agent per 6h (gated on
+  // last_anomaly_check_at) so the 30d aggregate RPC stays off the hot path.
+  if (agent_identity_id && shouldRunAnomalyCheck(lastAnomalyCheckAt)) {
+    const { data: healthRows } = await supabase.rpc('agent_health_30d', { p_agent_id: agent_identity_id })
+    const row = (Array.isArray(healthRows) ? healthRows[0] : healthRows) as AgentHealth30dRow | undefined
+    if (row) {
+      response.integration_health = buildIntegrationHealth(computeAnomalyChecks(normalizeActivity(row)))
+      supabase.from('agent_identities')
+        .update({ last_anomaly_check_at: new Date().toISOString() })
+        .eq('id', agent_identity_id)
+        .then(() => {}, () => {})
+    }
   }
 
   return NextResponse.json(response)
